@@ -215,9 +215,9 @@ def get_box_score(game_id: str, session: requests.Session) -> tuple[list, list]:
         print(f"    오류: {e}")
         return [], []
 
-    # 두산이 원정(AWAY)이면 arrHitter[0], 홈이면 arrHitter[1]
-    is_away = game_id[10:12] == "OB"
-    team_idx = 0 if is_away else 1
+    # 두산이 홈(game_id[8:10]=="OB")이면 arrHitter[0], 원정이면 arrHitter[1]
+    is_home  = game_id[8:10] == "OB"
+    team_idx = 0 if is_home else 1
 
     # ── 타자 파싱 ──
     batters = []

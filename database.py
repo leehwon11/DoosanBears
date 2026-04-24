@@ -139,10 +139,16 @@ def save_game(data: dict):
         conn.close()
         return
 
+    # game_info에서 직접 점수/팀명 가져오기 (크롤러 최종버전 기준)
+    home_nm    = game_info.get("home_nm", score.get("home_team", ""))
+    away_nm    = game_info.get("away_nm", score.get("away_team", ""))
+    home_score = game_info.get("home_score", score.get("total", {}).get("home", {}).get("R", 0))
+    away_score = game_info.get("away_score", score.get("total", {}).get("away", {}).get("R", 0))
+
     # 두산이 홈인지 원정인지 판단
-    is_home   = game_info.get("home_team") == "OB"
-    doosan_r  = score.get("total", {}).get("home" if is_home else "away", {}).get("R", 0)
-    opponent_r = score.get("total", {}).get("away" if is_home else "home", {}).get("R", 0)
+    is_home    = game_id[10:12] != "OB"  # game_id: 날짜+홈팀+원정팀
+    doosan_r   = home_score if is_home else away_score
+    opponent_r = away_score if is_home else home_score
 
     if doosan_r > opponent_r:
         result = "승"
@@ -159,10 +165,10 @@ def save_game(data: dict):
     """, (
         game_id,
         data.get("date"),
-        score.get("home_team", ""),
-        score.get("away_team", ""),
-        score.get("total", {}).get("home", {}).get("R", 0),
-        score.get("total", {}).get("away", {}).get("R", 0),
+        home_nm,
+        away_nm,
+        home_score,
+        away_score,
         result,
         now,
     ))
