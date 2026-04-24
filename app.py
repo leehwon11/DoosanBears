@@ -51,7 +51,14 @@ def player_page(name):
     stats = get_player_stats(name)
     if not stats:
         abort(404)
-    return render_template("player.html", name=name, stats=stats)
+    from database import get_connection
+    conn = get_connection()
+    ai_reports = conn.execute(
+        "SELECT * FROM ai_reports WHERE player_name=? AND report_type='player' ORDER BY created_at DESC",
+        (name,)
+    ).fetchall()
+    conn.close()
+    return render_template("player.html", name=name, stats=stats, ai_reports=[dict(r) for r in ai_reports])
 
 
 # ──────────────────────────────────────────

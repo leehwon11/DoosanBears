@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+{% block title %}경기 리포트 · 두산 베어스{% endblock %}
+
+{% block head %}
+<style>
+  .back-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--gray); text-decoration: none; font-size: 0.85rem;
+    margin-bottom: 1.5rem; transition: color 0.2s;
+  }
+  .back-link:hover { color: var(--white); }
+  .game-header {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+  .game-header-date { color: var(--gray); font-size: 0.85rem; margin-bottom: 1rem; }
+  .scoreboard {
+    display: flex; align-items: center; justify-content: center; gap: 2rem;
+    margin-bottom: 1.2rem;
+  }
+  .team-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem; letter-spacing: 2px;
+  }
+  .score-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 4rem; line-height: 1;
+  }
+  .score-sep { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; color: var(--gray); }
+  .inning-table {
+    width: 100%; border-collapse: collapse;
+    font-size: 0.82rem; margin-top: 1rem;
+  }
+  .inning-table th, .inning-table td {
+    padding: 6px 10px; text-align: center;
+    border: 1px solid var(--border);
+  }
+  .inning-table th { color: var(--gray); font-weight: 500; }
+  .inning-table .total-col { color: var(--gold); font-weight: 700; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+  @media (max-width: 640px) { .grid-2 { grid-template-columns: 1fr; } }
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem; letter-spacing: 2px;
+    margin-bottom: 1rem; padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 0.6rem;
+  }
+  .section-title::before {
+    content: ''; display: inline-block;
+    width: 4px; height: 18px;
+    background: var(--red); border-radius: 2px;
+  }
+  .stats-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .stats-table {
+    width: 100%; border-collapse: collapse; font-size: 0.82rem;
+  }
+  .stats-table th {
+    background: rgba(255,255,255,0.04);
+    padding: 8px 12px; text-align: center;
+    color: var(--gray); font-weight: 500;
+    border-bottom: 1px solid var(--border);
+  }
+  .stats-table td {
+    padding: 9px 12px; text-align: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .stats-table tr:last-child td { border-bottom: none; }
+  .stats-table td:first-child { text-align: left; font-weight: 500; }
+  .player-link { color: inherit; text-decoration: none; }
+  .player-link:hover { color: var(--gold); }
+  .highlight { color: var(--gold); font-weight: 700; }
+  .ai-section { margin-bottom: 2rem; }
+  .ai-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--red);
+    border-radius: 12px;
+    padding: 1.5rem;
+  }
+  .ai-label {
+    font-size: 0.72rem; font-weight: 700;
+    letter-spacing: 2px; color: var(--red);
+    text-transform: uppercase; margin-bottom: 0.8rem;
+  }
+  .ai-content {
+    line-height: 1.9; font-size: 0.92rem;
+    color: rgba(248,249,250,0.85);
+    white-space: pre-wrap;
+  }
+  .player-reports { display: flex; flex-direction: column; gap: 12px; }
+  .player-report-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.2rem 1.5rem;
+  }
+  .player-report-name {
+    font-weight: 700; margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+  }
+  .player-report-content {
+    font-size: 0.85rem; line-height: 1.8;
+    color: rgba(248,249,250,0.75);
+    white-space: pre-wrap;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<a href="/" class="back-link">← 경기 목록으로</a>
+
+{% set g = detail.game %}
+<div class="game-header">
+  <div class="game-header-date">
+    {{ g.date[:4] }}.{{ g.date[4:6] }}.{{ g.date[6:] }}
+    &nbsp;|&nbsp;
+    <span class="badge {% if g.result == '승' %}badge-win{% elif g.result == '패' %}badge-lose{% else %}badge-draw{% endif %}">{{ g.result }}</span>
+  </div>
+  <div class="scoreboard">
+    <div class="team-name">{{ g.home_team }}</div>
+    <div class="score-num">{{ g.home_score }}</div>
+    <div class="score-sep">:</div>
+    <div class="score-num">{{ g.away_score }}</div>
+    <div class="team-name">{{ g.away_team }}</div>
+  </div>
+
+  {% if detail.innings %}
+  {% set doosan_inn  = detail.innings | selectattr('team','equalto','doosan')   | list | sort(attribute='inning') %}
+  {% set opp_inn     = detail.innings | selectattr('team','equalto','opponent') | list | sort(attribute='inning') %}
+  <table class="inning-table">
+    <tr>
+      <th>팀</th>
+      {% for i in doosan_inn %}<th>{{ i.inning }}</th>{% endfor %}
+      <th class="total-col">R</th>
+    </tr>
+    <tr>
+      <td style="text-align:left;font-weight:500;">두산</td>
+      {% for i in doosan_inn %}<td>{{ i.score }}</td>{% endfor %}
+      <td class="total-col">{{ g.home_score if g.home_team == '두산' else g.away_score }}</td>
+    </tr>
+    <tr>
+      <td style="text-align:left;font-weight:500;">{{ g.away_team if g.home_team == '두산' else g.home_team }}</td>
+      {% for i in opp_inn %}<td>{{ i.score }}</td>{% endfor %}
+      <td class="total-col">{{ g.away_score if g.home_team == '두산' else g.home_score }}</td>
+    </tr>
+  </table>
+  {% endif %}
+</div>
+
+{% set game_report = detail.reports | selectattr('report_type','equalto','game') | list %}
+{% if game_report %}
+<div class="ai-section">
+  <div class="section-title">AI 경기 총평</div>
+  <div class="ai-card">
+    <div class="ai-label">Claude AI Analysis</div>
+    <div class="ai-content">{{ game_report[0].content }}</div>
+  </div>
+</div>
+{% endif %}
+
+<div class="grid-2">
+  {% if detail.batters %}
+  <div>
+    <div class="section-title">타자 기록</div>
+    <div class="stats-card">
+      <table class="stats-table">
+        <thead>
+          <tr><th>선수</th><th>타수</th><th>안타</th><th>홈런</th><th>타점</th><th>타율</th></tr>
+        </thead>
+        <tbody>
+        {% for b in detail.batters %}
+        <tr>
+          <td><a href="/player/{{ b.name }}" class="player-link">{{ b.name }}</a></td>
+          <td>{{ b.ab }}</td>
+          <td {% if b.h >= 2 %}class="highlight"{% endif %}>{{ b.h }}</td>
+          <td {% if b.hr >= 1 %}class="highlight"{% endif %}>{{ b.hr }}</td>
+          <td>{{ b.rbi }}</td>
+          <td>{{ b.avg }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if detail.pitchers %}
+  <div>
+    <div class="section-title">투수 기록</div>
+    <div class="stats-card">
+      <table class="stats-table">
+        <thead>
+          <tr><th>선수</th><th>결과</th><th>이닝</th><th>자책</th><th>삼진</th></tr>
+        </thead>
+        <tbody>
+        {% for p in detail.pitchers %}
+        <tr>
+          <td><a href="/player/{{ p.name }}" class="player-link">{{ p.name }}</a></td>
+          <td>{{ p.result }}</td>
+          <td>{{ p.ip }}</td>
+          <td {% if p.er == 0 %}class="highlight"{% endif %}>{{ p.er }}</td>
+          <td>{{ p.so }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{% set player_reports = detail.reports | selectattr('report_type','equalto','player') | list %}
+{% if player_reports %}
+<div class="section-title">선수별 AI 평가</div>
+<div class="player-reports">
+  {% for r in player_reports %}
+  <div class="player-report-card">
+    <div class="player-report-name">{{ r.player_name }}</div>
+    <div class="player-report-content">{{ r.content }}</div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

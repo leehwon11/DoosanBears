@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}두산 베어스 분석{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --navy: #0A1628;
+      --blue: #1B3A6B;
+      --red: #C8102E;
+      --gold: #F5A623;
+      --white: #F8F9FA;
+      --gray: #8A95A3;
+      --card: #111D30;
+      --border: rgba(255,255,255,0.08);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--navy);
+      color: var(--white);
+      font-family: 'Noto Sans KR', sans-serif;
+      min-height: 100vh;
+    }
+    nav {
+      background: rgba(10,22,40,0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 60px;
+    }
+    .nav-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.6rem;
+      letter-spacing: 2px;
+      color: var(--white);
+      text-decoration: none;
+    }
+    .nav-logo span { color: var(--red); }
+    .nav-links { display: flex; gap: 2rem; }
+    .nav-links a {
+      color: var(--gray);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--white); }
+    main { max-width: 1100px; margin: 0 auto; padding: 2.5rem 1.5rem; }
+    .badge {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+    }
+    .badge-win  { background: rgba(39,174,96,0.2);  color: #27AE60; }
+    .badge-lose { background: rgba(200,16,46,0.2);  color: #C8102E; }
+    .badge-draw { background: rgba(138,149,163,0.2); color: #8A95A3; }
+    footer {
+      text-align: center;
+      padding: 2rem;
+      color: var(--gray);
+      font-size: 0.8rem;
+      border-top: 1px solid var(--border);
+      margin-top: 4rem;
+    }
+  </style>
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <nav>
+    <a href="/" class="nav-logo">DOOSAN <span>BEARS</span></a>
+    <div class="nav-links">
+      <a href="/">경기 기록</a>
+    </div>
+  </nav>
+  <main>{% block content %}{% endblock %}</main>
+  <footer>두산 베어스 팬 분석 사이트 · 비공식 · 데이터 출처: KBO</footer>
+</body>
+</html>

@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% block title %}두산 베어스 경기 분석{% endblock %}
+
+{% block head %}
+<style>
+  .hero {
+    text-align: center;
+    padding: 3.5rem 0 2.5rem;
+    position: relative;
+  }
+  .hero-eyebrow {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: var(--red);
+    text-transform: uppercase;
+    margin-bottom: 0.8rem;
+  }
+  .hero h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(3rem, 8vw, 5.5rem);
+    letter-spacing: 4px;
+    line-height: 1;
+    margin-bottom: 1rem;
+  }
+  .hero h1 span { color: var(--red); }
+  .hero-sub {
+    color: var(--gray);
+    font-size: 0.95rem;
+  }
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 2px;
+    margin-bottom: 1.2rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 0.8rem;
+  }
+  .section-title::before {
+    content: '';
+    display: inline-block;
+    width: 4px; height: 22px;
+    background: var(--red);
+    border-radius: 2px;
+  }
+  .games-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .game-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.2rem 1.5rem;
+    text-decoration: none;
+    color: inherit;
+    display: grid;
+    grid-template-columns: 110px 1fr auto;
+    align-items: center;
+    gap: 1.5rem;
+    transition: border-color 0.2s, transform 0.15s;
+  }
+  .game-card:hover {
+    border-color: rgba(255,255,255,0.2);
+    transform: translateX(4px);
+  }
+  .game-date { color: var(--gray); font-size: 0.85rem; }
+  .game-score {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 2px;
+  }
+  .game-teams {
+    font-size: 0.88rem;
+    color: var(--gray);
+    margin-top: 2px;
+  }
+  .empty {
+    text-align: center;
+    padding: 4rem;
+    color: var(--gray);
+  }
+  .empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.4;
+  }
+  .stat-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 2.5rem;
+  }
+  .stat-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.2rem;
+    text-align: center;
+  }
+  .stat-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.4rem;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .stat-label { font-size: 0.78rem; color: var(--gray); letter-spacing: 1px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hero">
+  <p class="hero-eyebrow">Fan Analysis</p>
+  <h1>DOOSAN <span>BEARS</span></h1>
+  <p class="hero-sub">경기 후 AI가 분석한 두산 베어스 리포트</p>
+</div>
+
+{% if games %}
+{% set wins  = games | selectattr('result','equalto','승') | list | length %}
+{% set loses = games | selectattr('result','equalto','패') | list | length %}
+{% set draws = games | selectattr('result','equalto','무') | list | length %}
+<div class="stat-bar">
+  <div class="stat-item">
+    <div class="stat-num" style="color:#27AE60">{{ wins }}</div>
+    <div class="stat-label">최근 승</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num" style="color:var(--red)">{{ loses }}</div>
+    <div class="stat-label">최근 패</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num" style="color:var(--gold)">{{ draws }}</div>
+    <div class="stat-label">최근 무</div>
+  </div>
+</div>
+{% endif %}
+
+<div class="section-title">최근 경기</div>
+
+{% if games %}
+<div class="games-grid">
+  {% for g in games %}
+  <a href="/game/{{ g.game_id }}" class="game-card">
+    <div class="game-date">
+      {{ g.date[:4] }}.{{ g.date[4:6] }}.{{ g.date[6:] }}
+    </div>
+    <div>
+      <div class="game-score">
+        {{ g.home_team }} {{ g.home_score }} : {{ g.away_score }} {{ g.away_team }}
+      </div>
+      <div class="game-teams">클릭해서 AI 리포트 보기</div>
+    </div>
+    <span class="badge {% if g.result == '승' %}badge-win{% elif g.result == '패' %}badge-lose{% else %}badge-draw{% endif %}">
+      {{ g.result }}
+    </span>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty">
+  <div class="empty-icon">⚾</div>
+  <p>아직 경기 데이터가 없습니다.<br>경기 후 자동으로 업데이트돼요.</p>
+</div>
+{% endif %}
+{% endblock %}
