@@ -34,8 +34,15 @@ app = Flask(__name__)
 @app.route("/")
 def index():
     """메인 페이지 — 최근 경기 목록"""
-    games = get_recent_games(limit=10)
+    games = get_recent_games(limit=3)
     return render_template("index.html", games=games)
+
+
+@app.route("/games")
+def games_all():
+    """전체 경기 목록 페이지"""
+    games = get_recent_games(limit=200)
+    return render_template("games.html", games=games)
 
 
 @app.route("/game/<game_id>")
