@@ -19,6 +19,7 @@ from apscheduler.triggers.cron import CronTrigger
 
 from kbo_crawler import crawl_today_game, is_game_finished
 from database import init_db, save_game
+from analyzer import analyze_all
 
 # ──────────────────────────────────────────
 # 로그 설정
@@ -64,8 +65,10 @@ def run_crawl_job():
     save_game(data)
     log.info("DB 저장 완료")
 
-    # 4) AI 분석은 Step 4에서 여기에 추가 예정
-    # analyze_and_save(data)
+    # 4) AI 분석 실행
+    game_id = data.get('game_info', {}).get('game_id')
+    if game_id:
+        analyze_all(game_id)
 
 
 # ──────────────────────────────────────────
