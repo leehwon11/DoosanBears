@@ -1,28 +1,29 @@
 import requests, json
 
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-    "Referer": "https://www.koreabaseball.com/Schedule/Schedule.aspx",
-    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-    "X-Requested-With": "XMLHttpRequest",
-}
+session = requests.Session()
+session.headers.update({"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"})
+session.get("https://www.koreabaseball.com/Default.aspx", timeout=15)
 
-resp = requests.post(
-    "https://www.koreabaseball.com/ws/Schedule.asmx/GetScheduleList",
-    headers=HEADERS,
-    data={
-        "leId": "1",
-        "srIdList": "0,9,6",
-        "seasonId": "2026",
-        "gameMonth": "04",
-        "teamId": "OB",
+game_id = "20260401OBSS0"
+resp = session.post(
+    "https://www.koreabaseball.com/ws/Schedule.asmx/GetBoxScoreScroll",
+    headers={
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "X-Requested-With": "XMLHttpRequest",
+        "Referer": f"https://www.koreabaseball.com/Schedule/GameCenter/Main.aspx?gameDate=20260401&gameId={game_id}&section=REVIEW",
     },
+    data={"leId":"1","srId":"0","seasonId":"2026","gameId":game_id,"gameDate":"20260401"},
     timeout=15
 )
-print("Status:", resp.status_code)
 data = resp.json()
-rows = data.get("rows", [])
-print("rows 개수:", len(rows))
-if rows:
-    print("첫 번째 row 키 목록:", list(rows[0].keys()))
-    print("첫 번째 row 내용:", json.dumps(rows[0], ensure_ascii=False, indent=2))
+
+# 투수 구조 확인
+pitcher = data["arrPitcher"][0]
+print("arrPitcher keys:", list(pitcher.keys()))
+for tkey in pitcher.keys():
+    t = json.loads(pitcher[tkey])
+    rows = t.get("rows", [])
+    if rows:
+        print(f"\n{tkey} 첫 번째 row:")
+        for i, cell in enumerate(rows[0]["row"]):
+            print(f"  [{i}] {cell['Text']}")

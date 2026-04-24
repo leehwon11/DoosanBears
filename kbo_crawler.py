@@ -1,7 +1,10 @@
 """
-KBO 두산 베어스 경기 결과 크롤러 (실제 응답 구조 기반)
-=======================================================
-KBO API 응답은 row[] 배열 안에 Text 필드로 데이터가 들어있는 구조입니다.
+KBO 두산 베어스 경기 결과 크롤러 (최종 완성본)
+===============================================
+API 구조:
+  GetScheduleList    : 경기 ID / 팀 / 점수 / 상태
+  GetScoreBoardScroll: 이닝별 점수 + R/H/E
+  GetBoxScoreScroll  : 타자(arrHitter) + 투수(arrPitcher)
 
 설치:
     pip install requests beautifulsoup4
@@ -10,139 +13,123 @@ KBO API 응답은 row[] 배열 안에 Text 필드로 데이터가 들어있는 �
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
-import json
-import time
-import re
-
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    "Referer": "https://www.koreabaseball.com/Schedule/Schedule.aspx",
-    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-    "X-Requested-With": "XMLHttpRequest",
-    "Accept": "application/json, text/javascript, */*; q=0.01",
-}
+import json, time, re
 
 BASE_URL = "https://www.koreabaseball.com"
 DOOSAN_TEAM_CODE = "OB"
 
 
 # ──────────────────────────────────────────
+# 세션 관리
+# ──────────────────────────────────────────
+
+def _make_session() -> requests.Session:
+    session = requests.Session()
+    session.headers.update({
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept-Language": "ko-KR,ko;q=0.9",
+    })
+    try:
+        session.get(f"{BASE_URL}/Default.aspx", timeout=15)
+    except Exception as e:
+        print(f"    세션 획득 실패: {e}")
+    return session
+
+
+def _ajax_headers(referer: str) -> dict:
+    return {
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "X-Requested-With": "XMLHttpRequest",
+        "Referer": referer,
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+    }
+
+
+# ──────────────────────────────────────────
 # 유틸
 # ──────────────────────────────────────────
 
-def _text(row_arr, idx):
-    """row 배열에서 idx번째 Text 값 반환"""
+def _cell(row_arr, idx):
     try:
         return row_arr[idx].get("Text", "") or ""
     except (IndexError, AttributeError):
         return ""
 
+def _gt(row_arr, idx):
+    return BeautifulSoup(_cell(row_arr, idx), "html.parser").get_text(strip=True)
 
-def _extract_game_id(text):
-    """href에서 gameId 추출"""
-    m = re.search(r'gameId=([^&\'"]+)', text)
-    return m.group(1) if m else ""
+def _iv(row_arr, idx):
+    try: return int(_gt(row_arr, idx))
+    except: return 0
 
+def _fv(row_arr, idx):
+    try: return float(_gt(row_arr, idx))
+    except: return 0.0
 
-def _parse_teams_scores(play_text):
-    """
-    '<span>두산</span><em><span>3</span><span>vs</span><span>13</span></em><span>삼성</span>'
-    → {"home": "두산", "away": "삼성", "home_score": 3, "away_score": 13}
-    """
+def _parse_play_text(play_text):
     soup = BeautifulSoup(play_text, "html.parser")
     spans = [s.get_text(strip=True) for s in soup.find_all("span") if not s.get("class")]
     teams = [s for s in spans if s and s != "vs"]
-
     em = soup.find("em")
-    scores_raw = [s.get_text(strip=True) for s in em.find_all("span")] if em else []
     scores = []
-    for s in scores_raw:
-        try:
-            scores.append(int(s))
-        except ValueError:
-            pass
-
-    home = teams[0] if len(teams) > 0 else ""
+    if em:
+        for s in em.find_all("span"):
+            try: scores.append(int(s.get_text(strip=True)))
+            except ValueError: pass
+    home = teams[0] if teams else ""
     away = teams[1] if len(teams) > 1 else ""
-    home_score = scores[0] if len(scores) > 0 else 0
-    away_score = scores[1] if len(scores) > 1 else 0
+    return home, away, scores[0] if scores else 0, scores[1] if len(scores) > 1 else 0
 
-    # 종료 여부: 리뷰/하이라이트 버튼 있으면 종료
-    return home, away, home_score, away_score
-
+def _extract_game_id(text):
+    m = re.search(r'gameId=([^&\'"]+)', text)
+    return m.group(1) if m else ""
 
 def _is_finished(row_arr):
-    """리뷰 버튼 존재 여부로 경기 종료 판단"""
-    relay_text = _text(row_arr, 3)
-    return "리뷰" in relay_text or "REVIEW" in relay_text
+    return "리뷰" in _cell(row_arr, 3) or "리뷰" in _cell(row_arr, 4)
 
 
 # ──────────────────────────────────────────
 # 1단계: 경기 ID 찾기
 # ──────────────────────────────────────────
 
-def get_today_game_id(date: str = None) -> dict | None:
-    """KBO 일정 API에서 두산 경기 ID를 찾습니다."""
+def get_today_game_id(date: str = None, session: requests.Session = None) -> dict | None:
     if date is None:
         date = datetime.now().strftime("%Y%m%d")
+    if session is None:
+        session = _make_session()
 
-    year  = date[:4]
-    month = date[4:6]
-    day   = date[6:8]
-
+    year, month, day = date[:4], date[4:6], date[6:8]
     url = f"{BASE_URL}/ws/Schedule.asmx/GetScheduleList"
-    payload = {
-        "leId":      "1",
-        "srIdList":  "0,9,6",
-        "seasonId":  year,
-        "gameMonth": month,
-        "teamId":    DOOSAN_TEAM_CODE,
-    }
+    payload = {"leId":"1","srIdList":"0,9,6","seasonId":year,"gameMonth":month,"teamId":DOOSAN_TEAM_CODE}
 
     print(f"[1] 경기 일정 조회 중... ({date})")
     try:
-        resp = requests.post(url, headers=HEADERS, data=payload, timeout=15)
+        resp = session.post(url, headers=_ajax_headers(f"{BASE_URL}/Schedule/Schedule.aspx"), data=payload, timeout=15)
         resp.raise_for_status()
         data = resp.json()
     except Exception as e:
         print(f"    오류: {e}")
         return None
 
-    target_day = f"{month}.{day}"  # "04.01"
-
+    target_day = f"{month}.{day}"
     for item in data.get("rows", []):
         row_arr = item.get("row", [])
-
-        # row[0]: 날짜 ("04.01(수)")
-        date_text = _text(row_arr, 0)
-        if target_day not in date_text:
+        if target_day not in _cell(row_arr, 0):
             continue
 
-        # game_id는 row[3] 또는 row[4] href에서 추출
-        game_id = _extract_game_id(_text(row_arr, 3)) or \
-                  _extract_game_id(_text(row_arr, 4))
+        game_id = _extract_game_id(_cell(row_arr, 3)) or _extract_game_id(_cell(row_arr, 4))
         if not game_id:
             continue
 
-        # 팀/점수
-        play_text = _text(row_arr, 2)
-        home, away, home_score, away_score = _parse_teams_scores(play_text)
+        home, away, home_score, away_score = _parse_play_text(_cell(row_arr, 2))
+        status = "종료" if _is_finished(row_arr) else "미종료"
 
-        # 종료 여부
-        finished = _is_finished(row_arr)
-        status = "종료" if finished else "미종료"
-
-        print(f"    발견: game_id={game_id}, {away} {away_score}:{home_score} {home}, 상태={status}")
+        print(f"    발견: {game_id}, {away} {away_score}:{home_score} {home}, 상태={status}")
         return {
-            "game_id":    game_id,
-            "date":       date,
-            "home_team":  "OB" if "두산" in home else game_id[8:10],
-            "away_team":  game_id[10:12],
-            "home_nm":    home,
-            "away_nm":    away,
-            "home_score": home_score,
-            "away_score": away_score,
-            "status":     status,
+            "game_id": game_id, "date": date,
+            "home_nm": home, "away_nm": away,
+            "home_score": home_score, "away_score": away_score,
+            "status": status,
         }
 
     print(f"    두산 경기 없음 ({date})")
@@ -153,14 +140,14 @@ def get_today_game_id(date: str = None) -> dict | None:
 # 2단계: 스코어보드
 # ──────────────────────────────────────────
 
-def get_score_board(game_id: str) -> dict:
-    """이닝별 점수 수집"""
-    url = f"{BASE_URL}/ws/GameCenter.asmx/GetScoreBoardData"
-    payload = {"gameId": game_id}
+def get_score_board(game_id: str, session: requests.Session) -> dict:
+    url = f"{BASE_URL}/ws/Schedule.asmx/GetScoreBoardScroll"
+    referer = f"{BASE_URL}/Schedule/GameCenter/Main.aspx?gameDate={game_id[:8]}&gameId={game_id}&section=REVIEW"
+    payload = {"leId":"1","srId":"0","seasonId":game_id[:4],"gameId":game_id,"gameDate":game_id[:8]}
 
     print(f"[2] 스코어보드 수집 중...")
     try:
-        resp = requests.post(url, headers=HEADERS, data=payload, timeout=15)
+        resp = session.post(url, headers=_ajax_headers(referer), data=payload, timeout=15)
         resp.raise_for_status()
         data = resp.json()
     except Exception as e:
@@ -168,166 +155,138 @@ def get_score_board(game_id: str) -> dict:
         return {}
 
     result = {
-        "home_team": "", "away_team": "",
-        "innings":   {"home": [], "away": []},
-        "total":     {"home": {}, "away": {}},
+        "home_team": data.get("HOME_NM",""),
+        "away_team": data.get("AWAY_NM",""),
+        "innings": {"home":[], "away":[]},
+        "total":   {"home":{}, "away":{}},
     }
 
-    rows = data.get("rows", [])
-    for i, item in enumerate(rows):
-        row_arr = item.get("row", [])
-        if not row_arr:
-            continue
+    # table2: 이닝별 점수 rows[0]=원정, rows[1]=홈
+    try:
+        table2 = json.loads(data["table2"])
+        for i, item in enumerate(table2.get("rows",[])[:2]):
+            scores = []
+            for cell in item.get("row",[]):
+                try: scores.append(int(cell.get("Text","")))
+                except: pass
+            key = "away" if i == 0 else "home"
+            result["innings"][key] = scores
+    except Exception as e:
+        print(f"    이닝 파싱 오류: {e}")
 
-        team_nm = BeautifulSoup(_text(row_arr, 0), "html.parser").get_text(strip=True)
+    # table3: R/H/E rows[0]=원정, rows[1]=홈
+    try:
+        table3 = json.loads(data["table3"])
+        for i, item in enumerate(table3.get("rows",[])[:2]):
+            cells = [c.get("Text","") for c in item.get("row",[])]
+            def pi(s):
+                try: return int(s)
+                except: return 0
+            key = "away" if i == 0 else "home"
+            result["total"][key] = {
+                "R": pi(cells[0]) if cells else 0,
+                "H": pi(cells[1]) if len(cells)>1 else 0,
+                "E": pi(cells[2]) if len(cells)>2 else 0,
+            }
+    except Exception as e:
+        print(f"    R/H/E 파싱 오류: {e}")
 
-        # 이닝별 점수: row[1] ~ row[-4] (마지막 3개는 R/H/E)
-        score_cells = [_text(row_arr, j) for j in range(1, len(row_arr))]
-        rhe_raw  = score_cells[-3:]
-        inn_raw  = score_cells[:-3]
-
-        def parse_int(s):
-            s = BeautifulSoup(s, "html.parser").get_text(strip=True)
-            try: return int(s)
-            except: return 0
-
-        inning_list = [parse_int(s) for s in inn_raw if s not in ("", None)]
-        rhe = {
-            "R": parse_int(rhe_raw[0]) if len(rhe_raw) > 0 else 0,
-            "H": parse_int(rhe_raw[1]) if len(rhe_raw) > 1 else 0,
-            "E": parse_int(rhe_raw[2]) if len(rhe_raw) > 2 else 0,
-        }
-
-        if i == 0:
-            result["away_team"] = team_nm
-            result["innings"]["away"] = inning_list
-            result["total"]["away"]   = rhe
-        elif i == 1:
-            result["home_team"] = team_nm
-            result["innings"]["home"] = inning_list
-            result["total"]["home"]   = rhe
-
-    away_r = result['total'].get('away', {}).get('R', '?')
-    home_r = result['total'].get('home', {}).get('R', '?')
+    away_r = result['total'].get('away',{}).get('R','?')
+    home_r = result['total'].get('home',{}).get('R','?')
     print(f"    스코어: {result['away_team']} {away_r} - {home_r} {result['home_team']}")
     return result
 
 
 # ──────────────────────────────────────────
-# 3단계: 타자 기록
+# 3단계: 타자/투수 기록
 # ──────────────────────────────────────────
 
-def get_batter_stats(game_id: str) -> list[dict]:
-    """두산 타자 기록 수집"""
-    url = f"{BASE_URL}/ws/GameCenter.asmx/GetBatterBoxscore"
-    payload = {"gameId": game_id, "teamCode": DOOSAN_TEAM_CODE}
+def get_box_score(game_id: str, session: requests.Session) -> tuple[list, list]:
+    url = f"{BASE_URL}/ws/Schedule.asmx/GetBoxScoreScroll"
+    referer = f"{BASE_URL}/Schedule/GameCenter/Main.aspx?gameDate={game_id[:8]}&gameId={game_id}&section=REVIEW"
+    payload = {"leId":"1","srId":"0","seasonId":game_id[:4],"gameId":game_id,"gameDate":game_id[:8]}
 
-    print(f"[3] 타자 기록 수집 중...")
+    print(f"[3] 타자/투수 기록 수집 중...")
     try:
-        resp = requests.post(url, headers=HEADERS, data=payload, timeout=15)
+        resp = session.post(url, headers=_ajax_headers(referer), data=payload, timeout=15)
         resp.raise_for_status()
         data = resp.json()
     except Exception as e:
         print(f"    오류: {e}")
-        return []
+        return [], []
 
+    # 두산이 원정(AWAY)이면 arrHitter[0], 홈이면 arrHitter[1]
+    is_away = game_id[10:12] == "OB"
+    team_idx = 0 if is_away else 1
+
+    # ── 타자 파싱 ──
     batters = []
-    # 컬럼 순서: 선수명, 포지션, 타수, 안타, 2루타, 3루타, 홈런, 타점, 득점, 볼넷, 삼진, 타율
-    COL = {"name":0, "pos":1, "ab":2, "h":3, "2b":4, "3b":5,
-           "hr":6, "rbi":7, "r":8, "bb":9, "so":10, "avg":11}
-
-    for item in data.get("rows", []):
-        row_arr = item.get("row", [])
-        if not row_arr:
-            continue
-
-        def gt(idx):
-            return BeautifulSoup(_text(row_arr, idx), "html.parser").get_text(strip=True)
-        def iv(idx):
-            try: return int(gt(idx))
-            except: return 0
-
-        name = gt(COL["name"])
-        if not name or name in ("합계", "팀", "선수명"):
-            continue
-
-        batters.append({
-            "name":     name,
-            "position": gt(COL["pos"]),
-            "ab":  iv(COL["ab"]),
-            "h":   iv(COL["h"]),
-            "hr":  iv(COL["hr"]),
-            "rbi": iv(COL["rbi"]),
-            "r":   iv(COL["r"]),
-            "bb":  iv(COL["bb"]),
-            "so":  iv(COL["so"]),
-            "avg": gt(COL["avg"]),
-        })
-
-    print(f"    수집된 타자: {len(batters)}명")
-    return batters
-
-
-# ──────────────────────────────────────────
-# 4단계: 투수 기록
-# ──────────────────────────────────────────
-
-def get_pitcher_stats(game_id: str) -> list[dict]:
-    """두산 투수 기록 수집"""
-    url = f"{BASE_URL}/ws/GameCenter.asmx/GetPitcherBoxscore"
-    payload = {"gameId": game_id, "teamCode": DOOSAN_TEAM_CODE}
-
-    print(f"[4] 투수 기록 수집 중...")
     try:
-        resp = requests.post(url, headers=HEADERS, data=payload, timeout=15)
-        resp.raise_for_status()
-        data = resp.json()
+        hitter_data = data["arrHitter"][team_idx]
+        table1_rows = json.loads(hitter_data["table1"]).get("rows", [])  # 이름/포지션
+        table3_rows = json.loads(hitter_data["table3"]).get("rows", [])  # 타수/안타/타점/볼넷/타율
+
+        for i, (r1, r3) in enumerate(zip(table1_rows, table3_rows)):
+            row1 = r1.get("row", [])
+            row3 = r3.get("row", [])
+
+            name = _gt(row1, 2)
+            if not name or name in ("합계","선수명"):
+                continue
+
+            batters.append({
+                "name":     name,
+                "position": _gt(row1, 1),
+                "ab":  _iv(row3, 0),
+                "h":   _iv(row3, 1),
+                "rbi": _iv(row3, 2),
+                "bb":  _iv(row3, 3),
+                "avg": _gt(row3, 4),
+                # 홈런/득점/삼진은 table2(타석결과)에서 별도 집계 가능하나 생략
+                "hr": 0, "r": 0, "so": 0,
+            })
     except Exception as e:
-        print(f"    오류: {e}")
-        return []
+        print(f"    타자 파싱 오류: {e}")
 
+    # ── 투수 파싱 ──
+    # [0]이름 [1]선발/중간 [2]결과 [3~5]? [6]이닝 [7]상대타자 [8]투구수
+    # [9]타수 [10]피안타 [11]피홈런 [12]볼넷 [13]삼진 [14]자책 [15]비자책 [16]ERA
     pitchers = []
-    COL = {"name":0, "result":1, "ip":2, "bf":3, "h":4,
-           "hr":5, "bb":6, "so":7, "er":8, "era":9}
+    try:
+        pitcher_data = data["arrPitcher"][team_idx]
+        table_rows = json.loads(pitcher_data["table"]).get("rows", [])
 
-    for item in data.get("rows", []):
-        row_arr = item.get("row", [])
-        if not row_arr:
-            continue
+        for item in table_rows:
+            row = item.get("row", [])
+            name = _gt(row, 0)
+            if not name or name in ("합계","선수명"):
+                continue
 
-        def gt(idx):
-            return BeautifulSoup(_text(row_arr, idx), "html.parser").get_text(strip=True)
-        def iv(idx):
-            try: return int(gt(idx))
-            except: return 0
+            pitchers.append({
+                "name":   name,
+                "role":   _gt(row, 1),   # 선발/중간/마무리
+                "result": _gt(row, 2),   # 승/패/홀드/세이브/-
+                "ip":     _gt(row, 6),   # 이닝
+                "bf":     _iv(row, 7),   # 상대 타자
+                "h":      _iv(row, 10),  # 피안타
+                "hr":     _iv(row, 11),  # 피홈런
+                "bb":     _iv(row, 12),  # 볼넷
+                "so":     _iv(row, 13),  # 삼진
+                "er":     _iv(row, 14),  # 자책
+                "era":    _gt(row, 16),  # ERA
+            })
+    except Exception as e:
+        print(f"    투수 파싱 오류: {e}")
 
-        name = gt(COL["name"])
-        if not name or name in ("합계", "선수명"):
-            continue
-
-        pitchers.append({
-            "name":   name,
-            "result": gt(COL["result"]),
-            "ip":     gt(COL["ip"]),
-            "bf":     iv(COL["bf"]),
-            "h":      iv(COL["h"]),
-            "hr":     iv(COL["hr"]),
-            "bb":     iv(COL["bb"]),
-            "so":     iv(COL["so"]),
-            "er":     iv(COL["er"]),
-            "era":    gt(COL["era"]),
-        })
-
-    print(f"    수집된 투수: {len(pitchers)}명")
-    return pitchers
+    print(f"    타자: {len(batters)}명, 투수: {len(pitchers)}명")
+    return batters, pitchers
 
 
 # ──────────────────────────────────────────
-# 5단계: 전체 실행
+# 전체 실행
 # ──────────────────────────────────────────
 
 def crawl_today_game(date: str = None, save_json: bool = True) -> dict:
-    """오늘 두산 경기 전체 크롤링"""
     if date is None:
         date = datetime.now().strftime("%Y%m%d")
 
@@ -335,20 +294,16 @@ def crawl_today_game(date: str = None, save_json: bool = True) -> dict:
     print(f" 두산 베어스 경기 크롤링 ({date})")
     print("=" * 50)
 
-    game_info = get_today_game_id(date)
+    session   = _make_session()
+    game_info = get_today_game_id(date, session)
     if not game_info:
         return {}
 
     game_id = game_info["game_id"]
-    if not game_id:
-        return {}
-
     time.sleep(1)
-    score    = get_score_board(game_id)
+    score = get_score_board(game_id, session)
     time.sleep(1)
-    batters  = get_batter_stats(game_id)
-    time.sleep(1)
-    pitchers = get_pitcher_stats(game_id)
+    batters, pitchers = get_box_score(game_id, session)
 
     result = {
         "crawled_at":  datetime.now().isoformat(),
@@ -372,29 +327,27 @@ def crawl_today_game(date: str = None, save_json: bool = True) -> dict:
 def _print_summary(data: dict):
     if not data: return
     sb     = data.get("score_board", {})
-    home   = sb.get("home_team", "?")
-    away   = sb.get("away_team", "?")
-    home_r = sb.get("total", {}).get("home", {}).get("R", "?")
-    away_r = sb.get("total", {}).get("away", {}).get("R", "?")
-    print(f"\n  결과: {away} {away_r} : {home_r} {home}")
+    away_r = sb.get("total",{}).get("away",{}).get("R","?")
+    home_r = sb.get("total",{}).get("home",{}).get("R","?")
+    print(f"\n  결과: {sb.get('away_team','?')} {away_r} : {home_r} {sb.get('home_team','?')}")
 
     batters = data.get("batters", [])
     if batters:
-        top = sorted(batters, key=lambda x: x.get("h", 0), reverse=True)[:3]
+        top = sorted(batters, key=lambda x: x.get("h",0), reverse=True)[:3]
         print("  [타자 TOP3]")
         for b in top:
-            print(f"    {b['name']} {b['ab']}타 {b['h']}안 {b['hr']}홈 {b['rbi']}타점")
+            print(f"    {b['name']} ({b['position']}) {b['ab']}타 {b['h']}안 {b['rbi']}타점 {b['avg']}")
 
     pitchers = data.get("pitchers", [])
     if pitchers:
         print("  [투수]")
         for p in pitchers:
-            print(f"    {p['name']} ({p['result']}) {p['ip']}이닝 {p['er']}자책 {p['so']}K")
+            print(f"    {p['name']} ({p['result']}) {p['ip']}이닝 {p['er']}자책 {p['so']}K ERA {p['era']}")
 
 
 def is_game_finished(date: str = None) -> bool:
-    """경기 종료 여부 확인 (스케줄러용)"""
-    game_info = get_today_game_id(date)
+    session   = _make_session()
+    game_info = get_today_game_id(date, session)
     if not game_info:
         return False
     return game_info.get("status") == "종료"
