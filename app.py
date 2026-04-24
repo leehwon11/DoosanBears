@@ -20,6 +20,8 @@ from dotenv import load_dotenv
 
 from database import init_db, get_recent_games, get_game_detail, get_player_stats
 
+init_db()  # 서버 시작 시 항상 테이블 생성
+
 load_dotenv()
 
 app = Flask(__name__)
