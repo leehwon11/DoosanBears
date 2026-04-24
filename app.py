@@ -129,6 +129,39 @@ def start_scheduler_thread():
 
 
 # ──────────────────────────────────────────
+# AI 분석 API
+# ──────────────────────────────────────────
+
+@app.route("/api/analyze/<game_id>", methods=["POST"])
+def api_analyze(game_id):
+    """경기 AI 분석 생성 (버튼 클릭 시 호출)"""
+    try:
+        from analyzer import analyze_all
+        from database import get_game_detail
+        detail = get_game_detail(game_id)
+        if not detail.get("game"):
+            return jsonify({"error": "경기 데이터 없음"}), 404
+        analyze_all(game_id)
+        # 생성된 리포트 반환
+        updated = get_game_detail(game_id)
+        reports = updated.get("reports", [])
+        return jsonify({"success": True, "reports": reports})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/analyze/game/<game_id>", methods=["POST"])
+def api_analyze_game(game_id):
+    """경기 종합 평가만 생성"""
+    try:
+        from analyzer import analyze_game
+        content = analyze_game(game_id)
+        return jsonify({"success": True, "content": content})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# ──────────────────────────────────────────
 # 에러 페이지
 # ──────────────────────────────────────────
 

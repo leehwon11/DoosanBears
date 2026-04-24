@@ -1,5 +1,59 @@
 {% extends "base.html" %}
-{% block title %}경기 리포트 · 두산 베어스{% endblock %}
+{% block title %}경기 리포트 · 두산 베어스<script>
+const GAME_ID = "{{ detail.game.game_id }}";
+
+async function generateAnalysis() {
+  const btn = document.getElementById('btn-analyze');
+  const placeholder = document.getElementById('ai-game-placeholder');
+  const result = document.getElementById('ai-game-result');
+  const contentEl = document.getElementById('ai-game-content');
+
+  btn.disabled = true;
+  btn.textContent = '분석 생성 중... (30초~1분 소요)';
+  btn.style.opacity = '0.6';
+
+  try {
+    const resp = await fetch(`/api/analyze/${GAME_ID}`, { method: 'POST' });
+    const data = await resp.json();
+
+    if (data.success) {
+      // 경기 총평 표시
+      const gameReport = data.reports.find(r => r.report_type === 'game');
+      if (gameReport) {
+        placeholder.style.display = 'none';
+        result.style.display = 'block';
+        contentEl.textContent = gameReport.content;
+      }
+
+      // 선수별 평가 표시
+      const playerReports = data.reports.filter(r => r.report_type === 'player');
+      if (playerReports.length > 0) {
+        const section = document.getElementById('player-reports-section');
+        let html = '<div class="section-title">선수별 AI 평가</div><div class="player-reports">';
+        playerReports.forEach(r => {
+          html += `<div class="player-report-card">
+            <div class="player-report-name">${r.player_name}</div>
+            <div class="player-report-content">${r.content}</div>
+          </div>`;
+        });
+        html += '</div>';
+        section.innerHTML = html;
+      }
+    } else {
+      btn.disabled = false;
+      btn.textContent = '다시 시도하기';
+      btn.style.opacity = '1';
+      alert('분석 생성 실패: ' + (data.error || '알 수 없는 오류'));
+    }
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = '다시 시도하기';
+    btn.style.opacity = '1';
+    alert('오류가 발생했어요: ' + e.message);
+  }
+}
+</script>
+{% endblock %}
 
 {% block head %}
 <style>
@@ -158,15 +212,29 @@
 </div>
 
 {% set game_report = detail.reports | selectattr('report_type','equalto','game') | list %}
-{% if game_report %}
 <div class="ai-section">
   <div class="section-title">AI 경기 총평</div>
+  {% if game_report %}
   <div class="ai-card">
     <div class="ai-label">Claude AI Analysis</div>
     <div class="ai-content">{{ game_report[0].content }}</div>
   </div>
+  {% else %}
+  <div id="ai-game-wrap">
+    <div class="ai-card" id="ai-game-placeholder" style="text-align:center;padding:2rem;">
+      <div class="ai-label">Claude AI Analysis</div>
+      <p style="color:var(--gray);font-size:0.9rem;margin:0.8rem 0 1.2rem;">아직 AI 분석이 생성되지 않았어요</p>
+      <button id="btn-analyze" onclick="generateAnalysis()" style="background:var(--red);color:white;border:none;padding:10px 28px;border-radius:8px;font-size:0.9rem;font-weight:500;cursor:pointer;font-family:inherit;">
+        AI 분석 생성하기
+      </button>
+    </div>
+    <div class="ai-card" id="ai-game-result" style="display:none;">
+      <div class="ai-label">Claude AI Analysis</div>
+      <div class="ai-content" id="ai-game-content"></div>
+    </div>
+  </div>
+  {% endif %}
 </div>
-{% endif %}
 
 <div class="grid-2">
   {% if detail.batters %}
@@ -202,16 +270,24 @@
     <div class="stats-card">
       <table class="stats-table">
         <thead>
-          <tr><th>선수</th><th>결과</th><th>이닝</th><th>자책</th><th>삼진</th></tr>
+          <tr><th>선수</th><th>역할</th><th>결과</th><th>이닝</th><th>피안타</th><th>볼넷</th><th>삼진</th><th>자책</th><th>ERA</th></tr>
         </thead>
         <tbody>
         {% for p in detail.pitchers %}
         <tr>
           <td><a href="/player/{{ p.name }}" class="player-link">{{ p.name }}</a></td>
-          <td>{{ p.result }}</td>
+          <td style="color:var(--gray);font-size:0.78rem;">{{ p.role or '' }}</td>
+          <td>
+            {% if p.result %}
+            <span class="badge {% if p.result == '승' %}badge-win{% elif p.result == '패' %}badge-lose{% else %}badge-draw{% endif %}">{{ p.result }}</span>
+            {% endif %}
+          </td>
           <td>{{ p.ip }}</td>
-          <td {% if p.er == 0 %}class="highlight"{% endif %}>{{ p.er }}</td>
+          <td>{{ p.h }}</td>
+          <td>{{ p.bb }}</td>
           <td>{{ p.so }}</td>
+          <td {% if p.er == 0 %}class="highlight"{% endif %}>{{ p.er }}</td>
+          <td style="color:var(--gray)">{{ p.era }}</td>
         </tr>
         {% endfor %}
         </tbody>
@@ -222,15 +298,17 @@
 </div>
 
 {% set player_reports = detail.reports | selectattr('report_type','equalto','player') | list %}
-{% if player_reports %}
-<div class="section-title">선수별 AI 평가</div>
-<div class="player-reports">
-  {% for r in player_reports %}
-  <div class="player-report-card">
-    <div class="player-report-name">{{ r.player_name }}</div>
-    <div class="player-report-content">{{ r.content }}</div>
+<div id="player-reports-section">
+  {% if player_reports %}
+  <div class="section-title">선수별 AI 평가</div>
+  <div class="player-reports">
+    {% for r in player_reports %}
+    <div class="player-report-card">
+      <div class="player-report-name">{{ r.player_name }}</div>
+      <div class="player-report-content">{{ r.content }}</div>
+    </div>
+    {% endfor %}
   </div>
-  {% endfor %}
+  {% endif %}
 </div>
-{% endif %}
 {% endblock %}
