@@ -3,82 +3,41 @@
 
 {% block head %}
 <style>
-  .back-link {
-    display: inline-flex; align-items: center; gap: 6px;
-    color: var(--gray); text-decoration: none; font-size: 0.85rem;
-    margin-bottom: 1.5rem; transition: color 0.2s;
-  }
-  .back-link:hover { color: var(--white); }
-  .game-header {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 2rem;
-    margin-bottom: 2rem;
-    text-align: center;
-  }
-  .game-header-date { color: var(--gray); font-size: 0.85rem; margin-bottom: 1rem; }
-  .scoreboard {
-    display: flex; align-items: center; justify-content: center; gap: 2rem;
-    margin-bottom: 1.2rem;
-  }
-  .team-name { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 2px; }
-  .score-num { font-family: 'Bebas Neue', sans-serif; font-size: 4rem; line-height: 1; }
-  .score-sep { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; color: var(--gray); }
-  .inning-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-top: 1rem; }
-  .inning-table th, .inning-table td { padding: 6px 10px; text-align: center; border: 1px solid var(--border); }
-  .inning-table th { color: var(--gray); font-weight: 500; }
-  .inning-table .total-col { color: var(--gold); font-weight: 700; }
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
-  @media (max-width: 640px) { .grid-2 { grid-template-columns: 1fr; } }
-  .section-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.4rem; letter-spacing: 2px;
-    margin-bottom: 1rem; padding-bottom: 0.5rem;
-    border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; gap: 0.6rem;
-  }
-  .section-title::before {
-    content: ''; display: inline-block;
-    width: 4px; height: 18px;
-    background: var(--red); border-radius: 2px;
-  }
-  .stats-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
-  .stats-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
-  .stats-table th {
-    background: rgba(255,255,255,0.04);
-    padding: 8px 12px; text-align: center;
-    color: var(--gray); font-weight: 500;
-    border-bottom: 1px solid var(--border);
-  }
-  .stats-table td { padding: 9px 12px; text-align: center; border-bottom: 1px solid var(--border); }
-  .stats-table tr:last-child td { border-bottom: none; }
-  .stats-table td:first-child { text-align: left; font-weight: 500; }
-  .player-link { color: inherit; text-decoration: none; }
-  .player-link:hover { color: var(--gold); }
-  .highlight { color: var(--gold); font-weight: 700; }
-  .ai-section { margin-bottom: 2rem; }
-  .ai-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-left: 3px solid var(--red);
-    border-radius: 12px;
-    padding: 1.5rem;
-  }
-  .ai-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 2px; color: var(--red); text-transform: uppercase; margin-bottom: 0.8rem; }
-  .ai-content { line-height: 1.9; font-size: 0.92rem; color: rgba(248,249,250,0.85); white-space: pre-wrap; }
-  .player-reports { display: flex; flex-direction: column; gap: 12px; }
-  .player-report-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1.2rem 1.5rem; }
-  .player-report-name { font-weight: 700; margin-bottom: 0.5rem; font-size: 0.95rem; }
-  .player-report-content { font-size: 0.85rem; line-height: 1.8; color: rgba(248,249,250,0.75); white-space: pre-wrap; }
-  .analyze-btn {
-    background: var(--red); color: white; border: none;
-    padding: 10px 28px; border-radius: 8px;
-    font-size: 0.9rem; font-weight: 500; cursor: pointer;
-    font-family: inherit; transition: opacity 0.2s;
-  }
-  .analyze-btn:hover { opacity: 0.85; }
-  .analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .back-link { display:inline-flex;align-items:center;gap:6px;color:var(--gray);text-decoration:none;font-size:0.85rem;margin-bottom:1.5rem;transition:color 0.2s; }
+  .back-link:hover { color:var(--white); }
+  .game-header { background:var(--card);border:1px solid var(--border);border-radius:16px;padding:2rem;margin-bottom:2rem;text-align:center; }
+  .game-header-date { color:var(--gray);font-size:0.85rem;margin-bottom:1rem; }
+  .scoreboard { display:flex;align-items:center;justify-content:center;gap:2rem;margin-bottom:1.2rem; }
+  .team-name { font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:2px; }
+  .score-num { font-family:'Bebas Neue',sans-serif;font-size:4rem;line-height:1; }
+  .score-sep { font-family:'Bebas Neue',sans-serif;font-size:2.5rem;color:var(--gray); }
+  .inning-table { width:100%;border-collapse:collapse;font-size:0.82rem;margin-top:1rem; }
+  .inning-table th, .inning-table td { padding:6px 10px;text-align:center;border:1px solid var(--border); }
+  .inning-table th { color:var(--gray);font-weight:500; }
+  .inning-table .total-col { color:var(--gold);font-weight:700; }
+  .grid-2 { display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem; }
+  @media(max-width:640px){.grid-2{grid-template-columns:1fr;}}
+  .section-title { font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:2px;margin-bottom:1rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.6rem; }
+  .section-title::before { content:'';display:inline-block;width:4px;height:18px;background:var(--red);border-radius:2px; }
+  .stats-card { background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden; }
+  .stats-table { width:100%;border-collapse:collapse;font-size:0.82rem; }
+  .stats-table th { background:rgba(255,255,255,0.04);padding:8px 12px;text-align:center;color:var(--gray);font-weight:500;border-bottom:1px solid var(--border); }
+  .stats-table td { padding:9px 12px;text-align:center;border-bottom:1px solid var(--border); }
+  .stats-table tr:last-child td { border-bottom:none; }
+  .stats-table td:first-child { text-align:left;font-weight:500; }
+  .player-link { color:inherit;text-decoration:none; }
+  .player-link:hover { color:var(--gold); }
+  .highlight { color:var(--gold);font-weight:700; }
+  .ai-card { background:var(--card);border:1px solid var(--border);border-left:3px solid var(--red);border-radius:12px;padding:1.5rem; }
+  .ai-label { font-size:0.72rem;font-weight:700;letter-spacing:2px;color:var(--red);text-transform:uppercase;margin-bottom:0.8rem; }
+  .ai-content { line-height:1.9;font-size:0.88rem;color:rgba(248,249,250,0.85);white-space:pre-wrap; }
+  .player-report-card { background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.2rem 1.5rem; }
+  .player-report-name { font-weight:700;margin-bottom:0.5rem;font-size:0.95rem; }
+  .player-report-content { font-size:0.85rem;line-height:1.8;color:rgba(248,249,250,0.75);white-space:pre-wrap; }
+  .analyze-btn { background:var(--red);color:white;border:none;padding:10px 20px;border-radius:8px;font-size:0.88rem;font-weight:500;cursor:pointer;font-family:inherit;transition:opacity 0.2s;width:100%; }
+  .analyze-btn:hover { opacity:0.85; }
+  .analyze-btn:disabled { opacity:0.5;cursor:not-allowed; }
+  .player-select { width:100%;margin-bottom:0.8rem;background:var(--navy);color:var(--white);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:0.88rem;font-family:inherit; }
 </style>
 {% endblock %}
 
@@ -99,7 +58,6 @@
     <div class="score-num">{{ g.away_score }}</div>
     <div class="team-name">{{ g.away_team }}</div>
   </div>
-
   {% if detail.innings %}
   {% set doosan_inn  = detail.innings | selectattr('team','equalto','doosan')   | list | sort(attribute='inning') %}
   {% set opp_inn     = detail.innings | selectattr('team','equalto','opponent') | list | sort(attribute='inning') %}
@@ -123,27 +81,66 @@
   {% endif %}
 </div>
 
-{% set game_report = detail.reports | selectattr('report_type','equalto','game') | list %}
-<div class="ai-section">
-  <div class="section-title">AI 경기 총평</div>
-  {% if game_report %}
-  <div class="ai-card">
-    <div class="ai-label">Claude AI Analysis</div>
-    <div class="ai-content">{{ game_report[0].content }}</div>
+<!-- AI 분석 섹션 (2분할) -->
+<div class="grid-2" style="margin-bottom:2rem;">
+
+  <!-- 왼쪽: 경기 종합 평가 -->
+  <div>
+    <div class="section-title">AI 경기 총평</div>
+    {% set game_report = detail.reports | selectattr('report_type','equalto','game') | list %}
+    {% if game_report %}
+    <div class="ai-card">
+      <div class="ai-label">Gemini AI Analysis</div>
+      <div class="ai-content">{{ game_report[0].content }}</div>
+    </div>
+    {% else %}
+    <div class="ai-card" id="ai-game-placeholder" style="text-align:center;padding:2rem;">
+      <div class="ai-label">Gemini AI Analysis</div>
+      <p style="color:var(--gray);font-size:0.88rem;margin:0.8rem 0 1.2rem;">아직 경기 분석이 없어요</p>
+      <button class="analyze-btn" id="btn-game" onclick="generateGameAnalysis()">경기 분석 생성하기</button>
+    </div>
+    <div class="ai-card" id="ai-game-result" style="display:none;">
+      <div class="ai-label">Gemini AI Analysis</div>
+      <div class="ai-content" id="ai-game-content"></div>
+    </div>
+    {% endif %}
   </div>
-  {% else %}
-  <div class="ai-card" id="ai-placeholder" style="text-align:center;padding:2rem;">
-    <div class="ai-label">Claude AI Analysis</div>
-    <p style="color:var(--gray);font-size:0.9rem;margin:0.8rem 0 1.2rem;">아직 AI 분석이 생성되지 않았어요</p>
-    <button class="analyze-btn" id="btn-analyze" onclick="generateAnalysis()">AI 분석 생성하기</button>
+
+  <!-- 오른쪽: 선수 개인 평가 -->
+  <div>
+    <div class="section-title">AI 선수 평가</div>
+    <div class="ai-card">
+      <div class="ai-label">Gemini AI Analysis</div>
+      <p style="color:var(--gray);font-size:0.88rem;margin:0.6rem 0 1rem;">평가할 선수를 선택해주세요</p>
+      <select id="player-select" class="player-select">
+        <option value="">선수 선택</option>
+        {% for b in detail.batters %}
+        <option value="{{ b.name }}">{{ b.name }} ({{ b.position }})</option>
+        {% endfor %}
+        {% for p in detail.pitchers %}
+        <option value="{{ p.name }}">{{ p.name }} (투수)</option>
+        {% endfor %}
+      </select>
+      <button class="analyze-btn" id="btn-player" onclick="generatePlayerAnalysis()">선수 평가 생성하기</button>
+      <div id="ai-player-result" style="display:none;margin-top:1.2rem;border-top:1px solid var(--border);padding-top:1rem;">
+        <div style="font-weight:700;margin-bottom:0.5rem;" id="ai-player-name"></div>
+        <div class="ai-content" id="ai-player-content"></div>
+      </div>
+    </div>
+    <div id="player-reports-list" style="margin-top:1rem;display:flex;flex-direction:column;gap:10px;">
+      {% set player_reports = detail.reports | selectattr('report_type','equalto','player') | list %}
+      {% for r in player_reports %}
+      <div class="player-report-card">
+        <div class="player-report-name">{{ r.player_name }}</div>
+        <div class="player-report-content">{{ r.content }}</div>
+      </div>
+      {% endfor %}
+    </div>
   </div>
-  <div class="ai-card" id="ai-result" style="display:none;">
-    <div class="ai-label">Claude AI Analysis</div>
-    <div class="ai-content" id="ai-game-content"></div>
-  </div>
-  {% endif %}
+
 </div>
 
+<!-- 타자/투수 기록 -->
 <div class="grid-2">
   {% if detail.batters %}
   <div>
@@ -205,21 +202,6 @@
   {% endif %}
 </div>
 
-<div id="player-reports-section">
-  {% set player_reports = detail.reports | selectattr('report_type','equalto','player') | list %}
-  {% if player_reports %}
-  <div class="section-title">선수별 AI 평가</div>
-  <div class="player-reports">
-    {% for r in player_reports %}
-    <div class="player-report-card">
-      <div class="player-report-name">{{ r.player_name }}</div>
-      <div class="player-report-content">{{ r.content }}</div>
-    </div>
-    {% endfor %}
-  </div>
-  {% endif %}
-</div>
-
 <script>
 const GAME_ID = "{{ detail.game.game_id }}";
 
@@ -235,7 +217,6 @@ async function generateGameAnalysis() {
   try {
     const resp = await fetch('/api/analyze/game/' + GAME_ID, { method: 'POST' });
     const data = await resp.json();
-
     if (data.success) {
       placeholder.style.display = 'none';
       result.style.display = 'block';
@@ -255,10 +236,7 @@ async function generateGameAnalysis() {
 async function generatePlayerAnalysis() {
   const select = document.getElementById('player-select');
   const playerName = select.value;
-  if (!playerName) {
-    alert('선수를 선택해주세요!');
-    return;
-  }
+  if (!playerName) { alert('선수를 선택해주세요!'); return; }
 
   const btn = document.getElementById('btn-player');
   btn.disabled = true;
@@ -271,17 +249,11 @@ async function generatePlayerAnalysis() {
       body: JSON.stringify({ player_name: playerName })
     });
     const data = await resp.json();
-
     if (data.success) {
-      const resultDiv = document.getElementById('ai-player-result');
-      const nameEl = document.getElementById('ai-player-name');
-      const contentEl = document.getElementById('ai-player-content');
+      document.getElementById('ai-player-name').textContent = data.player_name;
+      document.getElementById('ai-player-content').textContent = data.content;
+      document.getElementById('ai-player-result').style.display = 'block';
 
-      nameEl.textContent = data.player_name;
-      contentEl.textContent = data.content;
-      resultDiv.style.display = 'block';
-
-      // 목록에도 추가
       const list = document.getElementById('player-reports-list');
       const card = document.createElement('div');
       card.className = 'player-report-card';
