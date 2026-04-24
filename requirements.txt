@@ -2,6 +2,6 @@ requests==2.31.0
 beautifulsoup4==4.12.3
 apscheduler==3.10.4
 flask==3.0.3
-anthropic==0.25.0
+google-generativeai>=0.8.0
 python-dotenv==1.0.1
 gunicorn==21.2.0

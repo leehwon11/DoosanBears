@@ -161,6 +161,21 @@ def api_analyze_game(game_id):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/api/analyze/player/<game_id>", methods=["POST"])
+def api_analyze_player(game_id):
+    """선수 개인 평가 생성"""
+    try:
+        from flask import request
+        from analyzer import analyze_player
+        player_name = request.json.get("player_name")
+        if not player_name:
+            return jsonify({"error": "선수명 없음"}), 400
+        content = analyze_player(game_id, player_name)
+        return jsonify({"success": True, "content": content, "player_name": player_name})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 # ──────────────────────────────────────────
 # 에러 페이지
 # ──────────────────────────────────────────

@@ -1,59 +1,5 @@
 {% extends "base.html" %}
-{% block title %}경기 리포트 · 두산 베어스<script>
-const GAME_ID = "{{ detail.game.game_id }}";
-
-async function generateAnalysis() {
-  const btn = document.getElementById('btn-analyze');
-  const placeholder = document.getElementById('ai-game-placeholder');
-  const result = document.getElementById('ai-game-result');
-  const contentEl = document.getElementById('ai-game-content');
-
-  btn.disabled = true;
-  btn.textContent = '분석 생성 중... (30초~1분 소요)';
-  btn.style.opacity = '0.6';
-
-  try {
-    const resp = await fetch(`/api/analyze/${GAME_ID}`, { method: 'POST' });
-    const data = await resp.json();
-
-    if (data.success) {
-      // 경기 총평 표시
-      const gameReport = data.reports.find(r => r.report_type === 'game');
-      if (gameReport) {
-        placeholder.style.display = 'none';
-        result.style.display = 'block';
-        contentEl.textContent = gameReport.content;
-      }
-
-      // 선수별 평가 표시
-      const playerReports = data.reports.filter(r => r.report_type === 'player');
-      if (playerReports.length > 0) {
-        const section = document.getElementById('player-reports-section');
-        let html = '<div class="section-title">선수별 AI 평가</div><div class="player-reports">';
-        playerReports.forEach(r => {
-          html += `<div class="player-report-card">
-            <div class="player-report-name">${r.player_name}</div>
-            <div class="player-report-content">${r.content}</div>
-          </div>`;
-        });
-        html += '</div>';
-        section.innerHTML = html;
-      }
-    } else {
-      btn.disabled = false;
-      btn.textContent = '다시 시도하기';
-      btn.style.opacity = '1';
-      alert('분석 생성 실패: ' + (data.error || '알 수 없는 오류'));
-    }
-  } catch (e) {
-    btn.disabled = false;
-    btn.textContent = '다시 시도하기';
-    btn.style.opacity = '1';
-    alert('오류가 발생했어요: ' + e.message);
-  }
-}
-</script>
-{% endblock %}
+{% block title %}경기 리포트 · 두산 베어스{% endblock %}
 
 {% block head %}
 <style>
@@ -76,23 +22,11 @@ async function generateAnalysis() {
     display: flex; align-items: center; justify-content: center; gap: 2rem;
     margin-bottom: 1.2rem;
   }
-  .team-name {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.8rem; letter-spacing: 2px;
-  }
-  .score-num {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 4rem; line-height: 1;
-  }
+  .team-name { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 2px; }
+  .score-num { font-family: 'Bebas Neue', sans-serif; font-size: 4rem; line-height: 1; }
   .score-sep { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; color: var(--gray); }
-  .inning-table {
-    width: 100%; border-collapse: collapse;
-    font-size: 0.82rem; margin-top: 1rem;
-  }
-  .inning-table th, .inning-table td {
-    padding: 6px 10px; text-align: center;
-    border: 1px solid var(--border);
-  }
+  .inning-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-top: 1rem; }
+  .inning-table th, .inning-table td { padding: 6px 10px; text-align: center; border: 1px solid var(--border); }
   .inning-table th { color: var(--gray); font-weight: 500; }
   .inning-table .total-col { color: var(--gold); font-weight: 700; }
   .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
@@ -109,25 +43,15 @@ async function generateAnalysis() {
     width: 4px; height: 18px;
     background: var(--red); border-radius: 2px;
   }
-  .stats-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    overflow: hidden;
-  }
-  .stats-table {
-    width: 100%; border-collapse: collapse; font-size: 0.82rem;
-  }
+  .stats-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .stats-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
   .stats-table th {
     background: rgba(255,255,255,0.04);
     padding: 8px 12px; text-align: center;
     color: var(--gray); font-weight: 500;
     border-bottom: 1px solid var(--border);
   }
-  .stats-table td {
-    padding: 9px 12px; text-align: center;
-    border-bottom: 1px solid var(--border);
-  }
+  .stats-table td { padding: 9px 12px; text-align: center; border-bottom: 1px solid var(--border); }
   .stats-table tr:last-child td { border-bottom: none; }
   .stats-table td:first-child { text-align: left; font-weight: 500; }
   .player-link { color: inherit; text-decoration: none; }
@@ -141,32 +65,20 @@ async function generateAnalysis() {
     border-radius: 12px;
     padding: 1.5rem;
   }
-  .ai-label {
-    font-size: 0.72rem; font-weight: 700;
-    letter-spacing: 2px; color: var(--red);
-    text-transform: uppercase; margin-bottom: 0.8rem;
-  }
-  .ai-content {
-    line-height: 1.9; font-size: 0.92rem;
-    color: rgba(248,249,250,0.85);
-    white-space: pre-wrap;
-  }
+  .ai-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 2px; color: var(--red); text-transform: uppercase; margin-bottom: 0.8rem; }
+  .ai-content { line-height: 1.9; font-size: 0.92rem; color: rgba(248,249,250,0.85); white-space: pre-wrap; }
   .player-reports { display: flex; flex-direction: column; gap: 12px; }
-  .player-report-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 1.2rem 1.5rem;
+  .player-report-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1.2rem 1.5rem; }
+  .player-report-name { font-weight: 700; margin-bottom: 0.5rem; font-size: 0.95rem; }
+  .player-report-content { font-size: 0.85rem; line-height: 1.8; color: rgba(248,249,250,0.75); white-space: pre-wrap; }
+  .analyze-btn {
+    background: var(--red); color: white; border: none;
+    padding: 10px 28px; border-radius: 8px;
+    font-size: 0.9rem; font-weight: 500; cursor: pointer;
+    font-family: inherit; transition: opacity 0.2s;
   }
-  .player-report-name {
-    font-weight: 700; margin-bottom: 0.5rem;
-    font-size: 0.95rem;
-  }
-  .player-report-content {
-    font-size: 0.85rem; line-height: 1.8;
-    color: rgba(248,249,250,0.75);
-    white-space: pre-wrap;
-  }
+  .analyze-btn:hover { opacity: 0.85; }
+  .analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 </style>
 {% endblock %}
 
@@ -220,18 +132,14 @@ async function generateAnalysis() {
     <div class="ai-content">{{ game_report[0].content }}</div>
   </div>
   {% else %}
-  <div id="ai-game-wrap">
-    <div class="ai-card" id="ai-game-placeholder" style="text-align:center;padding:2rem;">
-      <div class="ai-label">Claude AI Analysis</div>
-      <p style="color:var(--gray);font-size:0.9rem;margin:0.8rem 0 1.2rem;">아직 AI 분석이 생성되지 않았어요</p>
-      <button id="btn-analyze" onclick="generateAnalysis()" style="background:var(--red);color:white;border:none;padding:10px 28px;border-radius:8px;font-size:0.9rem;font-weight:500;cursor:pointer;font-family:inherit;">
-        AI 분석 생성하기
-      </button>
-    </div>
-    <div class="ai-card" id="ai-game-result" style="display:none;">
-      <div class="ai-label">Claude AI Analysis</div>
-      <div class="ai-content" id="ai-game-content"></div>
-    </div>
+  <div class="ai-card" id="ai-placeholder" style="text-align:center;padding:2rem;">
+    <div class="ai-label">Claude AI Analysis</div>
+    <p style="color:var(--gray);font-size:0.9rem;margin:0.8rem 0 1.2rem;">아직 AI 분석이 생성되지 않았어요</p>
+    <button class="analyze-btn" id="btn-analyze" onclick="generateAnalysis()">AI 분석 생성하기</button>
+  </div>
+  <div class="ai-card" id="ai-result" style="display:none;">
+    <div class="ai-label">Claude AI Analysis</div>
+    <div class="ai-content" id="ai-game-content"></div>
   </div>
   {% endif %}
 </div>
@@ -297,8 +205,8 @@ async function generateAnalysis() {
   {% endif %}
 </div>
 
-{% set player_reports = detail.reports | selectattr('report_type','equalto','player') | list %}
 <div id="player-reports-section">
+  {% set player_reports = detail.reports | selectattr('report_type','equalto','player') | list %}
   {% if player_reports %}
   <div class="section-title">선수별 AI 평가</div>
   <div class="player-reports">
@@ -311,4 +219,83 @@ async function generateAnalysis() {
   </div>
   {% endif %}
 </div>
+
+<script>
+const GAME_ID = "{{ detail.game.game_id }}";
+
+async function generateGameAnalysis() {
+  const btn = document.getElementById('btn-game');
+  const placeholder = document.getElementById('ai-game-placeholder');
+  const result = document.getElementById('ai-game-result');
+  const contentEl = document.getElementById('ai-game-content');
+
+  btn.disabled = true;
+  btn.textContent = '생성 중...';
+
+  try {
+    const resp = await fetch('/api/analyze/game/' + GAME_ID, { method: 'POST' });
+    const data = await resp.json();
+
+    if (data.success) {
+      placeholder.style.display = 'none';
+      result.style.display = 'block';
+      contentEl.textContent = data.content;
+    } else {
+      btn.disabled = false;
+      btn.textContent = '경기 분석 생성하기';
+      alert('오류: ' + (data.error || '알 수 없는 오류'));
+    }
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = '경기 분석 생성하기';
+    alert('오류: ' + e.message);
+  }
+}
+
+async function generatePlayerAnalysis() {
+  const select = document.getElementById('player-select');
+  const playerName = select.value;
+  if (!playerName) {
+    alert('선수를 선택해주세요!');
+    return;
+  }
+
+  const btn = document.getElementById('btn-player');
+  btn.disabled = true;
+  btn.textContent = '생성 중...';
+
+  try {
+    const resp = await fetch('/api/analyze/player/' + GAME_ID, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ player_name: playerName })
+    });
+    const data = await resp.json();
+
+    if (data.success) {
+      const resultDiv = document.getElementById('ai-player-result');
+      const nameEl = document.getElementById('ai-player-name');
+      const contentEl = document.getElementById('ai-player-content');
+
+      nameEl.textContent = data.player_name;
+      contentEl.textContent = data.content;
+      resultDiv.style.display = 'block';
+
+      // 목록에도 추가
+      const list = document.getElementById('player-reports-list');
+      const card = document.createElement('div');
+      card.className = 'player-report-card';
+      card.innerHTML = '<div class="player-report-name">' + data.player_name + '</div><div class="player-report-content">' + data.content + '</div>';
+      list.appendChild(card);
+    } else {
+      alert('오류: ' + (data.error || '알 수 없는 오류'));
+    }
+  } catch(e) {
+    alert('오류: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '선수 평가 생성하기';
+  }
+}
+</script>
 {% endblock %}

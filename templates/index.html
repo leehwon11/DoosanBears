@@ -137,12 +137,12 @@
 </div>
 {% endif %}
 
-<div class="section-title" style="justify-content:space-between;align-items:center;">
-  <span style="display:flex;align-items:center;gap:0.6rem;">
-    <span style="display:inline-block;width:4px;height:22px;background:var(--red);border-radius:2px;"></span>
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;padding-bottom:0.6rem;border-bottom:1px solid var(--border);">
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:2px;display:flex;align-items:center;gap:0.6rem;">
+    <span style="display:inline-block;width:4px;height:22px;background:var(--red);border-radius:2px;flex-shrink:0;"></span>
     최근 경기
-  </span>
-  <a href="/games" style="font-size:0.82rem;color:var(--gray);text-decoration:none;font-family:'Noto Sans KR',sans-serif;transition:color 0.2s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='var(--gray)'">전체 경기 보기 →</a>
+  </div>
+  <a href="/games" style="font-size:0.82rem;color:var(--gray);text-decoration:none;transition:color 0.2s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='var(--gray)'">전체 경기 보기 →</a>
 </div>
 
 {% if games %}
@@ -156,7 +156,6 @@
       <div class="game-score">
         {{ g.home_team }} {{ g.home_score }} : {{ g.away_score }} {{ g.away_team }}
       </div>
-      <div class="game-teams">클릭해서 AI 리포트 보기</div>
     </div>
     <span class="badge {% if g.result == '승' %}badge-win{% elif g.result == '패' %}badge-lose{% else %}badge-draw{% endif %}">
       {{ g.result }}
