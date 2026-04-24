@@ -68,6 +68,7 @@ def init_db():
             game_id   TEXT    NOT NULL REFERENCES games(game_id),
             name      TEXT    NOT NULL,
             position  TEXT,
+            batting_order INTEGER DEFAULT 0,  -- 타순
             ab        INTEGER DEFAULT 0,   -- 타수
             h         INTEGER DEFAULT 0,   -- 안타
             hr        INTEGER DEFAULT 0,   -- 홈런
@@ -187,11 +188,12 @@ def save_game(data: dict):
     for b in data.get("batters", []):
         cur.execute("""
             INSERT INTO batter_stats
-                (game_id, name, position, ab, h, hr, rbi, r, bb, so, avg)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (game_id, name, position, batting_order, ab, h, hr, rbi, r, bb, so, avg)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             game_id,
             b.get("name"), b.get("position"),
+            b.get("batting_order", 0),
             b.get("ab", 0), b.get("h", 0), b.get("hr", 0),
             b.get("rbi", 0), b.get("r", 0), b.get("bb", 0),
             b.get("so", 0), b.get("avg", ""),

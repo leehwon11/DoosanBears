@@ -66,6 +66,23 @@ def _fv(row_arr, idx):
     try: return float(_gt(row_arr, idx))
     except: return 0.0
 
+# 포지션 약자 → 전체 이름 변환
+POS_MAP = {
+    "투": "투수", "포": "포수",
+    "一": "1루수", "二": "2루수", "三": "3루수",
+    "유": "유격수", "좌": "좌익수", "중": "중견수", "우": "우익수",
+    "지": "지명타자", "타": "대타", "주": "대주자",
+    "주一": "대주자(1루)", "주二": "대주자(2루)", "주三": "대주자(3루)",
+    "타一": "대타→1루수", "타二": "대타→2루수", "타三": "대타→3루수",
+    "타유": "대타→유격수", "타좌": "대타→좌익수", "타중": "대타→중견수",
+    "타우": "대타→우익수", "타포": "대타→포수", "타지": "대타→지명타자",
+    "타투": "대타→투수",
+}
+
+def _convert_pos(pos: str) -> str:
+    return POS_MAP.get(pos, pos)
+
+
 def _parse_play_text(play_text):
     soup = BeautifulSoup(play_text, "html.parser")
     spans = [s.get_text(strip=True) for s in soup.find_all("span") if not s.get("class")]
@@ -234,15 +251,22 @@ def get_box_score(game_id: str, session: requests.Session) -> tuple[list, list]:
             if not name or name in ("합계","선수명"):
                 continue
 
+            # 타순: row1[0] (1~9, 대타/대주자는 공백일 수 있음)
+            order_raw = _gt(row1, 0)
+            try:
+                batting_order = int(order_raw)
+            except ValueError:
+                batting_order = 0  # 대타/대주자는 타순 없음
+
             batters.append({
-                "name":     name,
-                "position": _gt(row1, 1),
+                "name":          name,
+                "position":      _convert_pos(_gt(row1, 1)),
+                "batting_order": batting_order,
                 "ab":  _iv(row3, 0),
                 "h":   _iv(row3, 1),
                 "rbi": _iv(row3, 2),
                 "bb":  _iv(row3, 3),
                 "avg": _gt(row3, 4),
-                # 홈런/득점/삼진은 table2(타석결과)에서 별도 집계 가능하나 생략
                 "hr": 0, "r": 0, "so": 0,
             })
     except Exception as e:

@@ -175,16 +175,18 @@
     <div class="stats-card">
       <table class="stats-table">
         <thead>
-          <tr><th>선수</th><th>타수</th><th>안타</th><th>홈런</th><th>타점</th><th>타율</th></tr>
+          <tr><th>타순</th><th>포지션</th><th>선수</th><th>타수</th><th>안타</th><th>타점</th><th>볼넷</th><th>타율</th></tr>
         </thead>
         <tbody>
         {% for b in detail.batters %}
         <tr>
+          <td style="color:var(--gray)">{{ b.batting_order if b.batting_order else '' }}</td>
+          <td style="color:var(--gray);font-size:0.78rem;">{{ b.position }}</td>
           <td><a href="/player/{{ b.name }}" class="player-link">{{ b.name }}</a></td>
           <td>{{ b.ab }}</td>
           <td {% if b.h >= 2 %}class="highlight"{% endif %}>{{ b.h }}</td>
-          <td {% if b.hr >= 1 %}class="highlight"{% endif %}>{{ b.hr }}</td>
           <td>{{ b.rbi }}</td>
+          <td>{{ b.bb }}</td>
           <td>{{ b.avg }}</td>
         </tr>
         {% endfor %}
