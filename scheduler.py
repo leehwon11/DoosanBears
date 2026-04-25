@@ -40,6 +40,27 @@ log = logging.getLogger(__name__)
 # 핵심 작업 함수
 # ──────────────────────────────────────────
 
+def run_futures_crawl_job():
+    """퓨처스 경기 자동 크롤링"""
+    from futures_crawler import crawl_futures_game, is_futures_finished
+    from database import save_futures_game
+
+    now = datetime.now()
+    log.info(f"[퓨처스] 작업 시작 — {now.strftime('%Y-%m-%d %H:%M')}")
+
+    if not is_futures_finished():
+        log.info("[퓨처스] 경기 미종료 또는 경기 없음 — 스킵")
+        return
+
+    data = crawl_futures_game(save_json=False)
+    if not data:
+        log.warning("[퓨처스] 크롤링 결과 없음")
+        return
+
+    save_futures_game(data)
+    log.info("[퓨처스] DB 저장 완료")
+
+
 def run_crawl_job():
     """
     경기 종료 여부 확인 후 크롤링 & DB 저장 실행.

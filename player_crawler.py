@@ -183,56 +183,6 @@ def crawl_players() -> dict:
     result["futures_registered"]  = reg2
     result["futures_removed"]     = rem2
 
-    # 육성선수 - KBO 퓨처스 육성선수 등록 현황
-    print("[육성] 크롤링 시작...")
-    edu_roster = []
-    try:
-        driver3 = get_driver()
-        driver3.get("https://www.koreabaseball.com/Futures/Player/Education.aspx")
-        time.sleep(2)
-        try:
-            WebDriverWait(driver3, 8).until(
-                EC.element_to_be_clickable((By.CSS_SELECTOR, "li[data-id='OB'] a"))
-            ).click()
-            time.sleep(3)
-        except:
-            pass
-        soup3 = BeautifulSoup(driver3.page_source, "html.parser")
-        driver3.quit()
-
-        # tNData 또는 tbl 테이블에서 파싱
-        for table in soup3.find_all("table"):
-            headers = table.find_all("th")
-            if not headers:
-                continue
-            position = headers[1].get_text(strip=True) if len(headers) > 1 else ""
-            if position not in {"투수", "포수", "내야수", "외야수"}:
-                continue
-            for row in table.select("tbody tr"):
-                cells = row.find_all("td")
-                if len(cells) < 4:
-                    continue
-                link = cells[1].find("a")
-                name = link.get_text(strip=True) if link else cells[1].get_text(strip=True)
-                href = link.get("href", "") if link else ""
-                player_id = href.split("playerId=")[-1] if "playerId=" in href else ""
-                if not name:
-                    continue
-                edu_roster.append({
-                    "number":        cells[0].get_text(strip=True),
-                    "name":          name,
-                    "position":      position,
-                    "batting":       cells[2].get_text(strip=True),
-                    "birth":         cells[3].get_text(strip=True),
-                    "height_weight": cells[4].get_text(strip=True) if len(cells) > 4 else "",
-                    "player_id":     player_id,
-                })
-        print(f"  육성: {len(edu_roster)}명")
-    except Exception as e:
-        print(f"  육성 수집 실패: {e}")
-
-    result["education"] = edu_roster
-
     # 요약
     by_pos = {}
     for p in r1:
@@ -277,13 +227,14 @@ def save_players_to_db(data: dict):
         """, (p["player_id"], p["number"], p["name"], p["position"],
               p["batting"], p["birth"], p["height_weight"], now))
 
+    # 1군 말소 = 2군으로 내려간 선수 → 2군 active로 저장
     for p in data.get("removed", []):
         conn.execute("""
             INSERT INTO players (player_id, number, name, position, status, team_level, updated_at)
-            VALUES (?, ?, ?, ?, 'removed', '1군', ?)
+            VALUES (?, ?, ?, ?, 'active', '2군', ?)
         """, (p["player_id"], p["number"], p["name"], p["position"], now))
 
-    # 2군
+    # 2군 정규 엔트리
     for p in data.get("futures_roster", []):
         conn.execute("""
             INSERT INTO players (player_id, number, name, position, batting, birth, height_weight, status, team_level, updated_at)
@@ -291,22 +242,17 @@ def save_players_to_db(data: dict):
         """, (p["player_id"], p["number"], p["name"], p["position"],
               p["batting"], p["birth"], p["height_weight"], now))
 
+    # 2군 말소 = 1군으로 올라간 선수 → 이미 1군 roster에 있으니 별도 저장 불필요
+    # (참고용으로만 표시)
     for p in data.get("futures_removed", []):
         conn.execute("""
-            INSERT INTO players (player_id, number, name, position, status, team_level, updated_at)
-            VALUES (?, ?, ?, ?, 'removed', '2군', ?)
+            INSERT OR IGNORE INTO players (player_id, number, name, position, status, team_level, updated_at)
+            VALUES (?, ?, ?, ?, 'active', '1군', ?)
         """, (p["player_id"], p["number"], p["name"], p["position"], now))
-
-    for p in data.get("education", []):
-        conn.execute("""
-            INSERT INTO players (player_id, number, name, position, batting, birth, height_weight, status, team_level, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, 'active', '육성', ?)
-        """, (p.get("player_id",""), p["number"], p["name"], p["position"],
-              p.get("batting",""), p.get("birth",""), p.get("height_weight",""), now))
 
     conn.commit()
     conn.close()
-    print(f"DB 저장: 1군 {len(data['roster'])}명, 2군 {len(data['futures_roster'])}명, 육성 {len(data.get('education',[]))}명")
+    print(f"DB 저장: 1군 {len(data['roster'])}명, 2군 {len(data['futures_roster'])}명")
 
 
 if __name__ == "__main__":

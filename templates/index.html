@@ -107,6 +107,12 @@
     margin-bottom: 4px;
   }
   .stat-label { font-size: 0.78rem; color: var(--gray); letter-spacing: 1px; }
+  .league-tab-wrap { display:flex;gap:8px;margin-bottom:1.2rem; }
+  .league-tab { padding:6px 18px;border-radius:20px;border:1px solid var(--border);background:none;color:var(--gray);cursor:pointer;font-family:inherit;font-size:0.82rem;font-weight:500;transition:all 0.2s; }
+  .league-tab.active { background:var(--blue);border-color:var(--blue);color:white; }
+  .league-tab:hover:not(.active) { border-color:rgba(255,255,255,0.3);color:var(--white); }
+  .league-content { display:none; }
+  .league-content.active { display:block; }
 </style>
 {% endblock %}
 

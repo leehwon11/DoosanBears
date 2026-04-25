@@ -68,14 +68,50 @@ def bulk_crawl(start_date: str, end_date: str):
     print("=" * 50)
     print(f"완료! 성공: {success} / 스킵: {skipped} / 실패: {failed}")
 
+def bulk_crawl_futures(start_date: str, end_date: str):
+    """퓨처스 경기 일괄 크롤링"""
+    from futures_crawler import crawl_futures_game
+    from database import init_db, save_futures_game
+
+    init_db()
+    dates = list(date_range(start_date, end_date))
+    print(f"[퓨처스] 크롤링 대상: {start_date} ~ {end_date} ({len(dates)}일)")
+
+    success, skipped, failed = 0, 0, 0
+    for date in dates:
+        if date > datetime.now().strftime("%Y%m%d"):
+            continue
+        try:
+            data = crawl_futures_game(date, save_json=False)
+            if data:
+                save_futures_game(data)
+                success += 1
+            else:
+                skipped += 1
+        except Exception as e:
+            print(f"  {date} — 오류: {e}")
+            failed += 1
+        time.sleep(1.5)
+
+    print(f"[퓨처스] 완료! 성공: {success} / 스킵: {skipped} / 실패: {failed}")
+
+
 if __name__ == "__main__":
     today = datetime.now().strftime("%Y%m%d")
 
-    if len(sys.argv) == 3:
-        start, end = sys.argv[1], sys.argv[2]
-    elif len(sys.argv) == 2:
-        start, end = sys.argv[1], today
+    if len(sys.argv) >= 2 and sys.argv[1] == "futures":
+        start = sys.argv[2] if len(sys.argv) > 2 else "20260301"
+        end   = sys.argv[3] if len(sys.argv) > 3 else today
+        bulk_crawl_futures(start, end)
     else:
-        start, end = "20260301", today  # KBO 2026 시즌 개막일
+        if len(sys.argv) == 3:
+            start, end = sys.argv[1], sys.argv[2]
+        elif len(sys.argv) == 2:
+            start, end = sys.argv[1], today
+        else:
+            start, end = "20260301", today
 
-    bulk_crawl(start, end)
+        bulk_crawl(start, end)
+        # 1군 완료 후 퓨처스도 크롤링
+        print("\n퓨처스 크롤링 시작...")
+        bulk_crawl_futures(start, end)

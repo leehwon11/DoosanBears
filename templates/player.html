@@ -10,65 +10,83 @@
   .player-number-badge { font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--red);margin-bottom:2px; }
   .player-name { font-family:'Bebas Neue',sans-serif;font-size:2.4rem;letter-spacing:2px;line-height:1; }
   .player-meta { color:var(--gray);font-size:0.85rem;margin-top:6px;display:flex;flex-wrap:wrap;gap:10px; }
-  .season-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;margin-bottom:2rem; }
+
+  .season-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;margin-bottom:1.5rem; }
   .stat-box { background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem;text-align:center; }
   .stat-num { font-family:'Bebas Neue',sans-serif;font-size:1.8rem;line-height:1;color:var(--gold);margin-bottom:4px; }
   .stat-label { font-size:0.72rem;color:var(--gray);letter-spacing:1px; }
-  .section-title { font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:2px;margin-bottom:1rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between; }
-  .section-title-left { display:flex;align-items:center;gap:0.6rem; }
-  .section-title-left::before { content:'';display:inline-block;width:4px;height:18px;background:var(--red);border-radius:2px; }
 
-  /* 탭 */
-  .tab-wrap { display:flex;gap:8px;margin-bottom:1.2rem; }
-  .tab-btn { padding:6px 16px;border-radius:20px;border:1px solid var(--border);background:none;color:var(--gray);cursor:pointer;font-family:inherit;font-size:0.82rem;font-weight:500;transition:all 0.2s; }
-  .tab-btn.active { background:var(--red);border-color:var(--red);color:white; }
-  .tab-btn:hover:not(.active) { border-color:rgba(255,255,255,0.3);color:var(--white); }
-  .tab-content { display:none; }
-  .tab-content.active { display:block; }
+  .section-header { display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border); }
+  .section-title { font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:2px;display:flex;align-items:center;gap:0.6rem; }
+  .section-title::before { content:'';display:inline-block;width:4px;height:16px;background:var(--red);border-radius:2px; }
+  .season-select { background:var(--navy);color:var(--white);border:1px solid var(--border);border-radius:8px;padding:5px 12px;font-size:0.85rem;font-family:inherit;cursor:pointer; }
 
-  /* 슬라이더 */
-  .slider-wrap { position:relative;margin-bottom:2rem; }
+  .league-tab-wrap { display:flex;gap:8px;margin-bottom:1.5rem; }
+  .league-tab { padding:6px 18px;border-radius:20px;border:1px solid var(--border);background:none;color:var(--gray);cursor:pointer;font-family:inherit;font-size:0.82rem;font-weight:500;transition:all 0.2s; }
+  .league-tab.active { background:var(--blue);border-color:var(--blue);color:white; }
+  .league-tab:hover:not(.active) { border-color:rgba(255,255,255,0.3);color:var(--white); }
+  .league-content { display:none; }
+  .league-content.active { display:block; }
+
+  .slider-wrap { margin-bottom:1.5rem; }
   .slider { display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding-bottom:4px; }
   .slider::-webkit-scrollbar { display:none; }
   .game-card-mini { flex:0 0 155px;scroll-snap-align:start;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem;text-decoration:none;color:inherit;transition:border-color 0.2s; }
   .game-card-mini:hover { border-color:rgba(255,255,255,0.25); }
-  .gcm-date { font-size:0.75rem;color:var(--gray);margin-bottom:6px; }
+  .gcm-date { font-size:0.72rem;color:var(--gray);margin-bottom:5px; }
   .gcm-stat-row { display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:3px; }
-  .gcm-stat-label { color:var(--gray); }
-  .gcm-stat-val { font-weight:500; }
-  .gcm-highlight { color:var(--gold);font-weight:700; }
+  .gcm-lbl { color:var(--gray); }
+  .gcm-val { font-weight:500; }
+  .gcm-hi { color:var(--gold);font-weight:700; }
   .slider-nav { display:flex;gap:6px;margin-top:8px;justify-content:flex-end; }
-  .slider-btn { background:var(--card);border:1px solid var(--border);color:var(--white);width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:0.9rem;display:flex;align-items:center;justify-content:center;transition:background 0.2s; }
-  .slider-btn:hover { background:var(--blue); }
+  .snav-btn { background:var(--card);border:1px solid var(--border);color:var(--white);width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:0.9rem;display:flex;align-items:center;justify-content:center; }
+  .snav-btn:hover { background:var(--blue); }
 
-  /* 시즌 선택 */
-  .season-select { background:var(--navy);color:var(--white);border:1px solid var(--border);border-radius:8px;padding:5px 12px;font-size:0.85rem;font-family:inherit;cursor:pointer; }
-
-  /* 테이블 */
-  .stats-card { background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:2rem; }
+  .stats-card { background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:0.8rem; }
   .stats-table { width:100%;border-collapse:collapse;font-size:0.82rem; }
   .stats-table th { background:rgba(255,255,255,0.04);padding:8px 10px;text-align:center;color:var(--gray);font-weight:500;border-bottom:1px solid var(--border); }
   .stats-table td { padding:8px 10px;text-align:center;border-bottom:1px solid var(--border); }
   .stats-table tr:last-child td { border-bottom:none; }
   .highlight { color:var(--gold);font-weight:700; }
-  .table-nav { display:flex;align-items:center;gap:8px;margin-top:8px;justify-content:flex-end; }
-  .table-nav-btn { background:var(--card);border:1px solid var(--border);color:var(--white);width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:0.9rem;display:flex;align-items:center;justify-content:center;transition:background 0.2s; }
-  .table-nav-btn:hover { background:var(--blue); }
-  .table-nav-btn:disabled { opacity:0.3;cursor:not-allowed; }
-  .table-page-info { font-size:0.8rem;color:var(--gray); }
 
-  /* AI */
+  .page-nav { display:flex;align-items:center;gap:8px;justify-content:flex-end;margin-bottom:1.5rem; }
+  .page-btn { background:var(--card);border:1px solid var(--border);color:var(--white);width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:0.9rem;display:flex;align-items:center;justify-content:center; }
+  .page-btn:hover { background:var(--blue); }
+  .page-btn:disabled { opacity:0.3;cursor:not-allowed; }
+  .page-info { font-size:0.8rem;color:var(--gray); }
+
   .ai-card { background:var(--card);border:1px solid var(--border);border-left:3px solid var(--red);border-radius:12px;padding:1.5rem;margin-bottom:1rem; }
   .ai-label { font-size:0.72rem;font-weight:700;letter-spacing:2px;color:var(--red);text-transform:uppercase;margin-bottom:0.8rem; }
   .ai-content { line-height:1.9;font-size:0.88rem;color:rgba(248,249,250,0.85);white-space:pre-wrap; }
   .analyze-btn { background:var(--red);color:white;border:none;padding:8px 20px;border-radius:8px;font-size:0.85rem;font-weight:500;cursor:pointer;font-family:inherit;transition:opacity 0.2s; }
   .analyze-btn:hover { opacity:0.85; }
   .analyze-btn:disabled { opacity:0.5;cursor:not-allowed; }
-  .no-record { text-align:center;padding:2rem;color:var(--gray);background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:2rem; }
+  .analyze-btn-sm { background:var(--blue);color:white;border:none;padding:4px 10px;border-radius:6px;font-size:0.75rem;cursor:pointer;font-family:inherit; }
+  .analyze-btn-sm:hover { opacity:0.85; }
+  .no-record { text-align:center;padding:2rem;color:var(--gray);background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:1.5rem; }
+
+  /* AI 모달 */
+  .modal-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:1000;align-items:center;justify-content:center; }
+  .modal-overlay.active { display:flex; }
+  .modal-box { background:var(--card);border:1px solid var(--border);border-radius:16px;padding:2rem;width:90%;max-width:620px;max-height:80vh;overflow-y:auto;position:relative; }
+  .modal-close { position:absolute;top:1rem;right:1rem;background:none;border:none;color:var(--gray);font-size:1.4rem;cursor:pointer; }
+  .modal-close:hover { color:var(--white); }
+  .modal-loading { text-align:center;padding:2rem;color:var(--gray); }
+  .spinner { width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--red);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 1rem; }
+  @keyframes spin { to { transform:rotate(360deg); } }
 </style>
 {% endblock %}
 
 {% block content %}
+
+<!-- AI 모달 -->
+<div class="modal-overlay" id="ai-modal" onclick="closeModal(event)">
+  <div class="modal-box">
+    <button class="modal-close" onclick="document.getElementById('ai-modal').classList.remove('active')">×</button>
+    <div id="ai-modal-body"><div class="modal-loading"><div class="spinner"></div><p>AI 분석 중...</p></div></div>
+  </div>
+</div>
+
 <a href="/players" class="back-link">← 선수단으로</a>
 
 <!-- 선수 헤더 -->
@@ -81,222 +99,206 @@
     <div class="player-name">{{ name }}</div>
     <div class="player-meta">
       {% if player_info %}
-      <span>{{ player_info.position }}{% if player_info.batting %} ({{ player_info.batting }}){% endif %}</span>
-      {% if player_info.birth %}<span>{{ player_info.birth }}</span>{% endif %}
-      {% if player_info.height_weight %}<span>{{ player_info.height_weight }}</span>{% endif %}
+        <span>{{ player_info.position }}{% if player_info.batting %} ({{ player_info.batting }}){% endif %}</span>
+        {% if player_info.birth %}<span>{{ player_info.birth }}</span>{% endif %}
+        {% if player_info.height_weight %}<span>{{ player_info.height_weight }}</span>{% endif %}
       {% endif %}
     </div>
   </div>
 </div>
 
-{% if is_pitcher %}
-<!-- ══════════ 투수 ══════════ -->
-{% set all_stats = pitcher_stats %}
-{% if all_stats %}
-{% set total_er = all_stats | sum(attribute='er') %}
-{% set total_so = all_stats | sum(attribute='so') %}
-{% set total_bb = all_stats | sum(attribute='bb') %}
-{% set total_h  = all_stats | sum(attribute='h') %}
-{% set wins  = all_stats | selectattr('result','equalto','승') | list | length %}
-{% set loses = all_stats | selectattr('result','equalto','패') | list | length %}
-{% set holds = all_stats | selectattr('result','equalto','홀드') | list | length %}
-{% set saves = all_stats | selectattr('result','equalto','세이브') | list | length %}
+<!-- 리그 탭 -->
+<div class="league-tab-wrap">
+  <button class="league-tab active" onclick="switchLeague('kbo',this)">KBO ({{ pitcher_stats|length if is_pitcher else batter_stats|length }}경기)</button>
+  <button class="league-tab" onclick="switchLeague('fut',this)">퓨처스 ({{ futures_pitcher|length if is_pitcher else futures_batter|length }}경기)</button>
+</div>
 
-<div class="season-grid">
-  <div class="stat-box"><div class="stat-num">{{ wins }}</div><div class="stat-label">승</div></div>
-  <div class="stat-box"><div class="stat-num">{{ loses }}</div><div class="stat-label">패</div></div>
-  <div class="stat-box"><div class="stat-num">{{ holds }}</div><div class="stat-label">홀드</div></div>
-  <div class="stat-box"><div class="stat-num">{{ saves }}</div><div class="stat-label">세이브</div></div>
-  <div class="stat-box"><div class="stat-num">{{ total_so }}</div><div class="stat-label">탈삼진</div></div>
-  <div class="stat-box"><div class="stat-num">{{ total_er }}</div><div class="stat-label">자책점</div></div>
-  <div class="stat-box"><div class="stat-num">{{ total_bb }}</div><div class="stat-label">볼넷</div></div>
-  <div class="stat-box"><div class="stat-num">{{ total_h }}</div><div class="stat-label">피안타</div></div>
+{% macro render_league(league_key, stats, season_data, slider_id, tbody_id, page_id, game_link) %}
+{% if stats %}
+
+<!-- 시즌 요약 (JS로 업데이트) -->
+<div class="season-grid" id="sum-{{ league_key }}">
+  {% if is_pitcher %}
+  <div class="stat-box"><div class="stat-num" id="{{ league_key }}-w">-</div><div class="stat-label">승</div></div>
+  <div class="stat-box"><div class="stat-num" id="{{ league_key }}-l">-</div><div class="stat-label">패</div></div>
+  <div class="stat-box"><div class="stat-num" id="{{ league_key }}-hld">-</div><div class="stat-label">홀드</div></div>
+  <div class="stat-box"><div class="stat-num" id="{{ league_key }}-sav">-</div><div class="stat-label">세이브</div></div>
+  <div class="stat-box"><div class="stat-num" id="{{ league_key }}-so">-</div><div class="stat-label">탈삼진</div></div>
+  <div class="stat-box"><div class="stat-num" id="{{ league_key }}-er">-</div><div class="stat-label">자책점</div></div>
+  <div class="stat-box"><div class="stat-num" id="{{ league_key }}-bb">-</div><div class="stat-label">볼넷</div></div>
+  <div class="stat-box"><div class="stat-num" id="{{ league_key }}-h">-</div><div class="stat-label">피안타</div></div>
+  {% else %}
+  <div class="stat-box"><div class="stat-num" id="{{ league_key }}-avg">-</div><div class="stat-label">타율</div></div>
+  <div class="stat-box"><div class="stat-num" id="{{ league_key }}-h">-</div><div class="stat-label">안타</div></div>
+  <div class="stat-box"><div class="stat-num" id="{{ league_key }}-hr">-</div><div class="stat-label">홈런</div></div>
+  <div class="stat-box"><div class="stat-num" id="{{ league_key }}-rbi">-</div><div class="stat-label">타점</div></div>
+  <div class="stat-box"><div class="stat-num" id="{{ league_key }}-bb">-</div><div class="stat-label">볼넷</div></div>
+  <div class="stat-box"><div class="stat-num" id="{{ league_key }}-so">-</div><div class="stat-label">삼진</div></div>
+  <div class="stat-box"><div class="stat-num" id="{{ league_key }}-ab">-</div><div class="stat-label">타수</div></div>
+  {% endif %}
 </div>
 
 <!-- 최근 경기 슬라이더 -->
-<div class="section-title"><div class="section-title-left">최근 경기</div></div>
+<div class="section-header"><div class="section-title">최근 경기</div></div>
 <div class="slider-wrap">
-  <div class="slider" id="slider-recent">
-    {% for p in all_stats[:10] %}
-    <a href="/game/{{ p.game_id }}" class="game-card-mini">
-      <div class="gcm-date">{{ p.date[4:6] }}/{{ p.date[6:] }} vs {{ p.away_team if p.home_team == '두산' else p.home_team }}</div>
-      <span class="badge {% if p.result == '승' %}badge-win{% elif p.result == '패' %}badge-lose{% else %}badge-draw{% endif %}" style="font-size:0.7rem;margin-bottom:6px;display:inline-block;">{{ p.result or '-' }}</span>
-      <div class="gcm-stat-row"><span class="gcm-stat-label">이닝</span><span class="gcm-stat-val">{{ p.ip }}</span></div>
-      <div class="gcm-stat-row"><span class="gcm-stat-label">자책</span><span class="gcm-stat-val {% if p.er == 0 %}gcm-highlight{% endif %}">{{ p.er }}</span></div>
-      <div class="gcm-stat-row"><span class="gcm-stat-label">삼진</span><span class="gcm-stat-val">{{ p.so }}</span></div>
-      <div class="gcm-stat-row"><span class="gcm-stat-label">볼넷</span><span class="gcm-stat-val">{{ p.bb }}</span></div>
-      <div class="gcm-stat-row"><span class="gcm-stat-label">ERA</span><span class="gcm-stat-val">{{ p.era }}</span></div>
-    </a>
+  <div class="slider" id="{{ slider_id }}">
+    {% for g in stats[:10] %}
+    {% set tag = 'a href="/game/' + g.game_id + '"' if game_link else 'div' %}
+    {% set endtag = 'a' if game_link else 'div' %}
+    <{{ tag }} class="game-card-mini" data-year="{{ g.date[:4] }}">
+      <div class="gcm-date">{{ g.date[4:6] }}/{{ g.date[6:] }} vs {{ g.away_team if g.home_team == '두산' else g.home_team }}</div>
+      <span class="badge {% if g.result == '승' %}badge-win{% elif g.result == '패' %}badge-lose{% else %}badge-draw{% endif %}" style="font-size:0.7rem;margin-bottom:5px;display:inline-block;">{{ g.result or '-' }}</span>
+      {% if is_pitcher %}
+      <div class="gcm-stat-row"><span class="gcm-lbl">이닝</span><span class="gcm-val">{{ g.ip }}</span></div>
+      <div class="gcm-stat-row"><span class="gcm-lbl">자책</span><span class="gcm-val {% if g.er == 0 %}gcm-hi{% endif %}">{{ g.er }}</span></div>
+      <div class="gcm-stat-row"><span class="gcm-lbl">삼진</span><span class="gcm-val">{{ g.so }}</span></div>
+      <div class="gcm-stat-row"><span class="gcm-lbl">ERA</span><span class="gcm-val">{{ g.era }}</span></div>
+      {% else %}
+      <div class="gcm-stat-row"><span class="gcm-lbl">타수</span><span class="gcm-val">{{ g.ab }}</span></div>
+      <div class="gcm-stat-row"><span class="gcm-lbl">안타</span><span class="gcm-val {% if g.h >= 2 %}gcm-hi{% endif %}">{{ g.h }}</span></div>
+      <div class="gcm-stat-row"><span class="gcm-lbl">홈런</span><span class="gcm-val {% if g.hr >= 1 %}gcm-hi{% endif %}">{{ g.hr }}</span></div>
+      <div class="gcm-stat-row"><span class="gcm-lbl">타점</span><span class="gcm-val">{{ g.rbi }}</span></div>
+      <div class="gcm-stat-row"><span class="gcm-lbl">타율</span><span class="gcm-val">{{ g.avg }}</span></div>
+      {% endif %}
+    </{{ endtag }}>
     {% endfor %}
   </div>
   <div class="slider-nav">
-    <button class="slider-btn" onclick="document.getElementById('slider-recent').scrollBy(-165,0)">‹</button>
-    <button class="slider-btn" onclick="document.getElementById('slider-recent').scrollBy(165,0)">›</button>
+    <button class="snav-btn" onclick="document.getElementById('{{ slider_id }}').scrollBy(-165,0)">‹</button>
+    <button class="snav-btn" onclick="document.getElementById('{{ slider_id }}').scrollBy(165,0)">›</button>
   </div>
 </div>
 
-<!-- 시즌 전체 기록 -->
-<div class="section-title">
-  <div class="section-title-left">시즌 전체 기록</div>
-  <select class="season-select" id="season-select" onchange="filterSeason(this.value)">
-    <option value="all">전체 시즌</option>
-    {% set years = all_stats | map(attribute='date') | map('string') | map('slice', 4) | list %}
-    {% set unique_years = [] %}
-    {% for s in all_stats %}
-      {% set yr = s.date[:4] %}
-      {% if yr not in unique_years %}{% set _ = unique_years.append(yr) %}{% endif %}
+<!-- 시즌별 집계 -->
+<div class="section-header"><div class="section-title">시즌별 기록</div></div>
+<div class="stats-card" style="margin-bottom:1.2rem;">
+  <table class="stats-table">
+    <thead>
+      {% if is_pitcher %}
+      <tr><th>시즌</th><th>경기</th><th>승</th><th>패</th><th>홀드</th><th>세이브</th><th>이닝</th><th>피안타</th><th>볼넷</th><th>삼진</th><th>자책</th><th>ERA</th><th>AI 분석</th></tr>
+      {% else %}
+      <tr><th>시즌</th><th>경기</th><th>타율</th><th>안타</th><th>홈런</th><th>타점</th><th>볼넷</th><th>삼진</th><th>타수</th><th>출루율</th><th>AI 분석</th></tr>
+      {% endif %}
+    </thead>
+    <tbody>
+    {% for s in season_data %}
+    <tr>
+      <td style="font-weight:700;color:var(--gold)">{{ s.year }}</td>
+      <td>{{ s.games }}</td>
+      {% if is_pitcher %}
+      <td {% if s.wins > 0 %}class="highlight"{% endif %}>{{ s.wins }}</td>
+      <td>{{ s.loses }}</td>
+      <td>{{ s.holds }}</td>
+      <td>{{ s.saves }}</td>
+      <td>{{ s.ip }}</td>
+      <td>{{ s.h }}</td>
+      <td>{{ s.bb }}</td>
+      <td>{{ s.so }}</td>
+      <td>{{ s.er }}</td>
+      <td style="color:var(--gold)">{{ s.era }}</td>
+      {% else %}
+      <td style="color:var(--gold)">{{ s.avg }}</td>
+      <td {% if s.h > 0 %}class="highlight"{% endif %}>{{ s.h }}</td>
+      <td {% if s.hr > 0 %}class="highlight"{% endif %}>{{ s.hr }}</td>
+      <td>{{ s.rbi }}</td>
+      <td>{{ s.bb }}</td>
+      <td>{{ s.so }}</td>
+      <td>{{ s.ab }}</td>
+      <td>{{ s.obp }}</td>
+      {% endif %}
+      <td><button class="analyze-btn-sm" onclick="analyzeSeasonAI('{{ s.year }}','{{ league_key }}')">AI 분석</button></td>
+    </tr>
     {% endfor %}
-    {% for yr in unique_years | sort(reverse=True) %}
-    <option value="{{ yr }}">{{ yr }}시즌</option>
-    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- 경기별 기록 -->
+<div class="section-header">
+  <div class="section-title">경기별 기록</div>
+  <select class="season-select" onchange="filterTable('{{ tbody_id }}', this.value, '{{ page_id }}')">
+    <option value="all">전체</option>
+    {% set uyears = [] %}
+    {% for s in stats %}{% if s.date[:4] not in uyears %}{% set _ = uyears.append(s.date[:4]) %}{% endif %}{% endfor %}
+    {% for yr in uyears | sort(reverse=True) %}<option value="{{ yr }}">{{ yr }}시즌</option>{% endfor %}
   </select>
 </div>
 <div class="stats-card">
-  <table class="stats-table" id="stats-table">
+  <table class="stats-table">
     <thead>
+      {% if is_pitcher %}
       <tr><th>날짜</th><th>상대</th><th>결과</th><th>이닝</th><th>피안타</th><th>피홈런</th><th>볼넷</th><th>삼진</th><th>자책</th><th>ERA</th></tr>
-    </thead>
-    <tbody id="stats-tbody">
-    {% for p in all_stats %}
-    <tr data-year="{{ p.date[:4] }}">
-      <td><a href="/game/{{ p.game_id }}" style="color:inherit;text-decoration:none;">{{ p.date[4:6] }}/{{ p.date[6:] }}</a></td>
-      <td style="color:var(--gray);font-size:0.78rem;">{{ p.away_team if p.home_team == '두산' else p.home_team }}</td>
-      <td>{% if p.result %}<span class="badge {% if p.result == '승' %}badge-win{% elif p.result == '패' %}badge-lose{% else %}badge-draw{% endif %}">{{ p.result }}</span>{% else %}-{% endif %}</td>
-      <td>{{ p.ip }}</td>
-      <td>{{ p.h }}</td>
-      <td {% if p.hr >= 1 %}class="highlight"{% endif %}>{{ p.hr }}</td>
-      <td>{{ p.bb }}</td>
-      <td>{{ p.so }}</td>
-      <td {% if p.er == 0 %}class="highlight"{% endif %}>{{ p.er }}</td>
-      <td style="color:var(--gray)">{{ p.era }}</td>
-    </tr>
-    {% endfor %}
-    </tbody>
-  </table>
-</div>
-<div class="table-nav">
-  <button class="table-nav-btn" id="prev-btn" onclick="changePage(-1)">‹</button>
-  <span class="table-page-info" id="page-info"></span>
-  <button class="table-nav-btn" id="next-btn" onclick="changePage(1)">›</button>
-</div>
-
-{% else %}
-<div class="no-record">아직 이번 시즌 등판 기록이 없어요.</div>
-{% endif %}
-
-{% else %}
-<!-- ══════════ 타자 ══════════ -->
-{% set all_stats = batter_stats %}
-{% if all_stats %}
-{% set total_ab  = all_stats | sum(attribute='ab') %}
-{% set total_h   = all_stats | sum(attribute='h') %}
-{% set total_hr  = all_stats | sum(attribute='hr') %}
-{% set total_rbi = all_stats | sum(attribute='rbi') %}
-{% set total_bb  = all_stats | sum(attribute='bb') %}
-{% set total_so  = all_stats | sum(attribute='so') %}
-
-<div class="season-grid">
-  <div class="stat-box"><div class="stat-num">{{ "%.3f"|format(total_h/total_ab) if total_ab > 0 else '.000' }}</div><div class="stat-label">타율</div></div>
-  <div class="stat-box"><div class="stat-num">{{ total_h }}</div><div class="stat-label">안타</div></div>
-  <div class="stat-box"><div class="stat-num">{{ total_hr }}</div><div class="stat-label">홈런</div></div>
-  <div class="stat-box"><div class="stat-num">{{ total_rbi }}</div><div class="stat-label">타점</div></div>
-  <div class="stat-box"><div class="stat-num">{{ total_bb }}</div><div class="stat-label">볼넷</div></div>
-  <div class="stat-box"><div class="stat-num">{{ total_so }}</div><div class="stat-label">삼진</div></div>
-  <div class="stat-box"><div class="stat-num">{{ total_ab }}</div><div class="stat-label">타수</div></div>
-</div>
-
-<!-- 최근 경기 슬라이더 -->
-<div class="section-title"><div class="section-title-left">최근 경기</div></div>
-<div class="slider-wrap">
-  <div class="slider" id="slider-recent">
-    {% for b in all_stats[:10] %}
-    <a href="/game/{{ b.game_id }}" class="game-card-mini">
-      <div class="gcm-date">{{ b.date[4:6] }}/{{ b.date[6:] }} vs {{ b.away_team if b.home_team == '두산' else b.home_team }}</div>
-      <span class="badge {% if b.result == '승' %}badge-win{% elif b.result == '패' %}badge-lose{% else %}badge-draw{% endif %}" style="font-size:0.7rem;margin-bottom:6px;display:inline-block;">{{ b.result }}</span>
-      <div class="gcm-stat-row"><span class="gcm-stat-label">타수</span><span class="gcm-stat-val">{{ b.ab }}</span></div>
-      <div class="gcm-stat-row"><span class="gcm-stat-label">안타</span><span class="gcm-stat-val {% if b.h >= 2 %}gcm-highlight{% endif %}">{{ b.h }}</span></div>
-      <div class="gcm-stat-row"><span class="gcm-stat-label">홈런</span><span class="gcm-stat-val {% if b.hr >= 1 %}gcm-highlight{% endif %}">{{ b.hr }}</span></div>
-      <div class="gcm-stat-row"><span class="gcm-stat-label">타점</span><span class="gcm-stat-val">{{ b.rbi }}</span></div>
-      <div class="gcm-stat-row"><span class="gcm-stat-label">타율</span><span class="gcm-stat-val">{{ b.avg }}</span></div>
-    </a>
-    {% endfor %}
-  </div>
-  <div class="slider-nav">
-    <button class="slider-btn" onclick="document.getElementById('slider-recent').scrollBy(-165,0)">‹</button>
-    <button class="slider-btn" onclick="document.getElementById('slider-recent').scrollBy(165,0)">›</button>
-  </div>
-</div>
-
-<!-- 시즌 전체 기록 -->
-<div class="section-title">
-  <div class="section-title-left">시즌 전체 기록</div>
-  <select class="season-select" id="season-select" onchange="filterSeason(this.value)">
-    <option value="all">전체 시즌</option>
-    {% set unique_years = [] %}
-    {% for s in all_stats %}
-      {% set yr = s.date[:4] %}
-      {% if yr not in unique_years %}{% set _ = unique_years.append(yr) %}{% endif %}
-    {% endfor %}
-    {% for yr in unique_years | sort(reverse=True) %}
-    <option value="{{ yr }}">{{ yr }}시즌</option>
-    {% endfor %}
-  </select>
-</div>
-<div class="stats-card">
-  <table class="stats-table" id="stats-table">
-    <thead>
+      {% else %}
       <tr><th>날짜</th><th>상대</th><th>결과</th><th>타수</th><th>안타</th><th>홈런</th><th>타점</th><th>볼넷</th><th>삼진</th><th>타율</th></tr>
+      {% endif %}
     </thead>
-    <tbody id="stats-tbody">
-    {% for b in all_stats %}
-    <tr data-year="{{ b.date[:4] }}">
-      <td><a href="/game/{{ b.game_id }}" style="color:inherit;text-decoration:none;">{{ b.date[4:6] }}/{{ b.date[6:] }}</a></td>
-      <td style="color:var(--gray);font-size:0.78rem;">{{ b.away_team if b.home_team == '두산' else b.home_team }}</td>
-      <td><span class="badge {% if b.result == '승' %}badge-win{% elif b.result == '패' %}badge-lose{% else %}badge-draw{% endif %}">{{ b.result }}</span></td>
-      <td>{{ b.ab }}</td>
-      <td {% if b.h >= 2 %}class="highlight"{% endif %}>{{ b.h }}</td>
-      <td {% if b.hr >= 1 %}class="highlight"{% endif %}>{{ b.hr }}</td>
-      <td>{{ b.rbi }}</td>
-      <td>{{ b.bb }}</td>
-      <td>{{ b.so }}</td>
-      <td>{{ b.avg }}</td>
+    <tbody id="{{ tbody_id }}">
+    {% for g in stats %}
+    <tr data-year="{{ g.date[:4] }}">
+      <td>{% if game_link %}<a href="/game/{{ g.game_id }}" style="color:inherit;text-decoration:none;">{{ g.date[4:6] }}/{{ g.date[6:] }}</a>{% else %}{{ g.date[4:6] }}/{{ g.date[6:] }}{% endif %}</td>
+      <td style="color:var(--gray);font-size:0.78rem;">{{ g.away_team if g.home_team == '두산' else g.home_team }}</td>
+      <td>{% if g.result %}<span class="badge {% if g.result == '승' %}badge-win{% elif g.result == '패' %}badge-lose{% else %}badge-draw{% endif %}">{{ g.result }}</span>{% else %}-{% endif %}</td>
+      {% if is_pitcher %}
+      <td>{{ g.ip }}</td><td>{{ g.h }}</td>
+      <td {% if g.hr >= 1 %}class="highlight"{% endif %}>{{ g.hr }}</td>
+      <td>{{ g.bb }}</td><td>{{ g.so }}</td>
+      <td {% if g.er == 0 %}class="highlight"{% endif %}>{{ g.er }}</td>
+      <td style="color:var(--gray)">{{ g.era }}</td>
+      {% else %}
+      <td>{{ g.ab }}</td>
+      <td {% if g.h >= 2 %}class="highlight"{% endif %}>{{ g.h }}</td>
+      <td {% if g.hr >= 1 %}class="highlight"{% endif %}>{{ g.hr }}</td>
+      <td>{{ g.rbi }}</td><td>{{ g.bb }}</td><td>{{ g.so }}</td><td>{{ g.avg }}</td>
+      {% endif %}
     </tr>
     {% endfor %}
     </tbody>
   </table>
 </div>
-<div class="table-nav">
-  <button class="table-nav-btn" id="prev-btn" onclick="changePage(-1)">‹</button>
-  <span class="table-page-info" id="page-info"></span>
-  <button class="table-nav-btn" id="next-btn" onclick="changePage(1)">›</button>
+<div class="page-nav" id="{{ page_id }}">
+  <button class="page-btn" onclick="changePage('{{ tbody_id }}','{{ page_id }}',-1)">‹</button>
+  <span class="page-info" id="{{ page_id }}-info"></span>
+  <button class="page-btn" onclick="changePage('{{ tbody_id }}','{{ page_id }}',1)">›</button>
 </div>
 
 {% else %}
-<div class="no-record">아직 이번 시즌 타석 기록이 없어요.</div>
+<div class="no-record">기록이 없어요.</div>
 {% endif %}
-{% endif %}
+{% endmacro %}
 
-<!-- AI 선수 분석 -->
-<div class="section-title" style="margin-top:1rem;"><div class="section-title-left">AI 선수 분석</div></div>
-{% if player_season_report %}
+<!-- KBO 탭 -->
+<div id="tab-kbo" class="league-content active">
+  {% if is_pitcher %}
+    {{ render_league('kbo', pitcher_stats, kbo_pitcher_seasons, 'kbo-slider', 'kbo-tbody', 'kbo-page', true) }}
+  {% else %}
+    {{ render_league('kbo', batter_stats, kbo_batter_seasons, 'kbo-slider', 'kbo-tbody', 'kbo-page', true) }}
+  {% endif %}
+</div>
+
+<!-- 퓨처스 탭 -->
+<div id="tab-fut" class="league-content">
+  {% if is_pitcher %}
+    {{ render_league('fut', futures_pitcher, fut_pitcher_seasons, 'fut-slider', 'fut-tbody', 'fut-page', false) }}
+  {% else %}
+    {{ render_league('fut', futures_batter, fut_batter_seasons, 'fut-slider', 'fut-tbody', 'fut-page', false) }}
+  {% endif %}
+</div>
+
+<!-- AI 시즌 분석 -->
+<div class="section-header" style="margin-top:2rem;"><div class="section-title">AI 시즌 분석</div></div>
+<div id="ai-season-reports">
+{% for r in season_ai_reports %}
 <div class="ai-card">
-  <div class="ai-label">Claude AI · 시즌 종합 분석</div>
-  <div class="ai-content">{{ player_season_report.content }}</div>
+  <div class="ai-label">Claude AI · {{ r.created_at[:10] }} · {{ r.report_type.replace('player_season_','').replace('_',' ').upper() }}</div>
+  <div class="ai-content">{{ r.content }}</div>
 </div>
 {% else %}
-<div class="ai-card" id="ai-season-placeholder" style="text-align:center;padding:2rem;">
-  <div class="ai-label">Claude AI · 시즌 종합 분석</div>
-  <p style="color:var(--gray);font-size:0.88rem;margin:0.8rem 0 1.2rem;">이 선수의 시즌 전체 기록을 바탕으로 AI가 종합 분석을 생성할 수 있어요</p>
-  <button class="analyze-btn" id="btn-season-analyze" onclick="generateSeasonAnalysis()">AI 시즌 분석 생성하기</button>
+<div class="no-record">아직 AI 시즌 분석이 없어요. 시즌별 기록 표에서 AI 분석 버튼을 눌러주세요!</div>
+{% endfor %}
 </div>
-<div class="ai-card" id="ai-season-result" style="display:none;">
-  <div class="ai-label">Claude AI · 시즌 종합 분석</div>
-  <div class="ai-content" id="ai-season-content"></div>
-</div>
-{% endif %}
 
 {% if ai_reports %}
-<div class="section-title" style="margin-top:1rem;"><div class="section-title-left">경기별 AI 평가</div></div>
+<div class="section-header" style="margin-top:1rem;"><div class="section-title">경기별 AI 평가</div></div>
 {% for r in ai_reports[:5] %}
 <div class="ai-card">
   <div class="ai-label">Claude AI · {{ r.created_at[:10] }}</div>
@@ -306,82 +308,183 @@
 {% endif %}
 
 <script>
-const PLAYER_NAME = "{{ name }}";
-const IS_PITCHER  = {{ 'true' if is_pitcher else 'false' }};
-const PAGE_SIZE   = 10;
-let currentPage   = 1;
-let filteredRows  = [];
+const PLAYER_NAME  = "{{ name }}";
+const IS_PITCHER   = {{ 'true' if is_pitcher else 'false' }};
+const CURRENT_YEAR = "{{ current_year }}";
+const PAGE_SIZE    = 10;
+const pageStates   = {};
 
-function initTable() {
-  const tbody = document.getElementById('stats-tbody');
-  if (!tbody) return;
-  filteredRows = Array.from(tbody.querySelectorAll('tr'));
-  renderPage();
-}
+const allStats = {
+  kbo: {{ pitcher_stats | tojson if is_pitcher else batter_stats | tojson }},
+  fut: {{ futures_pitcher | tojson if is_pitcher else futures_batter | tojson }},
+};
 
-function filterSeason(year) {
-  const tbody = document.getElementById('stats-tbody');
-  if (!tbody) return;
-  const allRows = Array.from(tbody.querySelectorAll('tr'));
-  if (year === 'all') {
-    filteredRows = allRows;
+// 현재 시즌 기준 필터
+const currentStats = {
+  kbo: allStats.kbo.filter(s => s.date && s.date.startsWith(CURRENT_YEAR)),
+  fut: allStats.fut.filter(s => s.date && s.date.startsWith(CURRENT_YEAR)),
+};
+
+function calcSummary(stats) {
+  if (IS_PITCHER) {
+    const s = {w:0,l:0,hld:0,sav:0,so:0,er:0,bb:0,h:0};
+    stats.forEach(p => {
+      if (p.result==='승') s.w++; else if (p.result==='패') s.l++;
+      else if (p.result==='홀드') s.hld++; else if (p.result==='세이브') s.sav++;
+      s.so+=p.so||0; s.er+=p.er||0; s.bb+=p.bb||0; s.h+=p.h||0;
+    });
+    return s;
   } else {
-    filteredRows = allRows.filter(r => r.dataset.year === year);
+    const s = {ab:0,h:0,hr:0,rbi:0,bb:0,so:0};
+    stats.forEach(b => { s.ab+=b.ab||0; s.h+=b.h||0; s.hr+=b.hr||0; s.rbi+=b.rbi||0; s.bb+=b.bb||0; s.so+=b.so||0; });
+    s.avg = s.ab > 0 ? (s.h/s.ab).toFixed(3) : '.000';
+    return s;
   }
-  currentPage = 1;
-  renderPage();
 }
 
-function renderPage() {
-  const tbody = document.getElementById('stats-tbody');
+function updateSummary(league, year) {
+  const src = year ? allStats[league].filter(s => s.date && s.date.startsWith(year)) : currentStats[league];
+  const stats = src;
+  if (!stats || !stats.length) return;
+  const s = calcSummary(stats);
+  const set = (id, val) => { const el = document.getElementById(league+'-'+id); if(el) el.textContent = val; };
+  if (IS_PITCHER) {
+    set('w',s.w); set('l',s.l); set('hld',s.hld); set('sav',s.sav);
+    set('so',s.so); set('er',s.er); set('bb',s.bb); set('h',s.h);
+  } else {
+    set('avg',s.avg); set('h',s.h); set('hr',s.hr); set('rbi',s.rbi);
+    set('bb',s.bb); set('so',s.so); set('ab',s.ab);
+  }
+}
+
+function switchLeague(name, btn) {
+  document.querySelectorAll('.league-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.league-tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+  updateSummary(name, null);
+}
+
+function filterTable(tbodyId, year, pageNavId) {
+  const tbody = document.getElementById(tbodyId);
   if (!tbody) return;
-  const start = (currentPage - 1) * PAGE_SIZE;
-  const end   = start + PAGE_SIZE;
-  filteredRows.forEach((r, i) => {
-    r.style.display = (i >= start && i < end) ? '' : 'none';
-  });
-  const total = Math.ceil(filteredRows.length / PAGE_SIZE);
-  document.getElementById('page-info').textContent = total > 0 ? currentPage + ' / ' + total : '0 / 0';
-  document.getElementById('prev-btn').disabled = currentPage <= 1;
-  document.getElementById('next-btn').disabled = currentPage >= total;
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  const filtered = year === 'all' ? rows : rows.filter(r => r.dataset.year === year);
+  pageStates[tbodyId] = { rows: filtered, page: 1 };
+  renderPage(tbodyId, pageNavId);
+
+  // 시즌 필터 시 요약 업데이트
+  const league = tbodyId.startsWith('kbo') ? 'kbo' : 'fut';
+  updateSummary(league, year === 'all' ? null : year);
 }
 
-function changePage(dir) {
-  const total = Math.ceil(filteredRows.length / PAGE_SIZE);
-  currentPage = Math.max(1, Math.min(total, currentPage + dir));
-  renderPage();
+function initTable(tbodyId, pageNavId) {
+  const tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  pageStates[tbodyId] = { rows, page: 1 };
+  renderPage(tbodyId, pageNavId);
 }
 
-async function generateSeasonAnalysis() {
-  const btn = document.getElementById('btn-season-analyze');
-  const placeholder = document.getElementById('ai-season-placeholder');
-  const result = document.getElementById('ai-season-result');
-  const content = document.getElementById('ai-season-content');
-  btn.disabled = true;
-  btn.textContent = '분석 생성 중...';
+function renderPage(tbodyId, pageNavId) {
+  const state = pageStates[tbodyId];
+  if (!state) return;
+  const { rows, page } = state;
+  const total = Math.ceil(rows.length / PAGE_SIZE);
+  const start = (page-1)*PAGE_SIZE, end = start+PAGE_SIZE;
+  rows.forEach((r,i) => r.style.display = (i>=start && i<end) ? '' : 'none');
+  const infoEl = document.getElementById(pageNavId+'-info');
+  if (infoEl) infoEl.textContent = total > 0 ? page+' / '+total : '0 / 0';
+  const nav = document.getElementById(pageNavId);
+  if (nav) {
+    nav.querySelectorAll('.page-btn')[0].disabled = page <= 1;
+    nav.querySelectorAll('.page-btn')[1].disabled = page >= total;
+  }
+}
+
+function changePage(tbodyId, pageNavId, dir) {
+  const state = pageStates[tbodyId];
+  if (!state) return;
+  const total = Math.ceil(state.rows.length/PAGE_SIZE);
+  state.page = Math.max(1, Math.min(total, state.page+dir));
+  renderPage(tbodyId, pageNavId);
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('ai-modal'))
+    document.getElementById('ai-modal').classList.remove('active');
+}
+
+async function analyzeSeasonAI(year, league) {
+  const modal = document.getElementById('ai-modal');
+  const body  = document.getElementById('ai-modal-body');
+  modal.classList.add('active');
+  body.innerHTML = '<div class="modal-loading"><div class="spinner"></div><p>' + year + '시즌 AI 분석 생성 중...</p></div>';
+
   try {
     const resp = await fetch('/api/analyze/player-season', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ player_name: PLAYER_NAME, is_pitcher: IS_PITCHER })
+      body: JSON.stringify({ player_name: PLAYER_NAME, is_pitcher: IS_PITCHER, year: year, league: league })
     });
     const data = await resp.json();
     if (data.success) {
-      placeholder.style.display = 'none';
-      result.style.display = 'block';
-      content.textContent = data.content;
+      body.innerHTML = '<div class="ai-label" style="color:var(--red);font-size:0.72rem;font-weight:700;letter-spacing:2px;margin-bottom:0.8rem;">' +
+        'CLAUDE AI · ' + year + '시즌 · ' + (league==='kbo'?'KBO':'퓨처스') + (data.cached?' (저장됨)':'') + '</div>' +
+        '<div style="line-height:1.9;font-size:0.88rem;color:rgba(248,249,250,0.85);white-space:pre-wrap;">' + data.content + '</div>';
+
+      // 하단 AI 분석 목록에 추가
+      if (!data.cached) {
+        const section = document.getElementById('ai-season-reports');
+        const card = document.createElement('div');
+        card.className = 'ai-card';
+        card.innerHTML = '<div class="ai-label">Claude AI · ' + year + '시즌 · ' + (league==='kbo'?'KBO':'퓨처스') + '</div><div class="ai-content">' + data.content + '</div>';
+        section.insertBefore(card, section.firstChild);
+      }
     } else {
-      btn.disabled = false;
-      btn.textContent = 'AI 시즌 분석 생성하기';
-      alert('오류: ' + (data.error || '알 수 없는 오류'));
+      body.innerHTML = '<p style="color:var(--red);padding:1rem;">오류: ' + (data.error||'알 수 없는 오류') + '</p>';
     }
   } catch(e) {
-    btn.disabled = false;
-    btn.textContent = 'AI 시즌 분석 생성하기';
-    alert('오류: ' + e.message);
+    body.innerHTML = '<p style="color:var(--red);padding:1rem;">오류: ' + e.message + '</p>';
   }
 }
 
-window.addEventListener('DOMContentLoaded', initTable);
+window.addEventListener('DOMContentLoaded', () => {
+  // 현재 시즌으로 테이블/슬라이더 초기 필터링
+  filterTableByYear('kbo-tbody', 'kbo-page', CURRENT_YEAR);
+  filterTableByYear('fut-tbody', 'fut-page', CURRENT_YEAR);
+  filterSliderByYear('kbo-slider', CURRENT_YEAR);
+  filterSliderByYear('fut-slider', CURRENT_YEAR);
+  updateSummary('kbo', null);
+
+  // 드롭다운 기본값을 현재 시즌으로
+  document.querySelectorAll('.season-select').forEach(sel => {
+    for (let opt of sel.options) {
+      if (opt.value === CURRENT_YEAR) { opt.selected = true; break; }
+    }
+  });
+});
+
+function filterSliderByYear(sliderId, year) {
+  const slider = document.getElementById(sliderId);
+  if (!slider) return;
+  Array.from(slider.children).forEach(card => {
+    const dateEl = card.querySelector('.gcm-date');
+    if (!dateEl) return;
+    const text = dateEl.textContent;
+    // 날짜는 MM/DD 형식이라 year 직접 비교 불가 - data-year 속성 사용
+    const cardYear = card.dataset.year;
+    card.style.display = (!year || cardYear === year) ? '' : 'none';
+  });
+}
+
+function filterTableByYear(tbodyId, pageNavId, year) {
+  const tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  const filtered = year ? rows.filter(r => r.dataset.year === year) : rows;
+  pageStates[tbodyId] = { rows: filtered, page: 1 };
+  renderPage(tbodyId, pageNavId);
+}
 </script>
 {% endblock %}

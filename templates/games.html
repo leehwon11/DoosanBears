@@ -3,108 +3,43 @@
 
 {% block head %}
 <style>
-  .page-header {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 2rem;
-  }
-  .page-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 2rem; letter-spacing: 2px;
-  }
-  .month-nav {
-    display: flex; align-items: center; gap: 1rem;
-  }
-  .month-nav button {
-    background: var(--card);
-    border: 1px solid var(--border);
-    color: var(--white);
-    width: 32px; height: 32px;
-    border-radius: 50%;
-    cursor: pointer; font-size: 1rem;
-    transition: background 0.2s;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .month-nav button:hover { background: var(--blue); }
-  .month-label {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.4rem; letter-spacing: 2px;
-    min-width: 120px; text-align: center;
-  }
-  .calendar {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    overflow: hidden;
-    margin-bottom: 2rem;
-  }
-  .cal-header {
-    display: grid; grid-template-columns: repeat(7, 1fr);
-    border-bottom: 1px solid var(--border);
-  }
-  .cal-header span {
-    text-align: center; padding: 10px;
-    font-size: 0.78rem; color: var(--gray);
-    font-weight: 500; letter-spacing: 1px;
-  }
-  .cal-header span:first-child { color: #ff6b6b; }
-  .cal-header span:last-child  { color: #74b9ff; }
-  .cal-body {
-    display: grid; grid-template-columns: repeat(7, 1fr);
-  }
-  .cal-cell {
-    min-height: 80px;
-    border-right: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-    padding: 8px;
-    position: relative;
-  }
-  .cal-cell:nth-child(7n) { border-right: none; }
-  .cal-cell.empty { background: rgba(0,0,0,0.1); }
-  .cal-cell.today { background: rgba(27,58,107,0.3); }
-  .cal-day {
-    font-size: 0.78rem; color: var(--gray);
-    margin-bottom: 4px;
-  }
-  .cal-cell.sunday .cal-day   { color: #ff6b6b; }
-  .cal-cell.saturday .cal-day { color: #74b9ff; }
-  .cal-game {
-    display: block;
-    background: var(--blue);
-    border-radius: 6px;
-    padding: 4px 6px;
-    text-decoration: none;
-    margin-top: 2px;
-    transition: background 0.15s;
-  }
-  .cal-game:hover { background: #2558a8; }
-  .cal-game.win  { background: rgba(39,174,96,0.25); border: 1px solid rgba(39,174,96,0.4); }
-  .cal-game.lose { background: rgba(200,16,46,0.2);  border: 1px solid rgba(200,16,46,0.3); }
-  .cal-game.draw { background: rgba(138,149,163,0.2);border: 1px solid rgba(138,149,163,0.3); }
-  .cal-game-score {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 0.95rem; letter-spacing: 1px;
-    color: var(--white);
-  }
-  .cal-game-team {
-    font-size: 0.7rem; color: rgba(248,249,250,0.6);
-    margin-top: 1px;
-  }
-  .season-summary {
-    display: grid; grid-template-columns: repeat(4, 1fr);
-    gap: 10px; margin-bottom: 2rem;
-  }
-  @media (max-width: 600px) { .season-summary { grid-template-columns: repeat(2,1fr); } }
-  .sum-box {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 1rem; text-align: center;
-  }
-  .sum-num {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 2.2rem; line-height: 1; margin-bottom: 4px;
-  }
-  .sum-label { font-size: 0.75rem; color: var(--gray); letter-spacing: 1px; }
+  .page-header { display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem; }
+  .page-title { font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:2px; }
+  .league-tab-wrap { display:flex;gap:8px;margin-bottom:1.5rem; }
+  .league-tab { padding:7px 20px;border-radius:20px;border:1px solid var(--border);background:none;color:var(--gray);cursor:pointer;font-family:inherit;font-size:0.85rem;font-weight:500;transition:all 0.2s; }
+  .league-tab.active { background:var(--blue);border-color:var(--blue);color:white; }
+  .league-tab:hover:not(.active) { border-color:rgba(255,255,255,0.3);color:var(--white); }
+  .league-content { display:none; }
+  .league-content.active { display:block; }
+  .month-nav { display:flex;align-items:center;gap:1rem;margin-bottom:1.2rem; }
+  .month-nav button { background:var(--card);border:1px solid var(--border);color:var(--white);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1rem;transition:background 0.2s;display:flex;align-items:center;justify-content:center; }
+  .month-nav button:hover { background:var(--blue); }
+  .month-label { font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:2px;min-width:120px;text-align:center; }
+  .calendar { background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:2rem; }
+  .cal-header { display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--border); }
+  .cal-header span { text-align:center;padding:10px;font-size:0.78rem;color:var(--gray);font-weight:500; }
+  .cal-header span:first-child { color:#ff6b6b; }
+  .cal-header span:last-child  { color:#74b9ff; }
+  .cal-body { display:grid;grid-template-columns:repeat(7,1fr); }
+  .cal-cell { min-height:80px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:8px;position:relative; }
+  .cal-cell:nth-child(7n) { border-right:none; }
+  .cal-cell.empty { background:rgba(0,0,0,0.1); }
+  .cal-cell.today { background:rgba(27,58,107,0.3); }
+  .cal-day { font-size:0.78rem;color:var(--gray);margin-bottom:4px; }
+  .cal-cell.sunday .cal-day   { color:#ff6b6b; }
+  .cal-cell.saturday .cal-day { color:#74b9ff; }
+  .cal-game { display:block;border-radius:6px;padding:4px 6px;text-decoration:none;margin-top:2px;transition:background 0.15s; }
+  .cal-game.win  { background:rgba(39,174,96,0.25);border:1px solid rgba(39,174,96,0.4); }
+  .cal-game.lose { background:rgba(200,16,46,0.2);border:1px solid rgba(200,16,46,0.3); }
+  .cal-game.draw { background:rgba(138,149,163,0.2);border:1px solid rgba(138,149,163,0.3); }
+  .cal-game:hover { opacity:0.8; }
+  .cal-game-score { font-family:'Bebas Neue',sans-serif;font-size:0.95rem;letter-spacing:1px;color:var(--white); }
+  .cal-game-team { font-size:0.7rem;color:rgba(248,249,250,0.6);margin-top:1px; }
+  .season-summary { display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:2rem; }
+  @media(max-width:600px){.season-summary{grid-template-columns:repeat(2,1fr);}}
+  .sum-box { background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem;text-align:center; }
+  .sum-num { font-family:'Bebas Neue',sans-serif;font-size:2.2rem;line-height:1;margin-bottom:4px; }
+  .sum-label { font-size:0.75rem;color:var(--gray);letter-spacing:1px; }
 </style>
 {% endblock %}
 
@@ -114,112 +49,133 @@
   <a href="/" style="color:var(--gray);text-decoration:none;font-size:0.85rem;">← 홈으로</a>
 </div>
 
-{% if games %}
-{% set wins  = games | selectattr('result','equalto','승') | list | length %}
-{% set loses = games | selectattr('result','equalto','패') | list | length %}
-{% set draws = games | selectattr('result','equalto','무') | list | length %}
-{% set total = games | length %}
-<div class="season-summary">
-  <div class="sum-box">
-    <div class="sum-num" style="color:#27AE60">{{ wins }}</div>
-    <div class="sum-label">승</div>
-  </div>
-  <div class="sum-box">
-    <div class="sum-num" style="color:var(--red)">{{ loses }}</div>
-    <div class="sum-label">패</div>
-  </div>
-  <div class="sum-box">
-    <div class="sum-num" style="color:var(--gray)">{{ draws }}</div>
-    <div class="sum-label">무</div>
-  </div>
-  <div class="sum-box">
-    <div class="sum-num" style="color:var(--gold)">
-      {% if wins + loses > 0 %}{{ "%.3f"|format(wins / (wins + loses)) }}{% else %}.000{% endif %}
-    </div>
-    <div class="sum-label">승률</div>
-  </div>
-</div>
-{% endif %}
-
-<div class="month-nav" style="margin-bottom:1.2rem;">
-  <button onclick="changeMonth(-1)">‹</button>
-  <div class="month-label" id="monthLabel"></div>
-  <button onclick="changeMonth(1)">›</button>
+<div class="league-tab-wrap">
+  <button class="league-tab active" onclick="switchLeague('kbo', this)">KBO</button>
+  <button class="league-tab" onclick="switchLeague('futures', this)">퓨처스</button>
 </div>
 
-<div class="calendar">
-  <div class="cal-header">
-    <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+<!-- ══════ KBO ══════ -->
+<div id="tab-kbo" class="league-content active">
+  {% if games %}
+  {% set wins  = games | selectattr('result','equalto','승') | list | length %}
+  {% set loses = games | selectattr('result','equalto','패') | list | length %}
+  {% set draws = games | selectattr('result','equalto','무') | list | length %}
+  <div class="season-summary">
+    <div class="sum-box"><div class="sum-num" style="color:#27AE60">{{ wins }}</div><div class="sum-label">승</div></div>
+    <div class="sum-box"><div class="sum-num" style="color:var(--red)">{{ loses }}</div><div class="sum-label">패</div></div>
+    <div class="sum-box"><div class="sum-num" style="color:var(--gray)">{{ draws }}</div><div class="sum-label">무</div></div>
+    <div class="sum-box"><div class="sum-num" style="color:var(--gold)">
+      {% if wins+loses > 0 %}{{ "%.3f"|format(wins/(wins+loses)) }}{% else %}.000{% endif %}
+    </div><div class="sum-label">승률</div></div>
   </div>
-  <div class="cal-body" id="calBody"></div>
+  {% endif %}
+
+  <div class="month-nav">
+    <button onclick="changeMonth('kbo',-1)">‹</button>
+    <div class="month-label" id="kbo-month-label"></div>
+    <button onclick="changeMonth('kbo',1)">›</button>
+  </div>
+  <div class="calendar">
+    <div class="cal-header"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
+    <div class="cal-body" id="kbo-cal-body"></div>
+  </div>
+</div>
+
+<!-- ══════ 퓨처스 ══════ -->
+<div id="tab-futures" class="league-content">
+  {% if futures_games %}
+  {% set fw = futures_games | selectattr('result','equalto','승') | list | length %}
+  {% set fl = futures_games | selectattr('result','equalto','패') | list | length %}
+  {% set fd = futures_games | selectattr('result','equalto','무') | list | length %}
+  <div class="season-summary">
+    <div class="sum-box"><div class="sum-num" style="color:#27AE60">{{ fw }}</div><div class="sum-label">승</div></div>
+    <div class="sum-box"><div class="sum-num" style="color:var(--red)">{{ fl }}</div><div class="sum-label">패</div></div>
+    <div class="sum-box"><div class="sum-num" style="color:var(--gray)">{{ fd }}</div><div class="sum-label">무</div></div>
+    <div class="sum-box"><div class="sum-num" style="color:var(--gold)">
+      {% if fw+fl > 0 %}{{ "%.3f"|format(fw/(fw+fl)) }}{% else %}.000{% endif %}
+    </div><div class="sum-label">승률</div></div>
+  </div>
+  {% endif %}
+
+  <div class="month-nav">
+    <button onclick="changeMonth('futures',-1)">‹</button>
+    <div class="month-label" id="futures-month-label"></div>
+    <button onclick="changeMonth('futures',1)">›</button>
+  </div>
+  <div class="calendar">
+    <div class="cal-header"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
+    <div class="cal-body" id="futures-cal-body"></div>
+  </div>
 </div>
 
 <script>
-const games = {{ games | tojson }};
-const gameMap = {};
-games.forEach(g => { gameMap[g.date] = g; });
+function switchLeague(name, btn) {
+  document.querySelectorAll('.league-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.league-tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+const kboGames     = {{ games | tojson }};
+const futuresGames = {{ futures_games | tojson }};
+
+const kboMap     = {};
+const futuresMap = {};
+kboGames.forEach(g     => { kboMap[g.date] = g; });
+futuresGames.forEach(g => { futuresMap[g.date] = g; });
 
 const today = new Date();
-let curYear  = today.getFullYear();
-let curMonth = today.getMonth();
+const state = {
+  kbo:     { year: today.getFullYear(), month: today.getMonth() },
+  futures: { year: today.getFullYear(), month: today.getMonth() },
+};
 
-function renderCalendar(year, month) {
-  const label = `${year}년 ${month+1}월`;
-  document.getElementById('monthLabel').textContent = label;
+function renderCalendar(league) {
+  const { year, month } = state[league];
+  const gameMap  = league === 'kbo' ? kboMap : futuresMap;
+  const labelEl  = document.getElementById(league + '-month-label');
+  const bodyEl   = document.getElementById(league + '-cal-body');
+  const linkPrefix = league === 'kbo' ? '/game/' : null;
+
+  labelEl.textContent = year + '년 ' + (month+1) + '월';
 
   const firstDay = new Date(year, month, 1).getDay();
   const lastDate = new Date(year, month+1, 0).getDate();
-  const todayStr = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`;
+  const todayStr = String(today.getFullYear()) + String(today.getMonth()+1).padStart(2,'0') + String(today.getDate()).padStart(2,'0');
 
   let html = '';
-
-  // 빈 셀
-  for (let i = 0; i < firstDay; i++) {
-    html += '<div class="cal-cell empty"></div>';
-  }
-
+  for (let i = 0; i < firstDay; i++) html += '<div class="cal-cell empty"></div>';
   for (let d = 1; d <= lastDate; d++) {
-    const mm   = String(month+1).padStart(2,'0');
-    const dd   = String(d).padStart(2,'0');
-    const dateStr = `${year}${mm}${dd}`;
-    const dow  = new Date(year, month, d).getDay();
-    const isToday   = dateStr === todayStr;
-    const isSunday  = dow === 0;
-    const isSaturday= dow === 6;
-
+    const mm  = String(month+1).padStart(2,'0');
+    const dd  = String(d).padStart(2,'0');
+    const dateStr = String(year) + mm + dd;
+    const dow = new Date(year, month, d).getDay();
     let cls = 'cal-cell';
-    if (isToday)    cls += ' today';
-    if (isSunday)   cls += ' sunday';
-    if (isSaturday) cls += ' saturday';
-
-    html += `<div class="${cls}">`;
-    html += `<div class="cal-day">${d}</div>`;
-
+    if (dateStr === todayStr) cls += ' today';
+    if (dow === 0) cls += ' sunday';
+    if (dow === 6) cls += ' saturday';
+    html += '<div class="' + cls + '"><div class="cal-day">' + d + '</div>';
     const g = gameMap[dateStr];
     if (g) {
-      const resultCls = g.result === '승' ? 'win' : g.result === '패' ? 'lose' : 'draw';
-      const opponent  = g.home_team === '두산' ? g.away_team : g.home_team;
-      const ds = g.home_score;
-      const as = g.away_score;
-      html += `<a href="/game/${g.game_id}" class="cal-game ${resultCls}">
-        <div class="cal-game-score">${ds} : ${as}</div>
-        <div class="cal-game-team">vs ${opponent}</div>
-      </a>`;
+      const rc  = g.result === '승' ? 'win' : g.result === '패' ? 'lose' : 'draw';
+      const opp = g.home_team === '두산' ? g.away_team : g.home_team;
+      const tag = linkPrefix ? 'a href="' + linkPrefix + g.game_id + '"' : 'div';
+      const endTag = linkPrefix ? 'a' : 'div';
+      html += '<' + tag + ' class="cal-game ' + rc + '"><div class="cal-game-score">' + g.home_score + ' : ' + g.away_score + '</div><div class="cal-game-team">vs ' + opp + '</div></' + endTag + '>';
     }
-
     html += '</div>';
   }
-
-  document.getElementById('calBody').innerHTML = html;
+  bodyEl.innerHTML = html;
 }
 
-function changeMonth(dir) {
-  curMonth += dir;
-  if (curMonth > 11) { curMonth = 0; curYear++; }
-  if (curMonth < 0)  { curMonth = 11; curYear--; }
-  renderCalendar(curYear, curMonth);
+function changeMonth(league, dir) {
+  state[league].month += dir;
+  if (state[league].month > 11) { state[league].month = 0; state[league].year++; }
+  if (state[league].month < 0)  { state[league].month = 11; state[league].year--; }
+  renderCalendar(league);
 }
 
-renderCalendar(curYear, curMonth);
+renderCalendar('kbo');
+renderCalendar('futures');
 </script>
 {% endblock %}
