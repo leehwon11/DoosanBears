@@ -1,40 +1,40 @@
 """
-두산 베어스 분석 웹사이트 - Gemini AI 분석 모듈
+두산 베어스 분석 웹사이트 - Claude AI 분석 모듈
 =================================================
 설치:
-    pip install google-genai python-dotenv
+    pip install anthropic python-dotenv
 
 .env 파일에 추가:
-    GEMINI_API_KEY=여기에키입력
+    ANTHROPIC_API_KEY=sk-ant-여기에키입력
 """
 
 import os
 import time
-from google import genai
+import anthropic
 from dotenv import load_dotenv
 from database import save_ai_report, get_game_detail
 
 load_dotenv()
 
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
 
-def _call_gemini(prompt: str) -> str:
-    """Gemini API 호출. 429 오류 시 재시도."""
+def _call_claude(prompt: str) -> str:
+    """Claude API 호출. 오류 시 재시도."""
     for attempt in range(3):
         try:
-            response = client.models.generate_content(
-                model="models/gemini-2.5-flash",
-                contents=prompt,
+            message = client.messages.create(
+                model="claude-sonnet-4-5",
+                max_tokens=1024,
+                messages=[{"role": "user", "content": prompt}]
             )
-            return response.text
+            return message.content[0].text
+        except anthropic.RateLimitError as e:
+            wait = (attempt + 1) * 15
+            print(f"    API 한도 초과 — {wait}초 후 재시도...")
+            time.sleep(wait)
         except Exception as e:
-            if "429" in str(e) and attempt < 2:
-                wait = (attempt + 1) * 15
-                print(f"    API 한도 초과 — {wait}초 후 재시도...")
-                time.sleep(wait)
-            else:
-                raise e
+            raise e
 
 
 def analyze_game(game_id: str) -> str:
@@ -85,7 +85,7 @@ def analyze_game(game_id: str) -> str:
 - 잘한 점과 아쉬운 점을 균형 있게 서술
 - 팬 입장에서 따뜻한 톤으로 작성
 """
-    result = _call_gemini(prompt)
+    result = _call_claude(prompt)
     save_ai_report(game_id, "game", result)
     print(f"경기 종합 평가 저장 완료: {game_id}")
     return result
@@ -130,7 +130,7 @@ def analyze_player(game_id: str, player_name: str) -> str:
 2~3문단, 오늘 피칭 흐름 요약 → 잘한 점 → 발전 방향, 팬 입장에서 따뜻하고 솔직하게 작성해주세요.
 """
 
-    result = _call_gemini(prompt)
+    result = _call_claude(prompt)
     save_ai_report(game_id, "player", result, player_name)
     print(f"선수 평가 저장 완료: {player_name} ({game_id})")
     return result
@@ -147,7 +147,7 @@ def analyze_all(game_id: str):
         name = player.get("name")
         if name:
             analyze_player(game_id, name)
-            time.sleep(4)
+            time.sleep(2)
     print("=== AI 분석 완료 ===\n")
 
 

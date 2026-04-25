@@ -163,15 +163,29 @@ def api_analyze_game(game_id):
 
 @app.route("/api/analyze/player/<game_id>", methods=["POST"])
 def api_analyze_player(game_id):
-    """선수 개인 평가 생성"""
+    """선수 개인 평가 - 저장된 결과 있으면 바로 반환, 없으면 생성"""
     try:
         from flask import request
         from analyzer import analyze_player
+        from database import get_connection
         player_name = request.json.get("player_name")
         if not player_name:
             return jsonify({"error": "선수명 없음"}), 400
+
+        # 이미 분석된 결과 있는지 확인
+        conn = get_connection()
+        existing = conn.execute(
+            "SELECT content FROM ai_reports WHERE game_id=? AND report_type='player' AND player_name=? ORDER BY created_at DESC LIMIT 1",
+            (game_id, player_name)
+        ).fetchone()
+        conn.close()
+
+        if existing:
+            return jsonify({"success": True, "content": existing["content"], "player_name": player_name, "cached": True})
+
+        # 없으면 새로 생성
         content = analyze_player(game_id, player_name)
-        return jsonify({"success": True, "content": content, "player_name": player_name})
+        return jsonify({"success": True, "content": content, "player_name": player_name, "cached": False})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -194,12 +208,24 @@ def server_error(e):
 # 실행
 # ──────────────────────────────────────────
 
-if __name__ == "__main__":
-    init_db()
-    start_scheduler_thread()
+# gunicorn/직접 실행 모두 스케줄러 시작
+import threading
+_scheduler_started = False
+_scheduler_lock = threading.Lock()
 
+def ensure_scheduler():
+    global _scheduler_started
+    with _scheduler_lock:
+        if not _scheduler_started:
+            start_scheduler_thread()
+            _scheduler_started = True
+
+# 앱 컨텍스트에서 스케줄러 시작
+with app.app_context():
+    ensure_scheduler()
+
+if __name__ == "__main__":
     port = int(os.getenv("PORT", 5000))
     debug = os.getenv("FLASK_ENV") != "production"
-
     print(f"서버 시작 → http://localhost:{port}")
     app.run(host="0.0.0.0", port=port, debug=debug)
