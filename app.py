@@ -38,6 +38,28 @@ def index():
     return render_template("index.html", games=games)
 
 
+@app.route("/players")
+def players_page():
+    """선수 목록 페이지"""
+    from database import get_connection
+    conn = get_connection()
+    try:
+        players = conn.execute(
+            "SELECT * FROM players ORDER BY position, CAST(number AS INTEGER)"
+        ).fetchall()
+        updated_at = conn.execute(
+            "SELECT updated_at FROM players ORDER BY updated_at DESC LIMIT 1"
+        ).fetchone()
+    except:
+        players = []
+        updated_at = None
+    conn.close()
+    return render_template("players.html",
+        players=[dict(p) for p in players],
+        updated_at=updated_at["updated_at"][:10] if updated_at else "미업데이트"
+    )
+
+
 @app.route("/games")
 def games_all():
     """전체 경기 목록 페이지"""

@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}선수단 · 두산 베어스{% endblock %}
+
+{% block head %}
+<style>
+  .page-header { display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem; }
+  .page-title { font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:2px; }
+  .updated-at { color:var(--gray);font-size:0.82rem; }
+  .section-title { font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:2px;margin-bottom:1rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.6rem; }
+  .section-title::before { content:'';display:inline-block;width:4px;height:18px;background:var(--red);border-radius:2px; }
+  .pos-section { margin-bottom:2rem; }
+  .player-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px; }
+  .player-card {
+    background:var(--card);border:1px solid var(--border);border-radius:12px;
+    padding:1rem;text-align:center;text-decoration:none;color:inherit;
+    transition:border-color 0.2s,transform 0.15s;display:block;
+  }
+  .player-card:hover { border-color:rgba(255,255,255,0.25);transform:translateY(-2px); }
+  .player-number { font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--red);line-height:1; }
+  .player-name { font-weight:500;font-size:0.95rem;margin:6px 0 4px; }
+  .player-meta { font-size:0.75rem;color:var(--gray); }
+  .removed-section { margin-bottom:2rem; }
+  .removed-list { display:flex;flex-wrap:wrap;gap:8px; }
+  .removed-chip {
+    background:rgba(200,16,46,0.15);border:1px solid rgba(200,16,46,0.3);
+    border-radius:20px;padding:4px 14px;font-size:0.82rem;color:rgba(248,249,250,0.6);
+  }
+  .empty { text-align:center;padding:3rem;color:var(--gray); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title">두산 베어스 선수단</div>
+  <div class="updated-at">업데이트: {{ updated_at }}</div>
+</div>
+
+{% if not players %}
+<div class="empty">
+  <p>선수 데이터가 없어요.</p>
+  <p style="font-size:0.85rem;margin-top:0.5rem;">터미널에서 <code>python player_crawler.py</code> 실행해주세요!</p>
+</div>
+{% else %}
+
+{% set active   = players | selectattr('status','equalto','active')  | list %}
+{% set removed  = players | selectattr('status','equalto','removed') | list %}
+
+{% set pos_order = ['투수','포수','내야수','외야수'] %}
+
+{% for pos in pos_order %}
+{% set pos_players = active | selectattr('position','equalto',pos) | list %}
+{% if pos_players %}
+<div class="pos-section">
+  <div class="section-title">{{ pos }}</div>
+  <div class="player-grid">
+    {% for p in pos_players %}
+    <a href="/player/{{ p.name }}" class="player-card">
+      <div class="player-number">{{ p.number }}</div>
+      <div class="player-name">{{ p.name }}</div>
+      <div class="player-meta">{{ p.batting }}</div>
+      <div class="player-meta">{{ p.birth[:4] if p.birth else '' }}</div>
+      <div class="player-meta">{{ p.height_weight }}</div>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+{% endfor %}
+
+{% if removed %}
+<div class="removed-section">
+  <div class="section-title" style="color:var(--gray);">말소 선수</div>
+  <div class="removed-list">
+    {% for p in removed %}
+    <span class="removed-chip">{{ p.number }} {{ p.name }} ({{ p.position }})</span>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% endif %}
+{% endblock %}

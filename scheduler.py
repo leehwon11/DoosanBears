@@ -112,6 +112,18 @@ def start_scheduler():
 # 수동 즉시 실행 (테스트용)
 # ──────────────────────────────────────────
 
+def update_players_job():
+    """선수 등록 현황 자동 업데이트"""
+    log.info("선수 목록 업데이트 시작")
+    try:
+        from player_crawler import crawl_players, save_players_to_db
+        data = crawl_players()
+        save_players_to_db(data)
+        log.info(f"선수 목록 업데이트 완료: {len(data['roster'])}명")
+    except Exception as e:
+        log.error(f"선수 목록 업데이트 실패: {e}")
+
+
 def run_now():
     """
     스케줄 기다리지 않고 지금 바로 크롤링.
