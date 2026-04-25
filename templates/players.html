@@ -3,28 +3,31 @@
 
 {% block head %}
 <style>
-  .page-header { display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem; }
+  .page-header { display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem; }
   .page-title { font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:2px; }
   .updated-at { color:var(--gray);font-size:0.82rem; }
+  .tab-wrap { display:flex;gap:8px;margin-bottom:2rem; }
+  .tab-btn { padding:8px 20px;border-radius:20px;border:1px solid var(--border);background:none;color:var(--gray);cursor:pointer;font-family:inherit;font-size:0.88rem;font-weight:500;transition:all 0.2s; }
+  .tab-btn.active { background:var(--red);border-color:var(--red);color:white; }
+  .tab-btn:hover:not(.active) { border-color:rgba(255,255,255,0.3);color:var(--white); }
+  .tab-content { display:none; }
+  .tab-content.active { display:block; }
   .section-title { font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:2px;margin-bottom:1rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.6rem; }
   .section-title::before { content:'';display:inline-block;width:4px;height:18px;background:var(--red);border-radius:2px; }
   .pos-section { margin-bottom:2rem; }
-  .player-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px; }
-  .player-card {
-    background:var(--card);border:1px solid var(--border);border-radius:12px;
-    padding:1rem;text-align:center;text-decoration:none;color:inherit;
-    transition:border-color 0.2s,transform 0.15s;display:block;
-  }
+  .player-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px; }
+  .player-card { background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem;text-align:center;text-decoration:none;color:inherit;transition:border-color 0.2s,transform 0.15s;display:block; }
   .player-card:hover { border-color:rgba(255,255,255,0.25);transform:translateY(-2px); }
-  .player-number { font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--red);line-height:1; }
-  .player-name { font-weight:500;font-size:0.95rem;margin:6px 0 4px; }
-  .player-meta { font-size:0.75rem;color:var(--gray); }
-  .removed-section { margin-bottom:2rem; }
-  .removed-list { display:flex;flex-wrap:wrap;gap:8px; }
-  .removed-chip {
-    background:rgba(200,16,46,0.15);border:1px solid rgba(200,16,46,0.3);
-    border-radius:20px;padding:4px 14px;font-size:0.82rem;color:rgba(248,249,250,0.6);
-  }
+  .player-number { font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--red);line-height:1;margin-bottom:6px; }
+  .player-name { font-weight:700;font-size:0.95rem;margin-bottom:4px; }
+  .player-batting { font-size:0.75rem;color:var(--gray); }
+  .player-birth { font-size:0.72rem;color:var(--gray);margin-top:2px; }
+  .move-section { margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--border); }
+  .move-title { font-size:0.85rem;font-weight:700;color:var(--gray);letter-spacing:1px;margin-bottom:0.8rem; }
+  .move-list { display:flex;flex-wrap:wrap;gap:8px; }
+  .move-chip { border-radius:20px;padding:4px 14px;font-size:0.8rem; }
+  .chip-reg  { background:rgba(39,174,96,0.15);border:1px solid rgba(39,174,96,0.3);color:rgba(248,249,250,0.7); }
+  .chip-rem  { background:rgba(200,16,46,0.12);border:1px solid rgba(200,16,46,0.25);color:rgba(248,249,250,0.6); }
   .empty { text-align:center;padding:3rem;color:var(--gray); }
 </style>
 {% endblock %}
@@ -42,13 +45,22 @@
 </div>
 {% else %}
 
-{% set active   = players | selectattr('status','equalto','active')  | list %}
-{% set removed  = players | selectattr('status','equalto','removed') | list %}
+{% set first   = players | selectattr('team_level','equalto','1군') | selectattr('status','equalto','active')  | list %}
+{% set first_r = players | selectattr('team_level','equalto','1군') | selectattr('status','equalto','removed') | list %}
+{% set second   = players | selectattr('team_level','equalto','2군') | selectattr('status','equalto','active')  | list %}
+{% set second_r = players | selectattr('team_level','equalto','2군') | selectattr('status','equalto','removed') | list %}
+{% set edu      = players | selectattr('team_level','equalto','육성') | list %}
 
+<div class="tab-wrap">
+  <button class="tab-btn active" onclick="switchTab('first', this)">1군 엔트리 ({{ first|length }})</button>
+  <button class="tab-btn" onclick="switchTab('second', this)">2군 ({{ second|length }})</button>
+  <button class="tab-btn" onclick="switchTab('edu', this)">육성 ({{ edu|length }})</button>
+</div>
+
+{% macro roster_section(roster, removed, registered=[]) %}
 {% set pos_order = ['투수','포수','내야수','외야수'] %}
-
 {% for pos in pos_order %}
-{% set pos_players = active | selectattr('position','equalto',pos) | list %}
+{% set pos_players = roster | selectattr('position','equalto',pos) | list %}
 {% if pos_players %}
 <div class="pos-section">
   <div class="section-title">{{ pos }}</div>
@@ -57,9 +69,8 @@
     <a href="/player/{{ p.name }}" class="player-card">
       <div class="player-number">{{ p.number }}</div>
       <div class="player-name">{{ p.name }}</div>
-      <div class="player-meta">{{ p.batting }}</div>
-      <div class="player-meta">{{ p.birth[:4] if p.birth else '' }}</div>
-      <div class="player-meta">{{ p.height_weight }}</div>
+      <div class="player-batting">{{ p.batting }}</div>
+      <div class="player-birth">{{ p.birth[:4] if p.birth else '' }}년생</div>
     </a>
     {% endfor %}
   </div>
@@ -67,16 +78,59 @@
 {% endif %}
 {% endfor %}
 
-{% if removed %}
-<div class="removed-section">
-  <div class="section-title" style="color:var(--gray);">말소 선수</div>
-  <div class="removed-list">
-    {% for p in removed %}
-    <span class="removed-chip">{{ p.number }} {{ p.name }} ({{ p.position }})</span>
+{% if removed or registered %}
+<div class="move-section">
+  {% if registered %}
+  <div class="move-title">▲ 등록</div>
+  <div class="move-list" style="margin-bottom:0.8rem;">
+    {% for p in registered %}
+    <span class="move-chip chip-reg">{{ p.number }} {{ p.name }} ({{ p.position }})</span>
     {% endfor %}
   </div>
+  {% endif %}
+  {% if removed %}
+  <div class="move-title">▼ 말소</div>
+  <div class="move-list">
+    {% for p in removed %}
+    <span class="move-chip chip-rem">{{ p.number }} {{ p.name }} ({{ p.position }})</span>
+    {% endfor %}
+  </div>
+  {% endif %}
 </div>
 {% endif %}
+{% endmacro %}
+
+<!-- 1군 -->
+<div id="tab-first" class="tab-content active">
+  {{ roster_section(first, first_r) }}
+</div>
+
+<!-- 2군 -->
+<div id="tab-second" class="tab-content">
+  {% if second %}
+    {{ roster_section(second, second_r) }}
+  {% else %}
+  <div class="empty"><p style="color:var(--gray)">2군 데이터가 없어요.</p></div>
+  {% endif %}
+</div>
+
+<!-- 육성 -->
+<div id="tab-edu" class="tab-content">
+  {% if edu %}
+    {{ roster_section(edu, []) }}
+  {% else %}
+  <div class="empty"><p style="color:var(--gray)">육성선수 데이터가 없어요.</p></div>
+  {% endif %}
+</div>
 
 {% endif %}
+
+<script>
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
 {% endblock %}

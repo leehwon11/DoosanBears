@@ -45,7 +45,7 @@ def players_page():
     conn = get_connection()
     try:
         players = conn.execute(
-            "SELECT * FROM players ORDER BY position, CAST(number AS INTEGER)"
+            "SELECT * FROM players ORDER BY team_level, position, CAST(number AS INTEGER)"
         ).fetchall()
         updated_at = conn.execute(
             "SELECT updated_at FROM players ORDER BY updated_at DESC LIMIT 1"
@@ -76,20 +76,48 @@ def game_report(game_id):
     return render_template("game.html", detail=detail)
 
 
-@app.route("/player/<name>")
+@app.route("/player/<n>")
 def player_page(name):
-    """선수 시즌 기록 + AI 평가 페이지"""
-    stats = get_player_stats(name)
-    if not stats:
-        abort(404)
+    """선수 페이지 - 타자/투수 자동 구분"""
     from database import get_connection
     conn = get_connection()
+
+    try:
+        player_info = conn.execute("SELECT * FROM players WHERE name=? LIMIT 1", (name,)).fetchone()
+        player_info = dict(player_info) if player_info else {}
+    except:
+        player_info = {}
+
+    batter_stats = conn.execute("""
+        SELECT b.*, g.date, g.result, g.home_team, g.away_team
+        FROM batter_stats b JOIN games g ON b.game_id = g.game_id
+        WHERE b.name = ? ORDER BY g.date DESC
+    """, (name,)).fetchall()
+
+    pitcher_stats = conn.execute("""
+        SELECT p.*, g.date, g.result, g.home_team, g.away_team
+        FROM pitcher_stats p JOIN games g ON p.game_id = g.game_id
+        WHERE p.name = ? ORDER BY g.date DESC
+    """, (name,)).fetchall()
+
     ai_reports = conn.execute(
         "SELECT * FROM ai_reports WHERE player_name=? AND report_type='player' ORDER BY created_at DESC",
         (name,)
     ).fetchall()
     conn.close()
-    return render_template("player.html", name=name, stats=stats, ai_reports=[dict(r) for r in ai_reports])
+
+    if not batter_stats and not pitcher_stats and not player_info:
+        abort(404)
+
+    is_pitcher = len(pitcher_stats) > len(batter_stats)
+
+    return render_template("player.html",
+        name=name, player_info=player_info,
+        is_pitcher=is_pitcher,
+        batter_stats=[dict(r) for r in batter_stats],
+        pitcher_stats=[dict(r) for r in pitcher_stats],
+        ai_reports=[dict(r) for r in ai_reports],
+    )
 
 
 # ──────────────────────────────────────────
