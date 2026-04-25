@@ -76,9 +76,10 @@ def game_report(game_id):
     return render_template("game.html", detail=detail)
 
 
-@app.route("/player/<n>")
-def player_page(name):
+@app.route("/player/<name>")
+def player_page(n):
     """선수 페이지 - 타자/투수 자동 구분"""
+    name = n
     from database import get_connection
     conn = get_connection()
 
@@ -104,6 +105,7 @@ def player_page(name):
         "SELECT * FROM ai_reports WHERE player_name=? AND report_type='player' ORDER BY created_at DESC",
         (name,)
     ).fetchall()
+    conn2 = conn
     conn.close()
 
     if not batter_stats and not pitcher_stats and not player_info:
@@ -111,12 +113,23 @@ def player_page(name):
 
     is_pitcher = len(pitcher_stats) > len(batter_stats)
 
+    # 시즌 종합 AI 분석
+    try:
+        player_season_report = conn2.execute(
+            "SELECT * FROM ai_reports WHERE player_name=? AND report_type='player_season' ORDER BY created_at DESC LIMIT 1",
+            (name,)
+        ).fetchone()
+        player_season_report = dict(player_season_report) if player_season_report else None
+    except:
+        player_season_report = None
+
     return render_template("player.html",
         name=name, player_info=player_info,
         is_pitcher=is_pitcher,
         batter_stats=[dict(r) for r in batter_stats],
         pitcher_stats=[dict(r) for r in pitcher_stats],
         ai_reports=[dict(r) for r in ai_reports],
+        player_season_report=player_season_report,
     )
 
 
@@ -207,6 +220,70 @@ def api_analyze_game(game_id):
         from analyzer import analyze_game
         content = analyze_game(game_id)
         return jsonify({"success": True, "content": content})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/analyze/player-season", methods=["POST"])
+def api_analyze_player_season():
+    """선수 시즌 종합 AI 분석"""
+    try:
+        from flask import request
+        from database import get_connection
+        data = request.json
+        player_name = data.get("player_name")
+        is_pitcher  = data.get("is_pitcher", False)
+        if not player_name:
+            return jsonify({"error": "선수명 없음"}), 400
+
+        conn = get_connection()
+
+        if is_pitcher:
+            stats = conn.execute("""
+                SELECT p.*, g.date FROM pitcher_stats p
+                JOIN games g ON p.game_id = g.game_id
+                WHERE p.name = ? ORDER BY g.date DESC
+            """, (player_name,)).fetchall()
+            stats = [dict(r) for r in stats]
+            lines = [f"{s['date'][4:6]}/{s['date'][6:]} {s['ip']}이닝 {s['er']}자책 {s['so']}삼진 ERA {s['era']}" for s in stats]
+            stat_summary = "\n".join(lines[:30])
+            prompt = f"""두산 베어스 투수 {player_name}의 이번 시즌 전체 기록을 분석해주세요.
+
+기록 목록:
+{stat_summary}
+
+총 {len(stats)}경기 등판, 자책점 {sum(s['er'] for s in stats)}점, 삼진 {sum(s['so'] for s in stats)}개
+
+3~4문단으로 시즌 전체 흐름 평가, 강점, 약점, 발전 방향을 팬 입장에서 따뜻하게 작성해주세요."""
+        else:
+            stats = conn.execute("""
+                SELECT b.*, g.date FROM batter_stats b
+                JOIN games g ON b.game_id = g.game_id
+                WHERE b.name = ? ORDER BY g.date DESC
+            """, (player_name,)).fetchall()
+            stats = [dict(r) for r in stats]
+            total_ab  = sum(s['ab'] for s in stats)
+            total_h   = sum(s['h'] for s in stats)
+            total_hr  = sum(s['hr'] for s in stats)
+            total_rbi = sum(s['rbi'] for s in stats)
+            avg = f"{total_h/total_ab:.3f}" if total_ab > 0 else ".000"
+            prompt = f"""두산 베어스 타자 {player_name}의 이번 시즌 전체 기록을 분석해주세요.
+
+시즌 누적: {total_ab}타수 {total_h}안타 {total_hr}홈런 {total_rbi}타점 타율 {avg}
+총 {len(stats)}경기 출장
+
+3~4문단으로 시즌 전체 흐름 평가, 강점, 약점, 발전 방향을 팬 입장에서 따뜻하게 작성해주세요."""
+
+        from analyzer import _call_claude
+        result = _call_claude(prompt)
+
+        conn.execute(
+            "INSERT INTO ai_reports (game_id, report_type, player_name, content, created_at) VALUES ('season', 'player_season', ?, ?, ?)",
+            (player_name, result, __import__('datetime').datetime.now().isoformat())
+        )
+        conn.commit()
+        conn.close()
+        return jsonify({"success": True, "content": result})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
