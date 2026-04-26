@@ -20,10 +20,136 @@ app = Flask(__name__)
 
 @app.route("/")
 def index():
+    from database import get_connection, get_recent_futures_games
     games = get_recent_games(limit=5)
-    from database import get_recent_futures_games
     futures_games = get_recent_futures_games(limit=5)
-    return render_template("index.html", games=games, futures_games=futures_games)
+
+    # 팀 시즌 스탯 집계
+    from datetime import datetime as _dt
+    year = str(_dt.now().year)
+    conn = get_connection()
+    try:
+        # 타자 스탯
+        bat = conn.execute("""
+            SELECT SUM(ab) ab, SUM(h) h, SUM(hr) hr, SUM(rbi) rbi, SUM(bb) bb, SUM(so) so
+            FROM batter_stats b JOIN games g ON b.game_id = g.game_id
+            WHERE g.date LIKE ?
+        """, (year+'%',)).fetchone()
+        # 투수 스탯
+        pit = conn.execute("""
+            SELECT SUM(er) er, SUM(so) so, COUNT(DISTINCT g.game_id) games
+            FROM pitcher_stats p JOIN games g ON p.game_id = g.game_id
+            WHERE g.date LIKE ?
+        """, (year+'%',)).fetchone()
+        # 승/패
+        wl = conn.execute("""
+            SELECT result, COUNT(*) cnt FROM games
+            WHERE date LIKE ? AND result IN ('승','패','무')
+            GROUP BY result
+        """, (year+'%',)).fetchall()
+    except:
+        bat = pit = None
+        wl = []
+    conn.close()
+
+    wl_dict = {r['result']: r['cnt'] for r in wl}
+    wins  = wl_dict.get('승', 0)
+    loses = wl_dict.get('패', 0)
+    draws = wl_dict.get('무', 0)
+    team_avg = f"{bat['h']/bat['ab']:.3f}" if bat and bat['ab'] else ".000"
+    ip_games = pit['games'] if pit and pit['games'] else 1
+    team_era = f"{(pit['er']*9)/(ip_games*9**(0)):.2f}" if False else "-"
+    # ERA 계산 (이닝 합산 필요 - 간단히 경기당 자책으로 근사)
+    era_val  = f"{pit['er']/ip_games*9:.2f}" if pit and ip_games else "-"
+
+    team_stats = {
+        "wins": wins, "loses": loses, "draws": draws,
+        "avg": team_avg,
+        "hr":  bat['hr'] if bat else 0,
+        "rbi": bat['rbi'] if bat else 0,
+        "bb":  bat['bb'] if bat else 0,
+        "so_bat": bat['so'] if bat else 0,
+        "era": era_val,
+        "so_pit": pit['so'] if pit else 0,
+    }
+
+    return render_template("index.html", games=games, futures_games=futures_games, team_stats=team_stats)
+
+
+@app.route("/compare")
+def compare_page():
+    """선수 비교 페이지"""
+    from database import get_connection
+    conn = get_connection()
+    try:
+        players = conn.execute(
+            "SELECT DISTINCT name, position FROM players WHERE status='active' ORDER BY position, name"
+        ).fetchall()
+    except:
+        players = []
+    conn.close()
+    return render_template("compare.html", players=[dict(p) for p in players])
+
+
+@app.route("/api/compare")
+def api_compare():
+    """두 선수 스탯 비교 JSON"""
+    from database import get_connection
+    from datetime import datetime as _dt
+    p1 = request.args.get("p1", "")
+    p2 = request.args.get("p2", "")
+    year = request.args.get("year", str(_dt.now().year))
+    if not p1 or not p2:
+        return jsonify({"error": "선수명 필요"}), 400
+
+    conn = get_connection()
+
+    def get_batter(name):
+        rows = conn.execute("""
+            SELECT SUM(ab) ab, SUM(h) h, SUM(hr) hr, SUM(rbi) rbi,
+                   SUM(bb) bb, SUM(so) so, COUNT(*) games
+            FROM batter_stats b JOIN games g ON b.game_id = g.game_id
+            WHERE b.name=? AND g.date LIKE ?
+        """, (name, year+'%')).fetchone()
+        return dict(rows) if rows else {}
+
+    def get_pitcher(name):
+        rows = conn.execute("""
+            SELECT SUM(p.er) er, SUM(p.so) so, SUM(p.h) h, SUM(p.bb) bb,
+                   COUNT(*) games,
+                   SUM(CASE WHEN p.result='승' THEN 1 ELSE 0 END) wins,
+                   SUM(CASE WHEN p.result='패' THEN 1 ELSE 0 END) loses,
+                   SUM(CASE WHEN p.result='홀드' THEN 1 ELSE 0 END) holds,
+                   SUM(CASE WHEN p.result='세이브' THEN 1 ELSE 0 END) saves
+            FROM pitcher_stats p JOIN games g ON p.game_id = g.game_id
+            WHERE p.name=? AND g.date LIKE ?
+        """, (name, year+'%')).fetchone()
+        return dict(rows) if rows else {}
+
+    def get_player_info(name):
+        row = conn.execute("SELECT * FROM players WHERE name=? LIMIT 1", (name,)).fetchone()
+        return dict(row) if row else {"name": name, "position": ""}
+
+    info1 = get_player_info(p1)
+    info2 = get_player_info(p2)
+    is_pitcher1 = info1.get("position") == "투수"
+    is_pitcher2 = info2.get("position") == "투수"
+
+    stats1 = get_pitcher(p1) if is_pitcher1 else get_batter(p1)
+    stats2 = get_pitcher(p2) if is_pitcher2 else get_batter(p2)
+
+    # 타율 계산
+    if not is_pitcher1 and stats1.get("ab"):
+        stats1["avg"] = f"{stats1['h']/stats1['ab']:.3f}"
+    if not is_pitcher2 and stats2.get("ab"):
+        stats2["avg"] = f"{stats2['h']/stats2['ab']:.3f}"
+
+    conn.close()
+    return jsonify({
+        "p1": {"info": info1, "stats": stats1, "is_pitcher": is_pitcher1},
+        "p2": {"info": info2, "stats": stats2, "is_pitcher": is_pitcher2},
+        "year": year,
+    })
 
 
 @app.route("/players")
@@ -416,6 +542,43 @@ def api_analyze_player(game_id):
 # ──────────────────────────────────────────
 # 에러 페이지
 # ──────────────────────────────────────────
+
+@app.route("/ai-reports")
+def ai_reports_page():
+    """AI 분석 목록 페이지"""
+    from database import get_connection
+    conn = get_connection()
+    try:
+        reports = conn.execute("""
+            SELECT r.*, g.date, g.home_team, g.away_team, g.result
+            FROM ai_reports r
+            LEFT JOIN games g ON r.game_id = g.game_id
+            ORDER BY r.created_at DESC
+        """).fetchall()
+    except:
+        reports = []
+    conn.close()
+    return render_template("ai_reports.html", reports=[dict(r) for r in reports])
+
+
+@app.route("/api/ai-reports")
+def api_ai_reports():
+    """AI 분석 목록 JSON"""
+    from database import get_connection
+    conn = get_connection()
+    try:
+        reports = conn.execute("""
+            SELECT r.id, r.game_id, r.report_type, r.player_name, r.content, r.created_at,
+                   g.date, g.home_team, g.away_team, g.result
+            FROM ai_reports r
+            LEFT JOIN games g ON r.game_id = g.game_id
+            ORDER BY r.created_at DESC
+        """).fetchall()
+    except:
+        reports = []
+    conn.close()
+    return jsonify([dict(r) for r in reports])
+
 
 @app.errorhandler(404)
 def not_found(e):

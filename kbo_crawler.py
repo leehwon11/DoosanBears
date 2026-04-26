@@ -286,18 +286,45 @@ def get_box_score(game_id: str, session: requests.Session) -> tuple[list, list]:
             if not name or name in ("합계","선수명"):
                 continue
 
+            # row[1]: 선발은 "선발", 불펜은 이닝번호(숫자)
+            role_raw = _gt(row, 1)
+            try:
+                float(role_raw)  # 숫자면 이닝 번호 → 불펜
+                role = "불펜"
+                result = _gt(row, 2)
+                ip     = _gt(row, 6)
+                bf     = _iv(row, 7)
+                h      = _iv(row, 10)
+                hr     = _iv(row, 11)
+                bb     = _iv(row, 12)
+                so     = _iv(row, 13)
+                er     = _iv(row, 14)
+                era    = _gt(row, 16)
+            except ValueError:
+                # 문자면 역할 (선발 등)
+                role = role_raw if role_raw else "불펜"
+                result = _gt(row, 2)
+                ip     = _gt(row, 6)
+                bf     = _iv(row, 7)
+                h      = _iv(row, 10)
+                hr     = _iv(row, 11)
+                bb     = _iv(row, 12)
+                so     = _iv(row, 13)
+                er     = _iv(row, 14)
+                era    = _gt(row, 16)
+
             pitchers.append({
                 "name":   name,
-                "role":   _gt(row, 1),   # 선발/중간/마무리
-                "result": _gt(row, 2),   # 승/패/홀드/세이브/-
-                "ip":     _gt(row, 6),   # 이닝
-                "bf":     _iv(row, 7),   # 상대 타자
-                "h":      _iv(row, 10),  # 피안타
-                "hr":     _iv(row, 11),  # 피홈런
-                "bb":     _iv(row, 12),  # 볼넷
-                "so":     _iv(row, 13),  # 삼진
-                "er":     _iv(row, 14),  # 자책
-                "era":    _gt(row, 16),  # ERA
+                "role":   role,
+                "result": result,
+                "ip":     ip,
+                "bf":     bf,
+                "h":      h,
+                "hr":     hr,
+                "bb":     bb,
+                "so":     so,
+                "er":     er,
+                "era":    era,
             })
     except Exception as e:
         print(f"    투수 파싱 오류: {e}")

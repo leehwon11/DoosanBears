@@ -216,8 +216,7 @@
 <!-- 경기별 기록 -->
 <div class="section-header">
   <div class="section-title">경기별 기록</div>
-  <select class="season-select" onchange="filterTable('{{ tbody_id }}', this.value, '{{ page_id }}')">
-    <option value="all">전체</option>
+  <select class="season-select" id="sel-{{ tbody_id }}" onchange="filterTable('{{ tbody_id }}', this.value, '{{ page_id }}')">
     {% set uyears = [] %}
     {% for s in stats %}{% if s.date[:4] not in uyears %}{% set _ = uyears.append(s.date[:4]) %}{% endif %}{% endfor %}
     {% for yr in uyears | sort(reverse=True) %}<option value="{{ yr }}">{{ yr }}시즌</option>{% endfor %}
@@ -450,9 +449,7 @@ async function analyzeSeasonAI(year, league) {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  // 현재 시즌으로 테이블/슬라이더 초기 필터링
-  filterTableByYear('kbo-tbody', 'kbo-page', CURRENT_YEAR);
-  filterTableByYear('fut-tbody', 'fut-page', CURRENT_YEAR);
+  // 슬라이더 현재 시즌 필터
   filterSliderByYear('kbo-slider', CURRENT_YEAR);
   filterSliderByYear('fut-slider', CURRENT_YEAR);
   updateSummary('kbo', null);
@@ -463,6 +460,9 @@ window.addEventListener('DOMContentLoaded', () => {
       if (opt.value === CURRENT_YEAR) { opt.selected = true; break; }
     }
   });
+  // 현재 시즌으로 테이블 필터 적용
+  filterTable('kbo-tbody', CURRENT_YEAR, 'kbo-page');
+  filterTable('fut-tbody', CURRENT_YEAR, 'fut-page');
 });
 
 function filterSliderByYear(sliderId, year) {

@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% block title %}선수 비교 · 두산 베어스{% endblock %}
+
+{% block head %}
+<style>
+  .page-title { font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:2px;margin-bottom:2rem; }
+  .compare-select-wrap { display:grid;grid-template-columns:1fr auto 1fr;gap:1rem;align-items:center;margin-bottom:2rem; }
+  .vs-label { font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--red);text-align:center; }
+  .player-select-box { background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.2rem; }
+  .select-label { font-size:0.78rem;color:var(--gray);letter-spacing:1px;margin-bottom:8px; }
+  .player-select { width:100%;background:var(--navy);color:var(--white);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:inherit;font-size:0.9rem;cursor:pointer; }
+  .year-select { background:var(--navy);color:var(--white);border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-family:inherit;font-size:0.88rem;cursor:pointer; }
+  .compare-btn { background:var(--red);color:white;border:none;padding:10px 28px;border-radius:8px;font-size:0.9rem;font-weight:500;cursor:pointer;font-family:inherit;display:block;margin:0 auto 2rem; }
+  .compare-btn:hover { opacity:0.85; }
+
+  .result-wrap { display:none; }
+  .result-wrap.active { display:block; }
+
+  .player-headers { display:grid;grid-template-columns:1fr 80px 1fr;gap:1rem;margin-bottom:1rem;text-align:center; }
+  .player-header-card { background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.2rem; }
+  .ph-number { font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--red); }
+  .ph-name { font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:1px; }
+  .ph-pos { font-size:0.8rem;color:var(--gray);margin-top:4px; }
+  .vs-center { display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--red); }
+
+  .stat-rows { display:flex;flex-direction:column;gap:6px; }
+  .stat-row { display:grid;grid-template-columns:1fr 80px 1fr;gap:1rem;align-items:center; }
+  .stat-val { background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 14px;text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.3rem;transition:background 0.2s; }
+  .stat-val.winner { background:rgba(39,174,96,0.2);border-color:rgba(39,174,96,0.4);color:#27AE60; }
+  .stat-label-center { text-align:center;font-size:0.75rem;color:var(--gray);letter-spacing:1px;padding:6px 0; }
+  .loading { text-align:center;padding:2rem;color:var(--gray); }
+  .ai-card { background:var(--card);border:1px solid var(--border);border-left:3px solid var(--red);border-radius:12px;padding:1.5rem; }
+  .ai-label { font-size:0.72rem;font-weight:700;letter-spacing:2px;color:var(--red);text-transform:uppercase;margin-bottom:0.8rem; }
+  .ai-content { line-height:1.9;font-size:0.85rem;color:rgba(248,249,250,0.85);white-space:pre-wrap; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-title">선수 비교</div>
+
+<div class="compare-select-wrap">
+  <div class="player-select-box">
+    <div class="select-label">선수 1</div>
+    <select class="player-select" id="p1-select">
+      <option value="">선수 선택</option>
+      {% for p in players %}
+      <option value="{{ p.name }}">{{ p.name }} ({{ p.position }})</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="vs-label">VS</div>
+  <div class="player-select-box">
+    <div class="select-label">선수 2</div>
+    <select class="player-select" id="p2-select">
+      <option value="">선수 선택</option>
+      {% for p in players %}
+      <option value="{{ p.name }}">{{ p.name }} ({{ p.position }})</option>
+      {% endfor %}
+    </select>
+  </div>
+</div>
+
+<div style="text-align:center;margin-bottom:1.5rem;">
+  <select class="year-select" id="year-select">
+    <option value="2026">2026시즌</option>
+    <option value="2025">2025시즌</option>
+    <option value="">전체</option>
+  </select>
+</div>
+
+<button class="compare-btn" onclick="loadCompare()">비교하기</button>
+
+<div class="result-wrap" id="result-wrap">
+  <div class="player-headers">
+    <div class="player-header-card">
+      <div class="ph-number" id="p1-number"></div>
+      <div class="ph-name" id="p1-name"></div>
+      <div class="ph-pos" id="p1-pos"></div>
+    </div>
+    <div class="vs-center">VS</div>
+    <div class="player-header-card">
+      <div class="ph-number" id="p2-number"></div>
+      <div class="ph-name" id="p2-name"></div>
+      <div class="ph-pos" id="p2-pos"></div>
+    </div>
+  </div>
+
+  <div class="stat-rows" id="stat-rows"></div>
+</div>
+
+<div id="ai-compare-wrap"></div>
+
+<script>
+async function loadCompare() {
+  const p1 = document.getElementById('p1-select').value;
+  const p2 = document.getElementById('p2-select').value;
+  const year = document.getElementById('year-select').value;
+
+  if (!p1 || !p2) { alert('두 선수를 모두 선택해주세요!'); return; }
+  if (p1 === p2) { alert('다른 선수를 선택해주세요!'); return; }
+
+  const result = document.getElementById('result-wrap');
+  result.classList.add('active');
+  document.getElementById('stat-rows').innerHTML = '<div class="loading">불러오는 중...</div>';
+
+  const resp = await fetch('/api/compare?p1=' + encodeURIComponent(p1) + '&p2=' + encodeURIComponent(p2) + '&year=' + year);
+  const data = await resp.json();
+  if (data.error) { alert('오류: ' + data.error); return; }
+
+  const { p1: d1, p2: d2 } = data;
+
+  // 헤더
+  document.getElementById('p1-number').textContent = d1.info.number ? 'No.' + d1.info.number : '';
+  document.getElementById('p1-name').textContent   = d1.info.name || p1;
+  document.getElementById('p1-pos').textContent    = d1.info.position + (d1.info.batting ? ' (' + d1.info.batting + ')' : '');
+  document.getElementById('p2-number').textContent = d2.info.number ? 'No.' + d2.info.number : '';
+  document.getElementById('p2-name').textContent   = d2.info.name || p2;
+  document.getElementById('p2-pos').textContent    = d2.info.position + (d2.info.batting ? ' (' + d2.info.batting + ')' : '');
+
+  // 스탯 행 생성
+  const s1 = d1.stats, s2 = d2.stats;
+  let rows = [];
+
+  if (!d1.is_pitcher && !d2.is_pitcher) {
+    // 둘 다 타자
+    rows = [
+      { label: '경기', k: 'games', higher: true },
+      { label: '타율', k: 'avg', higher: true, str: true },
+      { label: '안타', k: 'h', higher: true },
+      { label: '홈런', k: 'hr', higher: true },
+      { label: '타점', k: 'rbi', higher: true },
+      { label: '볼넷', k: 'bb', higher: true },
+      { label: '삼진', k: 'so', higher: false },
+      { label: '타수', k: 'ab', higher: false },
+    ];
+  } else if (d1.is_pitcher && d2.is_pitcher) {
+    // 둘 다 투수
+    rows = [
+      { label: '경기', k: 'games', higher: true },
+      { label: '승', k: 'wins', higher: true },
+      { label: '패', k: 'loses', higher: false },
+      { label: '홀드', k: 'holds', higher: true },
+      { label: '세이브', k: 'saves', higher: true },
+      { label: '삼진', k: 'so', higher: true },
+      { label: '자책', k: 'er', higher: false },
+      { label: '피안타', k: 'h', higher: false },
+      { label: '볼넷', k: 'bb', higher: false },
+    ];
+  } else {
+    // 혼합
+    rows = [{ label: '경기', k: 'games', higher: true }];
+  }
+
+  const html = rows.map(row => {
+    const v1 = s1[row.k] ?? '-';
+    const v2 = s2[row.k] ?? '-';
+    let w1 = '', w2 = '';
+    if (v1 !== '-' && v2 !== '-' && v1 !== v2) {
+      const n1 = parseFloat(v1), n2 = parseFloat(v2);
+      if (!isNaN(n1) && !isNaN(n2)) {
+        if (row.higher ? n1 > n2 : n1 < n2) w1 = 'winner';
+        else w2 = 'winner';
+      }
+    }
+    return '<div class="stat-row">' +
+      '<div class="stat-val ' + w1 + '">' + (v1 === null ? '-' : v1) + '</div>' +
+      '<div class="stat-label-center">' + row.label + '</div>' +
+      '<div class="stat-val ' + w2 + '">' + (v2 === null ? '-' : v2) + '</div>' +
+      '</div>';
+  }).join('');
+
+  document.getElementById('stat-rows').innerHTML = html;
+
+  // AI 비교 분석 버튼 추가
+  const aiWrap = document.getElementById('ai-compare-wrap');
+  aiWrap.innerHTML = '<button class="compare-btn" style="margin-top:1.5rem;" onclick="generateCompareAI()">AI 비교 분석 생성하기</button>';
+  aiWrap.dataset.p1 = p1;
+  aiWrap.dataset.p2 = p2;
+  aiWrap.dataset.year = year;
+  aiWrap.dataset.ip1 = d1.is_pitcher ? '1' : '0';
+  aiWrap.dataset.ip2 = d2.is_pitcher ? '1' : '0';
+}
+
+async function generateCompareAI() {
+  const wrap = document.getElementById('ai-compare-wrap');
+  const p1 = wrap.dataset.p1, p2 = wrap.dataset.p2;
+  const year = wrap.dataset.year;
+  const ip1 = wrap.dataset.ip1 === '1', ip2 = wrap.dataset.ip2 === '1';
+
+  wrap.innerHTML = '<div style="text-align:center;padding:1rem;color:var(--gray);">AI 분석 생성 중...</div>';
+
+  // 두 선수 시즌 분석 순차 생성
+  try {
+    const r1 = await fetch('/api/analyze/player-season', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({player_name: p1, is_pitcher: ip1, year: year, league: 'kbo'})
+    });
+    const d1 = await r1.json();
+
+    const r2 = await fetch('/api/analyze/player-season', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({player_name: p2, is_pitcher: ip2, year: year, league: 'kbo'})
+    });
+    const d2 = await r2.json();
+
+    if (d1.success && d2.success) {
+      wrap.innerHTML =
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.5rem;">' +
+          '<div class="ai-card"><div class="ai-label">' + p1 + ' · ' + year + '시즌</div><div class="ai-content">' + d1.content + '</div></div>' +
+          '<div class="ai-card"><div class="ai-label">' + p2 + ' · ' + year + '시즌</div><div class="ai-content">' + d2.content + '</div></div>' +
+        '</div>';
+    } else {
+      wrap.innerHTML = '<p style="color:var(--red);text-align:center;">오류가 발생했어요.</p>';
+    }
+  } catch(e) {
+    wrap.innerHTML = '<p style="color:var(--red);text-align:center;">오류: ' + e.message + '</p>';
+  }
+}
+</script>
+{% endblock %}

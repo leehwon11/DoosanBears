@@ -227,28 +227,35 @@ def save_players_to_db(data: dict):
         """, (p["player_id"], p["number"], p["name"], p["position"],
               p["batting"], p["birth"], p["height_weight"], now))
 
-    # 1군 말소 = 2군으로 내려간 선수 → 2군 active로 저장
-    for p in data.get("removed", []):
-        conn.execute("""
-            INSERT INTO players (player_id, number, name, position, status, team_level, updated_at)
-            VALUES (?, ?, ?, ?, 'active', '2군', ?)
-        """, (p["player_id"], p["number"], p["name"], p["position"], now))
+    # 2군 전체 선수 정보 맵 (이름 기준으로 상세 정보 조회용)
+    futures_info = {p["name"]: p for p in data.get("futures_roster", [])}
+    # 1군 roster도 맵으로
+    roster_info  = {p["name"]: p for p in data.get("roster", [])}
 
-    # 2군 정규 엔트리
+    # 1군 말소 = 2군으로 내려간 선수 → 2군 active로 저장
+    # 2군 엔트리에서 상세 정보 매칭, 없으면 1군 정보 사용
+    for p in data.get("removed", []):
+        info = futures_info.get(p["name"]) or roster_info.get(p["name"]) or p
+        conn.execute("""
+            INSERT INTO players (player_id, number, name, position, batting, birth, height_weight, status, team_level, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'active', '2군', ?)
+        """, (info.get("player_id", p.get("player_id","")),
+              p["number"], p["name"], p["position"],
+              info.get("batting",""), info.get("birth",""), info.get("height_weight",""), now))
+
+    # 2군 정규 엔트리 (이미 1군 말소로 저장된 선수 제외)
+    removed_names = {p["name"] for p in data.get("removed", [])}
     for p in data.get("futures_roster", []):
+        if p["name"] in removed_names:
+            continue  # 이미 1군 말소로 2군에 저장됨
         conn.execute("""
             INSERT INTO players (player_id, number, name, position, batting, birth, height_weight, status, team_level, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, 'active', '2군', ?)
         """, (p["player_id"], p["number"], p["name"], p["position"],
               p["batting"], p["birth"], p["height_weight"], now))
 
-    # 2군 말소 = 1군으로 올라간 선수 → 이미 1군 roster에 있으니 별도 저장 불필요
-    # (참고용으로만 표시)
-    for p in data.get("futures_removed", []):
-        conn.execute("""
-            INSERT OR IGNORE INTO players (player_id, number, name, position, status, team_level, updated_at)
-            VALUES (?, ?, ?, ?, 'active', '1군', ?)
-        """, (p["player_id"], p["number"], p["name"], p["position"], now))
+    # 2군 말소 = 1군으로 올라간 선수 → 이미 1군 roster에 있으므로 스킵
+    # (futures_removed는 무시)
 
     conn.commit()
     conn.close()

@@ -150,6 +150,19 @@
   </div>
   <a href="/games" style="font-size:0.82rem;color:var(--gray);text-decoration:none;transition:color 0.2s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='var(--gray)'">전체 경기 보기 →</a>
 </div>
+{% if team_stats %}
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-bottom:2rem;">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem;text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:#27AE60;line-height:1;margin-bottom:4px;">{{ team_stats.wins }}</div><div style="font-size:0.72rem;color:var(--gray);letter-spacing:1px;">승</div></div>
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem;text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--red);line-height:1;margin-bottom:4px;">{{ team_stats.loses }}</div><div style="font-size:0.72rem;color:var(--gray);letter-spacing:1px;">패</div></div>
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem;text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--gold);line-height:1;margin-bottom:4px;">{% if team_stats.wins + team_stats.loses > 0 %}{{ "%.3f"|format(team_stats.wins/(team_stats.wins+team_stats.loses)) }}{% else %}.000{% endif %}</div><div style="font-size:0.72rem;color:var(--gray);letter-spacing:1px;">승률</div></div>
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem;text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--gold);line-height:1;margin-bottom:4px;">{{ team_stats.avg }}</div><div style="font-size:0.72rem;color:var(--gray);letter-spacing:1px;">팀타율</div></div>
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem;text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--white);line-height:1;margin-bottom:4px;">{{ team_stats.hr }}</div><div style="font-size:0.72rem;color:var(--gray);letter-spacing:1px;">홈런</div></div>
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem;text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--white);line-height:1;margin-bottom:4px;">{{ team_stats.rbi }}</div><div style="font-size:0.72rem;color:var(--gray);letter-spacing:1px;">타점</div></div>
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem;text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--white);line-height:1;margin-bottom:4px;">{{ team_stats.era }}</div><div style="font-size:0.72rem;color:var(--gray);letter-spacing:1px;">팀ERA</div></div>
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem;text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--white);line-height:1;margin-bottom:4px;">{{ team_stats.so_pit }}</div><div style="font-size:0.72rem;color:var(--gray);letter-spacing:1px;">탈삼진</div></div>
+</div>
+{% endif %}
+
 
 {% if games %}
 <div class="games-grid">
