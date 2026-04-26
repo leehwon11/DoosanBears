@@ -237,6 +237,10 @@ def save_game(data: dict):
             """, (game_id, team_label, i, s))
 
     # ── batter_stats 저장 ──
+    # 기존 타자/투수 기록 삭제 후 재저장 (중복 방지)
+    cur.execute("DELETE FROM batter_stats WHERE game_id=?", (game_id,))
+    cur.execute("DELETE FROM pitcher_stats WHERE game_id=?", (game_id,))
+
     for b in data.get("batters", []):
         cur.execute("""
             INSERT INTO batter_stats
@@ -375,6 +379,10 @@ def save_futures_game(data: dict):
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     """, (game_id, data.get("date"), home_nm, away_nm,
           game_info.get("home_score",0), game_info.get("away_score",0), result, now))
+
+    # 기존 퓨처스 기록 삭제 후 재저장
+    cur.execute("DELETE FROM futures_batter_stats WHERE game_id=?", (game_id,))
+    cur.execute("DELETE FROM futures_pitcher_stats WHERE game_id=?", (game_id,))
 
     for b in data.get("batters", []):
         cur.execute("""
