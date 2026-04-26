@@ -140,36 +140,7 @@
   {% endif %}
 </div>
 
-<!-- 최근 경기 슬라이더 -->
-<div class="section-header"><div class="section-title">최근 경기</div></div>
-<div class="slider-wrap">
-  <div class="slider" id="{{ slider_id }}">
-    {% for g in stats[:10] %}
-    {% set tag = 'a href="/game/' + g.game_id + '"' if game_link else 'div' %}
-    {% set endtag = 'a' if game_link else 'div' %}
-    <{{ tag }} class="game-card-mini" data-year="{{ g.date[:4] }}">
-      <div class="gcm-date">{{ g.date[4:6] }}/{{ g.date[6:] }} vs {{ g.away_team if g.home_team == '두산' else g.home_team }}</div>
-      <span class="badge {% if g.result == '승' %}badge-win{% elif g.result == '패' %}badge-lose{% else %}badge-draw{% endif %}" style="font-size:0.7rem;margin-bottom:5px;display:inline-block;">{{ g.result or '-' }}</span>
-      {% if is_pitcher %}
-      <div class="gcm-stat-row"><span class="gcm-lbl">이닝</span><span class="gcm-val">{{ g.ip }}</span></div>
-      <div class="gcm-stat-row"><span class="gcm-lbl">자책</span><span class="gcm-val {% if g.er == 0 %}gcm-hi{% endif %}">{{ g.er }}</span></div>
-      <div class="gcm-stat-row"><span class="gcm-lbl">삼진</span><span class="gcm-val">{{ g.so }}</span></div>
-      <div class="gcm-stat-row"><span class="gcm-lbl">ERA</span><span class="gcm-val">{{ g.era }}</span></div>
-      {% else %}
-      <div class="gcm-stat-row"><span class="gcm-lbl">타수</span><span class="gcm-val">{{ g.ab }}</span></div>
-      <div class="gcm-stat-row"><span class="gcm-lbl">안타</span><span class="gcm-val {% if g.h >= 2 %}gcm-hi{% endif %}">{{ g.h }}</span></div>
-      <div class="gcm-stat-row"><span class="gcm-lbl">홈런</span><span class="gcm-val {% if g.hr >= 1 %}gcm-hi{% endif %}">{{ g.hr }}</span></div>
-      <div class="gcm-stat-row"><span class="gcm-lbl">타점</span><span class="gcm-val">{{ g.rbi }}</span></div>
-      <div class="gcm-stat-row"><span class="gcm-lbl">타율</span><span class="gcm-val">{{ g.avg }}</span></div>
-      {% endif %}
-    </{{ endtag }}>
-    {% endfor %}
-  </div>
-  <div class="slider-nav">
-    <button class="snav-btn" onclick="document.getElementById('{{ slider_id }}').scrollBy(-165,0)">‹</button>
-    <button class="snav-btn" onclick="document.getElementById('{{ slider_id }}').scrollBy(165,0)">›</button>
-  </div>
-</div>
+
 
 <!-- 시즌별 집계 -->
 <div class="section-header"><div class="section-title">시즌별 기록</div></div>
@@ -222,48 +193,34 @@
 <!-- 경기별 기록 -->
 <div class="section-header">
   <div class="section-title">경기별 기록</div>
-  <select class="season-select" id="sel-{{ tbody_id }}" onchange="filterTable('{{ tbody_id }}', this.value, '{{ page_id }}')">
+  <select class="season-select" id="sel-{{ tbody_id }}" onchange="renderGameCards('{{ tbody_id }}', this.value, '{{ game_link }}')">
     {% set uyears = [] %}
     {% for s in stats %}{% if s.date[:4] not in uyears %}{% set _ = uyears.append(s.date[:4]) %}{% endif %}{% endfor %}
-    {% for yr in uyears | sort(reverse=True) %}<option value="{{ yr }}">{{ yr }}시즌</option>{% endfor %}
+    {% for yr in uyears | sort(reverse=True) %}<option value="{{ yr }}" {% if yr == current_year %}selected{% endif %}>{{ yr }}시즌</option>{% endfor %}
   </select>
 </div>
-<div class="stats-card">
-  <table class="stats-table">
-    <thead>
-      {% if is_pitcher %}
-      <tr><th>날짜</th><th>상대</th><th>결과</th><th>이닝</th><th>피안타</th><th>피홈런</th><th>볼넷</th><th>삼진</th><th>자책</th><th>ERA</th></tr>
-      {% else %}
-      <tr><th>날짜</th><th>상대</th><th>결과</th><th>타수</th><th>안타</th><th>홈런</th><th>타점</th><th>볼넷</th><th>삼진</th><th>타율</th></tr>
-      {% endif %}
-    </thead>
-    <tbody id="{{ tbody_id }}">
-    {% for g in stats %}
-    <tr data-year="{{ g.date[:4] }}">
-      <td>{% if game_link %}<a href="/game/{{ g.game_id }}" style="color:inherit;text-decoration:none;">{{ g.date[4:6] }}/{{ g.date[6:] }}</a>{% else %}{{ g.date[4:6] }}/{{ g.date[6:] }}{% endif %}</td>
-      <td style="color:var(--gray);font-size:0.78rem;">{{ g.away_team if g.home_team == '두산' else g.home_team }}</td>
-      <td>{% if g.result %}<span class="badge {% if g.result == '승' %}badge-win{% elif g.result == '패' %}badge-lose{% else %}badge-draw{% endif %}">{{ g.result }}</span>{% else %}-{% endif %}</td>
-      {% if is_pitcher %}
-      <td>{{ g.ip }}</td><td>{{ g.h }}</td>
-      <td {% if g.hr >= 1 %}class="highlight"{% endif %}>{{ g.hr }}</td>
-      <td>{{ g.bb }}</td><td>{{ g.so }}</td>
-      <td {% if g.er == 0 %}class="highlight"{% endif %}>{{ g.er }}</td>
-      <td style="color:var(--gray)">{{ g.era }}</td>
-      {% else %}
-      <td>{{ g.ab }}</td>
-      <td {% if g.h >= 2 %}class="highlight"{% endif %}>{{ g.h }}</td>
-      <td {% if g.hr >= 1 %}class="highlight"{% endif %}>{{ g.hr }}</td>
-      <td>{{ g.rbi }}</td><td>{{ g.bb }}</td><td>{{ g.so }}</td><td>{{ g.avg }}</td>
-      {% endif %}
-    </tr>
-    {% endfor %}
-    </tbody>
-  </table>
+<div style="position:relative;">
+  <div class="slider" id="{{ tbody_id }}-cards" style="gap:10px;padding-bottom:4px;"></div>
+  <div class="slider-nav">
+    <button class="snav-btn" onclick="document.getElementById('{{ tbody_id }}-cards').scrollBy(-170,0)">‹</button>
+    <button class="snav-btn" onclick="document.getElementById('{{ tbody_id }}-cards').scrollBy(170,0)">›</button>
+  </div>
 </div>
-<div class="page-nav" id="{{ page_id }}">
-  <button class="page-btn" onclick="changePage('{{ tbody_id }}','{{ page_id }}',-1)">‹</button>
-  <span class="page-info" id="{{ page_id }}-info"></span>
-  <button class="page-btn" onclick="changePage('{{ tbody_id }}','{{ page_id }}',1)">›</button>
+<div style="display:none" id="{{ tbody_id }}-data">
+{% for g in stats %}
+<span data-year="{{ g.date[:4] }}" data-date="{{ g.date[4:6] }}/{{ g.date[6:] }}"
+  data-opp="{{ g.away_team if g.home_team == '두산' else g.home_team }}"
+  data-result="{{ g.result or '' }}"
+  data-gameid="{{ g.game_id }}"
+  {% if is_pitcher %}
+  data-ip="{{ g.ip }}" data-h="{{ g.h }}" data-hr="{{ g.hr }}"
+  data-bb="{{ g.bb }}" data-so="{{ g.so }}" data-er="{{ g.er }}" data-era="{{ g.era }}"
+  {% else %}
+  data-ab="{{ g.ab }}" data-h="{{ g.h }}" data-hr="{{ g.hr }}"
+  data-rbi="{{ g.rbi }}" data-bb="{{ g.bb }}" data-so="{{ g.so }}" data-avg="{{ g.avg }}"
+  {% endif %}
+></span>
+{% endfor %}
 </div>
 
 {% else %}
@@ -318,6 +275,50 @@ const IS_PITCHER   = {{ 'true' if is_pitcher else 'false' }};
 const CURRENT_YEAR = "{{ current_year }}";
 const PAGE_SIZE    = 10;
 const pageStates   = {};
+
+function renderGameCards(tbodyId, year, useLink) {
+  const container = document.getElementById(tbodyId + '-cards');
+  const dataEl    = document.getElementById(tbodyId + '-data');
+  if (!container || !dataEl) return;
+
+  const spans = Array.from(dataEl.querySelectorAll('span'));
+  const filtered = year ? spans.filter(s => s.dataset.year === year) : spans;
+
+  container.innerHTML = filtered.map(s => {
+    const result = s.dataset.result;
+    const badgeCls = result === '승' ? 'badge-win' : result === '패' ? 'badge-lose' : 'badge-draw';
+    const link = (useLink === 'True' || useLink === true) && s.dataset.gameid
+      ? 'href="/game/' + s.dataset.gameid + '"' : '';
+    const tag = link ? 'a ' + link : 'div';
+    const endTag = link ? 'a' : 'div';
+
+    let stats = '';
+    if (IS_PITCHER) {
+      const erCls = s.dataset.er === '0' ? 'gcm-hi' : '';
+      stats = '<div class="gcm-stat-row"><span class="gcm-lbl">이닝</span><span class="gcm-val">'+s.dataset.ip+'</span></div>' +
+              '<div class="gcm-stat-row"><span class="gcm-lbl">자책</span><span class="gcm-val '+erCls+'">'+s.dataset.er+'</span></div>' +
+              '<div class="gcm-stat-row"><span class="gcm-lbl">삼진</span><span class="gcm-val">'+s.dataset.so+'</span></div>' +
+              '<div class="gcm-stat-row"><span class="gcm-lbl">ERA</span><span class="gcm-val">'+s.dataset.era+'</span></div>';
+    } else {
+      const hCls = parseInt(s.dataset.h) >= 2 ? 'gcm-hi' : '';
+      const hrCls = parseInt(s.dataset.hr) >= 1 ? 'gcm-hi' : '';
+      stats = '<div class="gcm-stat-row"><span class="gcm-lbl">타수</span><span class="gcm-val">'+s.dataset.ab+'</span></div>' +
+              '<div class="gcm-stat-row"><span class="gcm-lbl">안타</span><span class="gcm-val '+hCls+'">'+s.dataset.h+'</span></div>' +
+              '<div class="gcm-stat-row"><span class="gcm-lbl">홈런</span><span class="gcm-val '+hrCls+'">'+s.dataset.hr+'</span></div>' +
+              '<div class="gcm-stat-row"><span class="gcm-lbl">타점</span><span class="gcm-val">'+s.dataset.rbi+'</span></div>' +
+              '<div class="gcm-stat-row"><span class="gcm-lbl">타율</span><span class="gcm-val">'+s.dataset.avg+'</span></div>';
+    }
+
+    return '<'+tag+' class="game-card-mini" style="flex:0 0 155px;scroll-snap-align:start;">' +
+      '<div class="gcm-date">'+s.dataset.date+' vs '+s.dataset.opp+'</div>' +
+      (result ? '<span class="badge '+badgeCls+'" style="font-size:0.7rem;margin-bottom:5px;display:inline-block;">'+result+'</span>' : '<span style="font-size:0.7rem;margin-bottom:5px;display:inline-block;color:var(--gray);">-</span>') +
+      stats +
+      '</'+endTag+'>';
+  }).join('');
+
+  // 슬라이더 맨 앞으로
+  container.scrollLeft = 0;
+}
 
 const allStats = {
   kbo: {{ pitcher_stats | tojson if is_pitcher else batter_stats | tojson }},
@@ -378,23 +379,28 @@ function switchLeague(name, btn) {
   updateSummary(name, null);
 }
 
+// 전체 rows 원본 보관
+const allRows = {};
+
 function filterTable(tbodyId, year, pageNavId) {
-  const tbody = document.getElementById(tbodyId);
-  if (!tbody) return;
-  const rows = Array.from(tbody.querySelectorAll('tr'));
-  const filtered = year === 'all' ? rows : rows.filter(r => r.dataset.year === year);
+  const rows = allRows[tbodyId];
+  if (!rows) return;
+  const filtered = (!year || year === 'all') ? rows : rows.filter(r => r.dataset.year === year);
   pageStates[tbodyId] = { rows: filtered, page: 1 };
+  // 모든 행 숨기고 필터된 것만 표시
+  rows.forEach(r => r.style.display = 'none');
   renderPage(tbodyId, pageNavId);
 
   // 시즌 필터 시 요약 업데이트
   const league = tbodyId.startsWith('kbo') ? 'kbo' : 'fut';
-  updateSummary(league, year === 'all' ? null : year);
+  updateSummary(league, (!year || year === 'all') ? null : year);
 }
 
 function initTable(tbodyId, pageNavId) {
   const tbody = document.getElementById(tbodyId);
   if (!tbody) return;
   const rows = Array.from(tbody.querySelectorAll('tr'));
+  allRows[tbodyId] = rows;  // 원본 저장
   pageStates[tbodyId] = { rows, page: 1 };
   renderPage(tbodyId, pageNavId);
 }
@@ -464,19 +470,11 @@ async function analyzeSeasonAI(year, league) {
 
 window.addEventListener('DOMContentLoaded', () => {
   // 슬라이더 현재 시즌 필터
-  filterSliderByYear('kbo-slider', CURRENT_YEAR);
-  filterSliderByYear('fut-slider', CURRENT_YEAR);
   updateSummary('kbo', null);
 
-  // 드롭다운 기본값을 현재 시즌으로
-  document.querySelectorAll('.season-select').forEach(sel => {
-    for (let opt of sel.options) {
-      if (opt.value === CURRENT_YEAR) { opt.selected = true; break; }
-    }
-  });
-  // 현재 시즌으로 테이블 필터 적용
-  filterTable('kbo-tbody', CURRENT_YEAR, 'kbo-page');
-  filterTable('fut-tbody', CURRENT_YEAR, 'fut-page');
+  // 경기별 기록 카드 초기 렌더링
+  renderGameCards('kbo-tbody', CURRENT_YEAR, true);
+  renderGameCards('fut-tbody', CURRENT_YEAR, 'False');
 });
 
 function filterSliderByYear(sliderId, year) {

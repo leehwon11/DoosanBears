@@ -377,6 +377,33 @@ def player_page(pname):
     fut_pitcher_seasons   = aggregate_by_season_pitcher([dict(r) for r in futures_pitcher])
     fut_batter_seasons    = aggregate_by_season_batter([dict(r) for r in futures_batter])
 
+    # 기록 없는 시즌도 포함 (모든 KBO 시즌 기준으로 채우기)
+    all_years = sorted(set(
+        [s['year'] for s in kbo_pitcher_seasons] +
+        [s['year'] for s in kbo_batter_seasons] +
+        [s['year'] for s in fut_pitcher_seasons] +
+        [s['year'] for s in fut_batter_seasons]
+    ), reverse=True)
+
+    def fill_empty_seasons(seasons, years, is_pitcher):
+        existing = {s['year'] for s in seasons}
+        for yr in years:
+            if yr not in existing:
+                if is_pitcher:
+                    seasons.append({'year': yr, 'games': 0, 'wins': 0, 'loses': 0, 'holds': 0,
+                                    'saves': 0, 'er': 0, 'so': 0, 'bb': 0, 'h': 0, 'hr': 0,
+                                    'ip': '-', 'era': '-', 'whip': '-', 'bavg': '-'})
+                else:
+                    seasons.append({'year': yr, 'games': 0, 'ab': 0, 'h': 0, 'hr': 0,
+                                    'rbi': 0, 'bb': 0, 'so': 0, 'r': 0,
+                                    'avg': '-', 'obp': '-', 'slg': '-', 'ops': '-'})
+        return sorted(seasons, key=lambda x: x['year'], reverse=True)
+
+    kbo_pitcher_seasons = fill_empty_seasons(kbo_pitcher_seasons, all_years, True)
+    kbo_batter_seasons  = fill_empty_seasons(kbo_batter_seasons,  all_years, False)
+    fut_pitcher_seasons = fill_empty_seasons(fut_pitcher_seasons, all_years, True)
+    fut_batter_seasons  = fill_empty_seasons(fut_batter_seasons,  all_years, False)
+
     # 시즌별 AI 평가
     try:
         season_ai_reports = conn2.execute(
