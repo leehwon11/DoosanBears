@@ -5,12 +5,13 @@
 <style>
   .page-header { display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem; }
   .page-title { font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:2px; }
-  .league-tab-wrap { display:flex;gap:8px;margin-bottom:1.5rem; }
+  .league-tab-wrap { display:flex;gap:8px;margin-bottom:1.5rem;align-items:center;flex-wrap:wrap; }
   .league-tab { padding:7px 20px;border-radius:20px;border:1px solid var(--border);background:none;color:var(--gray);cursor:pointer;font-family:inherit;font-size:0.85rem;font-weight:500;transition:all 0.2s; }
   .league-tab.active { background:var(--blue);border-color:var(--blue);color:white; }
   .league-tab:hover:not(.active) { border-color:rgba(255,255,255,0.3);color:var(--white); }
   .league-content { display:none; }
   .league-content.active { display:block; }
+  .season-select { background:var(--navy);color:var(--white);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-family:inherit;font-size:0.85rem;cursor:pointer;margin-left:auto; }
   .month-nav { display:flex;align-items:center;gap:1rem;margin-bottom:1.2rem; }
   .month-nav button { background:var(--card);border:1px solid var(--border);color:var(--white);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1rem;transition:background 0.2s;display:flex;align-items:center;justify-content:center; }
   .month-nav button:hover { background:var(--blue); }
@@ -28,11 +29,11 @@
   .cal-day { font-size:0.78rem;color:var(--gray);margin-bottom:4px; }
   .cal-cell.sunday .cal-day   { color:#ff6b6b; }
   .cal-cell.saturday .cal-day { color:#74b9ff; }
-  .cal-game { display:block;border-radius:6px;padding:4px 6px;text-decoration:none;margin-top:2px;transition:background 0.15s; }
+  .cal-game { display:block;border-radius:6px;padding:4px 6px;text-decoration:none;margin-top:2px;transition:opacity 0.15s; }
+  .cal-game:hover { opacity:0.8; }
   .cal-game.win  { background:rgba(39,174,96,0.25);border:1px solid rgba(39,174,96,0.4); }
   .cal-game.lose { background:rgba(200,16,46,0.2);border:1px solid rgba(200,16,46,0.3); }
   .cal-game.draw { background:rgba(138,149,163,0.2);border:1px solid rgba(138,149,163,0.3); }
-  .cal-game:hover { opacity:0.8; }
   .cal-game-score { font-family:'Bebas Neue',sans-serif;font-size:0.95rem;letter-spacing:1px;color:var(--white); }
   .cal-game-team { font-size:0.7rem;color:rgba(248,249,250,0.6);margin-top:1px; }
   .season-summary { display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:2rem; }
@@ -50,26 +51,19 @@
 </div>
 
 <div class="league-tab-wrap">
-  <button class="league-tab active" onclick="switchLeague('kbo', this)">KBO</button>
-  <button class="league-tab" onclick="switchLeague('futures', this)">퓨처스</button>
+  <button class="league-tab active" onclick="switchLeague('kbo',this)">KBO</button>
+  <button class="league-tab" onclick="switchLeague('futures',this)">퓨처스</button>
+  <select class="season-select" id="kbo-year-sel" onchange="changeSeason('kbo',this.value)" style="display:block;">
+    {% for yr in years %}<option value="{{ yr }}" {% if yr == current_year %}selected{% endif %}>{{ yr }}시즌</option>{% endfor %}
+  </select>
+  <select class="season-select" id="futures-year-sel" onchange="changeSeason('futures',this.value)" style="display:none;">
+    {% for yr in fut_years %}<option value="{{ yr }}" {% if yr == current_year %}selected{% endif %}>{{ yr }}시즌</option>{% endfor %}
+  </select>
 </div>
 
-<!-- ══════ KBO ══════ -->
+<!-- KBO -->
 <div id="tab-kbo" class="league-content active">
-  {% if games %}
-  {% set wins  = games | selectattr('result','equalto','승') | list | length %}
-  {% set loses = games | selectattr('result','equalto','패') | list | length %}
-  {% set draws = games | selectattr('result','equalto','무') | list | length %}
-  <div class="season-summary">
-    <div class="sum-box"><div class="sum-num" style="color:#27AE60">{{ wins }}</div><div class="sum-label">승</div></div>
-    <div class="sum-box"><div class="sum-num" style="color:var(--red)">{{ loses }}</div><div class="sum-label">패</div></div>
-    <div class="sum-box"><div class="sum-num" style="color:var(--gray)">{{ draws }}</div><div class="sum-label">무</div></div>
-    <div class="sum-box"><div class="sum-num" style="color:var(--gold)">
-      {% if wins+loses > 0 %}{{ "%.3f"|format(wins/(wins+loses)) }}{% else %}.000{% endif %}
-    </div><div class="sum-label">승률</div></div>
-  </div>
-  {% endif %}
-
+  <div class="season-summary" id="kbo-summary"></div>
   <div class="month-nav">
     <button onclick="changeMonth('kbo',-1)">‹</button>
     <div class="month-label" id="kbo-month-label"></div>
@@ -81,22 +75,9 @@
   </div>
 </div>
 
-<!-- ══════ 퓨처스 ══════ -->
+<!-- 퓨처스 -->
 <div id="tab-futures" class="league-content">
-  {% if futures_games %}
-  {% set fw = futures_games | selectattr('result','equalto','승') | list | length %}
-  {% set fl = futures_games | selectattr('result','equalto','패') | list | length %}
-  {% set fd = futures_games | selectattr('result','equalto','무') | list | length %}
-  <div class="season-summary">
-    <div class="sum-box"><div class="sum-num" style="color:#27AE60">{{ fw }}</div><div class="sum-label">승</div></div>
-    <div class="sum-box"><div class="sum-num" style="color:var(--red)">{{ fl }}</div><div class="sum-label">패</div></div>
-    <div class="sum-box"><div class="sum-num" style="color:var(--gray)">{{ fd }}</div><div class="sum-label">무</div></div>
-    <div class="sum-box"><div class="sum-num" style="color:var(--gold)">
-      {% if fw+fl > 0 %}{{ "%.3f"|format(fw/(fw+fl)) }}{% else %}.000{% endif %}
-    </div><div class="sum-label">승률</div></div>
-  </div>
-  {% endif %}
-
+  <div class="season-summary" id="futures-summary"></div>
   <div class="month-nav">
     <button onclick="changeMonth('futures',-1)">‹</button>
     <div class="month-label" id="futures-month-label"></div>
@@ -109,38 +90,48 @@
 </div>
 
 <script>
-function switchLeague(name, btn) {
-  document.querySelectorAll('.league-content').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.league-tab').forEach(el => el.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
-  btn.classList.add('active');
-}
-
-const kboGames     = {{ games | tojson }};
-const futuresGames = {{ futures_games | tojson }};
-
-const kboMap     = {};
-const futuresMap = {};
-kboGames.forEach(g     => { kboMap[g.date] = g; });
-futuresGames.forEach(g => { futuresMap[g.date] = g; });
-
+const allGames = {{ games | tojson }};
+const allFutures = {{ futures_games | tojson }};
 const today = new Date();
+const CURRENT_YEAR = "{{ current_year }}";
+
 const state = {
-  kbo:     { year: today.getFullYear(), month: today.getMonth() },
-  futures: { year: today.getFullYear(), month: today.getMonth() },
+  kbo:     { year: CURRENT_YEAR, month: today.getMonth(), calYear: today.getFullYear() },
+  futures: { year: CURRENT_YEAR, month: today.getMonth(), calYear: today.getFullYear() },
 };
 
+function getGameMap(allData, year) {
+  const map = {};
+  allData.filter(g => g.date && g.date.startsWith(year)).forEach(g => { map[g.date] = g; });
+  return map;
+}
+
+function renderSummary(league, year) {
+  const data = league === 'kbo' ? allGames : allFutures;
+  const filtered = data.filter(g => g.date && g.date.startsWith(year));
+  const wins  = filtered.filter(g => g.result === '승').length;
+  const loses = filtered.filter(g => g.result === '패').length;
+  const draws = filtered.filter(g => g.result === '무').length;
+  const rate  = (wins + loses) > 0 ? (wins/(wins+loses)).toFixed(3) : '.000';
+  document.getElementById(league+'-summary').innerHTML =
+    '<div class="sum-box"><div class="sum-num" style="color:#27AE60">'+wins+'</div><div class="sum-label">승</div></div>' +
+    '<div class="sum-box"><div class="sum-num" style="color:var(--red)">'+loses+'</div><div class="sum-label">패</div></div>' +
+    '<div class="sum-box"><div class="sum-num" style="color:var(--gray)">'+draws+'</div><div class="sum-label">무</div></div>' +
+    '<div class="sum-box"><div class="sum-num" style="color:var(--gold)">'+rate+'</div><div class="sum-label">승률</div></div>';
+}
+
 function renderCalendar(league) {
-  const { year, month } = state[league];
-  const gameMap  = league === 'kbo' ? kboMap : futuresMap;
-  const labelEl  = document.getElementById(league + '-month-label');
-  const bodyEl   = document.getElementById(league + '-cal-body');
-  const linkPrefix = league === 'kbo' ? '/game/' : null;
+  const s = state[league];
+  const { calYear, month, year } = s;
+  const gameMap    = getGameMap(league === 'kbo' ? allGames : allFutures, year);
+  const labelEl    = document.getElementById(league+'-month-label');
+  const bodyEl     = document.getElementById(league+'-cal-body');
+  const useLink    = league === 'kbo';
 
-  labelEl.textContent = year + '년 ' + (month+1) + '월';
+  labelEl.textContent = calYear + '년 ' + (month+1) + '월';
 
-  const firstDay = new Date(year, month, 1).getDay();
-  const lastDate = new Date(year, month+1, 0).getDate();
+  const firstDay = new Date(calYear, month, 1).getDay();
+  const lastDate = new Date(calYear, month+1, 0).getDate();
   const todayStr = String(today.getFullYear()) + String(today.getMonth()+1).padStart(2,'0') + String(today.getDate()).padStart(2,'0');
 
   let html = '';
@@ -148,8 +139,8 @@ function renderCalendar(league) {
   for (let d = 1; d <= lastDate; d++) {
     const mm  = String(month+1).padStart(2,'0');
     const dd  = String(d).padStart(2,'0');
-    const dateStr = String(year) + mm + dd;
-    const dow = new Date(year, month, d).getDay();
+    const dateStr = String(calYear) + mm + dd;
+    const dow = new Date(calYear, month, d).getDay();
     let cls = 'cal-cell';
     if (dateStr === todayStr) cls += ' today';
     if (dow === 0) cls += ' sunday';
@@ -159,9 +150,9 @@ function renderCalendar(league) {
     if (g) {
       const rc  = g.result === '승' ? 'win' : g.result === '패' ? 'lose' : 'draw';
       const opp = g.home_team === '두산' ? g.away_team : g.home_team;
-      const tag = linkPrefix ? 'a href="' + linkPrefix + g.game_id + '"' : 'div';
-      const endTag = linkPrefix ? 'a' : 'div';
-      html += '<' + tag + ' class="cal-game ' + rc + '"><div class="cal-game-score">' + g.home_score + ' : ' + g.away_score + '</div><div class="cal-game-team">vs ' + opp + '</div></' + endTag + '>';
+      const tag = useLink ? 'a href="/game/'+g.game_id+'"' : 'div';
+      const endTag = useLink ? 'a' : 'div';
+      html += '<'+tag+' class="cal-game '+rc+'"><div class="cal-game-score">'+g.home_score+' : '+g.away_score+'</div><div class="cal-game-team">vs '+opp+'</div></'+endTag+'>';
     }
     html += '</div>';
   }
@@ -169,12 +160,34 @@ function renderCalendar(league) {
 }
 
 function changeMonth(league, dir) {
-  state[league].month += dir;
-  if (state[league].month > 11) { state[league].month = 0; state[league].year++; }
-  if (state[league].month < 0)  { state[league].month = 11; state[league].year--; }
+  const s = state[league];
+  s.month += dir;
+  if (s.month > 11) { s.month = 0; s.calYear++; }
+  if (s.month < 0)  { s.month = 11; s.calYear--; }
   renderCalendar(league);
 }
 
+function changeSeason(league, year) {
+  state[league].year = year;
+  state[league].calYear = parseInt(year);
+  state[league].month = parseInt(year) === today.getFullYear() ? today.getMonth() : 2; // 3월부터
+  renderSummary(league, year);
+  renderCalendar(league);
+}
+
+function switchLeague(name, btn) {
+  document.querySelectorAll('.league-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.league-tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+  // 드롭다운 교체
+  document.getElementById('kbo-year-sel').style.display     = name === 'kbo' ? 'block' : 'none';
+  document.getElementById('futures-year-sel').style.display = name === 'futures' ? 'block' : 'none';
+}
+
+// 초기화
+renderSummary('kbo', CURRENT_YEAR);
+renderSummary('futures', CURRENT_YEAR);
 renderCalendar('kbo');
 renderCalendar('futures');
 </script>

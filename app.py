@@ -175,10 +175,33 @@ def players_page():
 
 @app.route("/games")
 def games_all():
-    games = get_recent_games(limit=200)
-    from database import get_recent_futures_games
-    futures_games = get_recent_futures_games(limit=200)
-    return render_template("games.html", games=games, futures_games=futures_games)
+    from database import get_connection, get_recent_futures_games
+    from datetime import datetime as _dt
+
+    conn = get_connection()
+    try:
+        games = conn.execute(
+            "SELECT * FROM games ORDER BY date DESC LIMIT 500"
+        ).fetchall()
+        futures_games = conn.execute(
+            "SELECT * FROM futures_games ORDER BY date DESC LIMIT 500"
+        ).fetchall()
+    except:
+        games = []
+        futures_games = []
+    conn.close()
+
+    # 시즌 목록 추출
+    years = sorted(set(g['date'][:4] for g in games if g['date']), reverse=True)
+    fut_years = sorted(set(g['date'][:4] for g in futures_games if g['date']), reverse=True)
+
+    return render_template("games.html",
+        games=[dict(g) for g in games],
+        futures_games=[dict(g) for g in futures_games],
+        years=years,
+        fut_years=fut_years,
+        current_year=str(_dt.now().year),
+    )
 
 
 @app.route("/game/<game_id>")

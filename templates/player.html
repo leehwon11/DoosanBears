@@ -109,8 +109,8 @@
 
 <!-- 리그 탭 -->
 <div class="league-tab-wrap">
-  <button class="league-tab active" onclick="switchLeague('kbo',this)">KBO ({{ pitcher_stats|length if is_pitcher else batter_stats|length }}경기)</button>
-  <button class="league-tab" onclick="switchLeague('fut',this)">퓨처스 ({{ futures_pitcher|length if is_pitcher else futures_batter|length }}경기)</button>
+  <button class="league-tab active" onclick="switchLeague('kbo',this)">KBO</button>
+  <button class="league-tab" onclick="switchLeague('fut',this)">퓨처스</button>
 </div>
 
 {% macro render_league(league_key, stats, season_data, slider_id, tbody_id, page_id, game_link) %}
