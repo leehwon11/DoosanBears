@@ -313,8 +313,12 @@ def player_page(pname):
         for s in seasons.values():
             o = s['ip_outs']
             s['ip'] = f"{o//3}.{o%3}" if o > 0 else "0"
-            er = s['er']; ip_inn = o/3 if o > 0 else 0
-            s['era'] = f"{er*9/ip_inn:.2f}" if ip_inn > 0 else "-"
+            ip_inn = o/3 if o > 0 else 0
+            s['era']  = f"{s['er']*9/ip_inn:.2f}" if ip_inn > 0 else "-"
+            s['whip'] = f"{(s['bb']+s['h'])/ip_inn:.2f}" if ip_inn > 0 else "-"
+            # 피안타율: 피안타 / (상대타자 - 볼넷) 근사
+            bf_approx = s['h'] + s['bb'] + s['so'] + s['er']  # 대략적 대면타자
+            s['bavg'] = f"{s['h']/bf_approx:.3f}" if bf_approx > 0 else ".000"
         return sorted(seasons.values(), key=lambda x: x['year'], reverse=True)
 
     def aggregate_by_season_batter(stats):
@@ -334,8 +338,15 @@ def player_page(pname):
             s['so']  += d.get('so', 0)
             s['r']   += d.get('r', 0)
         for s in seasons.values():
-            s['avg'] = f"{s['h']/s['ab']:.3f}" if s['ab'] > 0 else ".000"
-            s['obp'] = f"{(s['h']+s['bb'])/(s['ab']+s['bb']):.3f}" if (s['ab']+s['bb']) > 0 else ".000"
+            ab, h, hr, bb = s['ab'], s['h'], s['hr'], s['bb']
+            s['avg'] = f"{h/ab:.3f}" if ab > 0 else ".000"
+            s['obp'] = f"{(h+bb)/(ab+bb):.3f}" if (ab+bb) > 0 else ".000"
+            # SLG 근사: 단타=1, 2루타 추정없음, 홈런=4 (보수적)
+            tb = h + hr * 3  # 홈런 추가 루타만 반영
+            s['slg'] = f"{tb/ab:.3f}" if ab > 0 else ".000"
+            obp_f = (h+bb)/(ab+bb) if (ab+bb) > 0 else 0
+            slg_f = tb/ab if ab > 0 else 0
+            s['ops'] = f"{obp_f+slg_f:.3f}"
         return sorted(seasons.values(), key=lambda x: x['year'], reverse=True)
 
     kbo_pitcher_seasons   = aggregate_by_season_pitcher([dict(r) for r in pitcher_stats])

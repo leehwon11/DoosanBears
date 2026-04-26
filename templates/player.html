@@ -135,6 +135,8 @@
   <div class="stat-box"><div class="stat-num" id="{{ league_key }}-bb">-</div><div class="stat-label">볼넷</div></div>
   <div class="stat-box"><div class="stat-num" id="{{ league_key }}-so">-</div><div class="stat-label">삼진</div></div>
   <div class="stat-box"><div class="stat-num" id="{{ league_key }}-ab">-</div><div class="stat-label">타수</div></div>
+  <div class="stat-box"><div class="stat-num" id="{{ league_key }}-obp">-</div><div class="stat-label">출루율</div></div>
+  <div class="stat-box"><div class="stat-num" id="{{ league_key }}-ops">-</div><div class="stat-label">OPS</div></div>
   {% endif %}
 </div>
 
@@ -175,9 +177,9 @@
   <table class="stats-table">
     <thead>
       {% if is_pitcher %}
-      <tr><th>시즌</th><th>경기</th><th>승</th><th>패</th><th>홀드</th><th>세이브</th><th>이닝</th><th>피안타</th><th>볼넷</th><th>삼진</th><th>자책</th><th>ERA</th><th>AI 분석</th></tr>
+      <tr><th>시즌</th><th>경기</th><th>승</th><th>패</th><th>홀드</th><th>세이브</th><th>이닝</th><th>피안타</th><th>볼넷</th><th>삼진</th><th>자책</th><th>ERA</th><th>WHIP</th><th>피안타율</th><th>AI 분석</th></tr>
       {% else %}
-      <tr><th>시즌</th><th>경기</th><th>타율</th><th>안타</th><th>홈런</th><th>타점</th><th>볼넷</th><th>삼진</th><th>타수</th><th>출루율</th><th>AI 분석</th></tr>
+      <tr><th>시즌</th><th>경기</th><th>타율</th><th>안타</th><th>홈런</th><th>타점</th><th>볼넷</th><th>삼진</th><th>타수</th><th>출루율</th><th>장타율</th><th>OPS</th><th>AI 분석</th></tr>
       {% endif %}
     </thead>
     <tbody>
@@ -196,6 +198,8 @@
       <td>{{ s.so }}</td>
       <td>{{ s.er }}</td>
       <td style="color:var(--gold)">{{ s.era }}</td>
+      <td>{{ s.whip if s.whip is defined else '-' }}</td>
+      <td>{{ s.bavg if s.bavg is defined else '-' }}</td>
       {% else %}
       <td style="color:var(--gold)">{{ s.avg }}</td>
       <td {% if s.h > 0 %}class="highlight"{% endif %}>{{ s.h }}</td>
@@ -205,6 +209,8 @@
       <td>{{ s.so }}</td>
       <td>{{ s.ab }}</td>
       <td>{{ s.obp }}</td>
+      <td>{{ s.slg if s.slg is defined else '-' }}</td>
+      <td style="color:var(--gold)">{{ s.ops if s.ops is defined else '-' }}</td>
       {% endif %}
       <td><button class="analyze-btn-sm" onclick="analyzeSeasonAI('{{ s.year }}','{{ league_key }}')">AI 분석</button></td>
     </tr>
@@ -337,6 +343,10 @@ function calcSummary(stats) {
     const s = {ab:0,h:0,hr:0,rbi:0,bb:0,so:0};
     stats.forEach(b => { s.ab+=b.ab||0; s.h+=b.h||0; s.hr+=b.hr||0; s.rbi+=b.rbi||0; s.bb+=b.bb||0; s.so+=b.so||0; });
     s.avg = s.ab > 0 ? (s.h/s.ab).toFixed(3) : '.000';
+    s.obp = (s.ab+s.bb) > 0 ? ((s.h+s.bb)/(s.ab+s.bb)).toFixed(3) : '.000';
+    const tb = s.h + s.hr * 3;
+    s.slg = s.ab > 0 ? (tb/s.ab).toFixed(3) : '.000';
+    s.ops = ((parseFloat(s.obp)||0) + (parseFloat(s.slg)||0)).toFixed(3);
     return s;
   }
 }
@@ -350,9 +360,13 @@ function updateSummary(league, year) {
   if (IS_PITCHER) {
     set('w',s.w); set('l',s.l); set('hld',s.hld); set('sav',s.sav);
     set('so',s.so); set('er',s.er); set('bb',s.bb); set('h',s.h);
+    // WHIP 계산 (이닝 정보 없어서 경기당 근사)
+    const whip = (s.bb+s.h) > 0 ? ((s.bb+s.h)/stats.length).toFixed(2) : '-';
+    set('whip', whip);
   } else {
     set('avg',s.avg); set('h',s.h); set('hr',s.hr); set('rbi',s.rbi);
     set('bb',s.bb); set('so',s.so); set('ab',s.ab);
+    set('obp',s.obp); set('ops',s.ops);
   }
 }
 
