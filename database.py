@@ -228,6 +228,8 @@ def save_game(data: dict):
 
     # ── inning_scores 저장 ──
     innings = score.get("innings", {})
+    # 기존 이닝 데이터 삭제 후 재저장 (중복 방지)
+    cur.execute("DELETE FROM inning_scores WHERE game_id=?", (game_id,))
     for team_key, team_label in [("home", "doosan" if is_home else "opponent"),
                                   ("away", "opponent" if is_home else "doosan")]:
         for i, s in enumerate(innings.get(team_key, []), start=1):

@@ -241,6 +241,7 @@ def get_box_score(game_id: str, session: requests.Session) -> tuple[list, list]:
     try:
         hitter_data = data["arrHitter"][team_idx]
         table1_rows = json.loads(hitter_data["table1"]).get("rows", [])  # 이름/포지션
+        table2_rows = json.loads(hitter_data["table2"]).get("rows", [])  # 타석별 결과
         table3_rows = json.loads(hitter_data["table3"]).get("rows", [])  # 타수/안타/타점/볼넷/타율
 
         for i, (r1, r3) in enumerate(zip(table1_rows, table3_rows)):
@@ -258,6 +259,15 @@ def get_box_score(game_id: str, session: requests.Session) -> tuple[list, list]:
             except ValueError:
                 batting_order = 0  # 대타/대주자는 타순 없음
 
+            # table2에서 홈런 카운트 (좌홈, 우홈, 중홈 등)
+            hr_count = 0
+            if i < len(table2_rows):
+                row2 = table2_rows[i].get("row", [])
+                for cell in row2:
+                    t = BeautifulSoup(cell.get("Text", ""), "html.parser").get_text(strip=True)
+                    if "홈" in t:
+                        hr_count += 1
+
             batters.append({
                 "name":          name,
                 "position":      _convert_pos(_gt(row1, 1)),
@@ -267,7 +277,7 @@ def get_box_score(game_id: str, session: requests.Session) -> tuple[list, list]:
                 "rbi": _iv(row3, 2),
                 "bb":  _iv(row3, 3),
                 "avg": _gt(row3, 4),
-                "hr": 0, "r": 0, "so": 0,
+                "hr": hr_count, "r": 0, "so": 0,
             })
     except Exception as e:
         print(f"    타자 파싱 오류: {e}")
