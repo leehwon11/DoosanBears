@@ -62,9 +62,9 @@
 
 <div style="text-align:center;margin-bottom:1.5rem;">
   <select class="year-select" id="year-select">
-    <option value="2026">2026시즌</option>
-    <option value="2025">2025시즌</option>
-    <option value="">전체</option>
+    {% for yr in years %}
+    <option value="{{ yr }}" {% if yr == current_year %}selected{% endif %}>{{ yr }}시즌</option>
+    {% endfor %}
   </select>
 </div>
 

@@ -80,15 +80,25 @@ def index():
 def compare_page():
     """선수 비교 페이지"""
     from database import get_connection
+    from datetime import datetime as _dt
     conn = get_connection()
     try:
         players = conn.execute(
             "SELECT DISTINCT name, position FROM players WHERE status='active' ORDER BY position, name"
         ).fetchall()
+        years = conn.execute(
+            "SELECT DISTINCT substr(date,1,4) yr FROM games ORDER BY yr DESC"
+        ).fetchall()
+        years = [r['yr'] for r in years]
     except:
         players = []
+        years = [str(_dt.now().year)]
     conn.close()
-    return render_template("compare.html", players=[dict(p) for p in players])
+    return render_template("compare.html",
+        players=[dict(p) for p in players],
+        years=years,
+        current_year=str(_dt.now().year),
+    )
 
 
 @app.route("/api/compare")
@@ -99,6 +109,8 @@ def api_compare():
     p1 = request.args.get("p1", "")
     p2 = request.args.get("p2", "")
     year = request.args.get("year", str(_dt.now().year))
+    if not year:
+        year = str(_dt.now().year)
     if not p1 or not p2:
         return jsonify({"error": "선수명 필요"}), 400
 
