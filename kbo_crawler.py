@@ -259,25 +259,37 @@ def get_box_score(game_id: str, session: requests.Session) -> tuple[list, list]:
             except ValueError:
                 batting_order = 0  # 대타/대주자는 타순 없음
 
-            # table2에서 홈런 카운트 (좌홈, 우홈, 중홈 등)
-            hr_count = 0
+            # table2에서 2루타/3루타/홈런/삼진 카운트
+            hr_count = doubles = triples = so_count = 0
             if i < len(table2_rows):
                 row2 = table2_rows[i].get("row", [])
                 for cell in row2:
                     t = BeautifulSoup(cell.get("Text", ""), "html.parser").get_text(strip=True)
+                    if not t:
+                        continue
                     if "홈" in t:
                         hr_count += 1
+                    elif "삼진" in t:
+                        so_count += 1
+                    elif t.endswith("2") or "2루" in t:
+                        doubles += 1
+                    elif t.endswith("3") or "3루" in t:
+                        triples += 1
 
             batters.append({
                 "name":          name,
                 "position":      _convert_pos(_gt(row1, 1)),
                 "batting_order": batting_order,
-                "ab":  _iv(row3, 0),
-                "h":   _iv(row3, 1),
-                "rbi": _iv(row3, 2),
-                "bb":  _iv(row3, 3),
-                "avg": _gt(row3, 4),
-                "hr": hr_count, "r": 0, "so": 0,
+                "ab":      _iv(row3, 0),
+                "h":       _iv(row3, 1),
+                "rbi":     _iv(row3, 2),
+                "bb":      _iv(row3, 3),
+                "avg":     _gt(row3, 4),
+                "hr":      hr_count,
+                "doubles": doubles,
+                "triples": triples,
+                "so":      so_count,
+                "r":       0,
             })
     except Exception as e:
         print(f"    타자 파싱 오류: {e}")

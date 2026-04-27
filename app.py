@@ -350,26 +350,32 @@ def player_page(pname):
             d = dict(b) if not isinstance(b, dict) else b
             yr = d['date'][:4]
             if yr not in seasons:
-                seasons[yr] = {'year': yr, 'games':0, 'ab':0, 'h':0, 'hr':0, 'rbi':0, 'bb':0, 'so':0, 'r':0}
+                seasons[yr] = {'year': yr, 'games':0, 'ab':0, 'h':0, 'hr':0, 'doubles':0, 'triples':0, 'rbi':0, 'bb':0, 'so':0, 'r':0}
             s = seasons[yr]
-            s['games'] += 1
-            s['ab']  += d.get('ab', 0)
-            s['h']   += d.get('h', 0)
-            s['hr']  += d.get('hr', 0)
-            s['rbi'] += d.get('rbi', 0)
-            s['bb']  += d.get('bb', 0)
-            s['so']  += d.get('so', 0)
-            s['r']   += d.get('r', 0)
+            s['games']   += 1
+            s['ab']      += d.get('ab', 0)
+            s['h']       += d.get('h', 0)
+            s['hr']      += d.get('hr', 0)
+            s['doubles'] += d.get('doubles', 0)
+            s['triples'] += d.get('triples', 0)
+            s['rbi']     += d.get('rbi', 0)
+            s['bb']      += d.get('bb', 0)
+            s['so']      += d.get('so', 0)
+            s['r']       += d.get('r', 0)
         for s in seasons.values():
             ab, h, hr, bb = s['ab'], s['h'], s['hr'], s['bb']
+            doubles, triples = s.get('doubles', 0), s.get('triples', 0)
             s['avg'] = f"{h/ab:.3f}" if ab > 0 else ".000"
             s['obp'] = f"{(h+bb)/(ab+bb):.3f}" if (ab+bb) > 0 else ".000"
-            # SLG 근사: 단타=1, 2루타 추정없음, 홈런=4 (보수적)
-            tb = h + hr * 3  # 홈런 추가 루타만 반영
+            # SLG = (단타 + 2루타*2 + 3루타*3 + 홈런*4) / 타수
+            singles = h - doubles - triples - hr
+            tb = singles + doubles*2 + triples*3 + hr*4
             s['slg'] = f"{tb/ab:.3f}" if ab > 0 else ".000"
             obp_f = (h+bb)/(ab+bb) if (ab+bb) > 0 else 0
             slg_f = tb/ab if ab > 0 else 0
             s['ops'] = f"{obp_f+slg_f:.3f}"
+            s['doubles'] = doubles
+            s['triples'] = triples
         return sorted(seasons.values(), key=lambda x: x['year'], reverse=True)
 
     kbo_pitcher_seasons   = aggregate_by_season_pitcher([dict(r) for r in pitcher_stats])
