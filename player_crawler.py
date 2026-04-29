@@ -217,6 +217,17 @@ def save_players_to_db(data: dict):
     conn.commit()
 
     now = datetime.now().isoformat()
+
+    # 삭제 전 기존 선수 정보 백업
+    existing_players = {}
+    try:
+        rows = conn.execute("SELECT * FROM players").fetchall()
+        for r in rows:
+            d = dict(r)
+            existing_players[d['name']] = d
+    except:
+        pass
+
     conn.execute("DELETE FROM players")
 
     # 1군
@@ -237,12 +248,8 @@ def save_players_to_db(data: dict):
     for p in data.get("removed", []):
         info = futures_info.get(p["name"]) or roster_info.get(p["name"])
         if not info:
-            # 기존 DB에서 해당 선수 정보 가져오기
-            existing = conn.execute(
-                "SELECT * FROM players WHERE name=? ORDER BY updated_at DESC LIMIT 1", (p["name"],)
-            ).fetchone()
-            if existing:
-                info = dict(existing)
+            # 삭제 전 백업에서 정보 가져오기
+            info = existing_players.get(p["name"])
         if not info:
             info = p
         conn.execute("""
