@@ -92,7 +92,7 @@
 {% set g = detail.game %}
 <div class="game-header">
   <div class="game-header-date">
-    {{ g.date[:4] }}.{{ g.date[4:6] }}.{{ g.date[6:] }}
+    {{ g.date[:4] }}.{{ g.date[4:6] }}.{{ g.date[6:] }}{% if g.stadium %} · {{ g.stadium }}{% endif %}
     &nbsp;|&nbsp;
     <span class="badge {% if g.result == '승' %}badge-win{% elif g.result == '패' %}badge-lose{% else %}badge-draw{% endif %}">{{ g.result }}</span>
   </div>

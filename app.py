@@ -179,9 +179,19 @@ def players_page():
         players = []
         updated_at = None
     conn.close()
+    # 당일 등록/말소
+    try:
+        daily_changes = conn.execute(
+            "SELECT * FROM players_daily_change ORDER BY change_type, team_level"
+        ).fetchall()
+        daily_changes = [dict(d) for d in daily_changes]
+    except:
+        daily_changes = []
+
     return render_template("players.html",
         players=[dict(p) for p in players],
-        updated_at=updated_at["updated_at"][:10] if updated_at else "미업데이트"
+        updated_at=updated_at["updated_at"][:10] if updated_at else "미업데이트",
+        daily_changes=daily_changes,
     )
 
 

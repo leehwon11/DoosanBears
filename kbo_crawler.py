@@ -141,6 +141,18 @@ def get_today_game_id(date: str = None, session: requests.Session = None) -> dic
         home, away, home_score, away_score = _parse_play_text(_cell(row_arr, 2))
         status = "종료" if _is_finished(row_arr) else "미종료"
 
+        # 스코어보드 API로 홈/원정 정확히 보정
+        try:
+            score_data = get_score_board(game_id, session)
+            if score_data.get("home_team"):
+                home = score_data["home_team"]
+                away = score_data["away_team"]
+                total = score_data.get("total", {})
+                home_score = total.get("home", {}).get("R", home_score)
+                away_score = total.get("away", {}).get("R", away_score)
+        except:
+            pass
+
         print(f"    발견: {game_id}, {away} {away_score}:{home_score} {home}, 상태={status}")
         return {
             "game_id": game_id, "date": date,

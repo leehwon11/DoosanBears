@@ -118,6 +118,25 @@
 
 {% endif %}
 
+{% if daily_changes %}
+<div style="margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--border);">
+  <div class="section-title" style="font-size:1.1rem;margin-bottom:1rem;">오늘의 엔트리 변동</div>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;">
+    {% for c in daily_changes %}
+    {% if c.change_type == 'registered' %}
+    <span style="background:rgba(39,174,96,0.15);border:1px solid rgba(39,174,96,0.4);color:#27AE60;border-radius:20px;padding:5px 14px;font-size:0.82rem;">
+      ▲ {{ c.name }} ({{ c.position }}) {{ c.team_level }} 등록
+    </span>
+    {% else %}
+    <span style="background:rgba(200,16,46,0.12);border:1px solid rgba(200,16,46,0.3);color:rgba(248,249,250,0.6);border-radius:20px;padding:5px 14px;font-size:0.82rem;">
+      ▼ {{ c.name }} ({{ c.position }}) {{ c.team_level }} 말소
+    </span>
+    {% endif %}
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
 <script>
 function switchLeague(name, btn) {
   document.querySelectorAll('.league-content').forEach(el => el.classList.remove('active'));
