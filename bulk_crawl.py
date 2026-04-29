@@ -96,6 +96,59 @@ def bulk_crawl_futures(start_date: str, end_date: str):
     print(f"[퓨처스] 완료! 성공: {success} / 스킵: {skipped} / 실패: {failed}")
 
 
+def recrawl_innings_only(start_date: str, end_date: str):
+    """이닝 데이터만 재크롤링 (타자/투수 기록 유지)"""
+    from kbo_crawler import crawl_game
+    from database import init_db, get_connection
+
+    init_db()
+    conn = get_connection()
+
+    # DB에 있는 경기만 대상으로
+    games = conn.execute(
+        "SELECT game_id, date FROM games WHERE date BETWEEN ? AND ? ORDER BY date",
+        (start_date, end_date)
+    ).fetchall()
+    conn.close()
+
+    print(f"[이닝 재크롤링] 대상: {len(games)}경기")
+    success = failed = 0
+
+    for g in games:
+        game_id, date = g[0], g[1]
+        try:
+            data = crawl_game(date=date, save_json=False)
+            if not data:
+                failed += 1
+                continue
+
+            score = data.get("score_board", {})
+            innings = score.get("innings", {})
+            home_nm = score.get("home_team", "")
+            is_home = (home_nm == "두산")
+
+            conn2 = get_connection()
+            cur = conn2.cursor()
+            cur.execute("DELETE FROM inning_scores WHERE game_id=?", (game_id,))
+            for team_key, team_label in [("home", "doosan" if is_home else "opponent"),
+                                          ("away", "opponent" if is_home else "doosan")]:
+                for i, s in enumerate(innings.get(team_key, []), start=1):
+                    cur.execute(
+                        "INSERT INTO inning_scores (game_id, team, inning, score) VALUES (?, ?, ?, ?)",
+                        (game_id, team_label, i, s)
+                    )
+            conn2.commit()
+            conn2.close()
+            print(f"  {date} ({game_id}) — 이닝 저장 완료")
+            success += 1
+        except Exception as e:
+            print(f"  {date} — 오류: {e}")
+            failed += 1
+        time.sleep(1)
+
+    print(f"[이닝 재크롤링] 완료! 성공: {success} / 실패: {failed}")
+
+
 if __name__ == "__main__":
     today = datetime.now().strftime("%Y%m%d")
 
@@ -103,6 +156,10 @@ if __name__ == "__main__":
         start = sys.argv[2] if len(sys.argv) > 2 else "20260301"
         end   = sys.argv[3] if len(sys.argv) > 3 else today
         bulk_crawl_futures(start, end)
+    elif len(sys.argv) >= 2 and sys.argv[1] == "innings":
+        start = sys.argv[2] if len(sys.argv) > 2 else "20240101"
+        end   = sys.argv[3] if len(sys.argv) > 3 else today
+        recrawl_innings_only(start, end)
     else:
         if len(sys.argv) == 3:
             start, end = sys.argv[1], sys.argv[2]
