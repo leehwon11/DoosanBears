@@ -112,6 +112,7 @@ def init_db():
             home_score  INTEGER,
             away_score  INTEGER,
             result      TEXT,
+            stadium     TEXT,
             crawled_at  TEXT    NOT NULL
         )
     """)
@@ -213,14 +214,17 @@ def save_game(data: dict):
         result = "무"
 
     # ── games 저장 (있으면 업데이트) ──
+    stadium = score.get("stadium", "")
+
     cur.execute("""
         INSERT INTO games
-            (game_id, date, home_team, away_team, home_score, away_score, result, crawled_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            (game_id, date, home_team, away_team, home_score, away_score, result, stadium, crawled_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(game_id) DO UPDATE SET
             home_score=excluded.home_score,
             away_score=excluded.away_score,
             result=excluded.result,
+            stadium=excluded.stadium,
             crawled_at=excluded.crawled_at
     """, (
         game_id,
@@ -230,6 +234,7 @@ def save_game(data: dict):
         home_score,
         away_score,
         result,
+        stadium,
         now,
     ))
 

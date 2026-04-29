@@ -98,7 +98,6 @@ def bulk_crawl_futures(start_date: str, end_date: str):
 
 def recrawl_innings_only(start_date: str, end_date: str):
     """이닝 데이터만 재크롤링 (타자/투수 기록 유지)"""
-    from kbo_crawler import crawl_today_game as crawl_game
     from database import init_db, get_connection
 
     init_db()
@@ -114,15 +113,17 @@ def recrawl_innings_only(start_date: str, end_date: str):
     print(f"[이닝 재크롤링] 대상: {len(games)}경기")
     success = failed = 0
 
+    from kbo_crawler import get_score_board, _make_session
     for g in games:
         game_id, date = g[0], g[1]
         try:
-            data = crawl_game(date=date, save_json=False)
-            if not data:
+            # game_id로 직접 스코어보드 크롤링
+            session = _make_session()
+            score = get_score_board(game_id, session)
+            if not score:
                 failed += 1
                 continue
 
-            score = data.get("score_board", {})
             innings = score.get("innings", {})
             home_nm = score.get("home_team", "")
             is_home = (home_nm == "두산")
@@ -139,10 +140,10 @@ def recrawl_innings_only(start_date: str, end_date: str):
                     )
             conn2.commit()
             conn2.close()
-            print(f"  {date} ({game_id}) — 이닝 저장 완료")
+            print(f"  {date} ({game_id}) — 이닝 저장 완료 (홈: {'두산' if is_home else home_nm})")
             success += 1
         except Exception as e:
-            print(f"  {date} — 오류: {e}")
+            print(f"  {date} ({game_id}) — 오류: {e}")
             failed += 1
         time.sleep(1)
 

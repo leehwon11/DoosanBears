@@ -174,6 +174,7 @@ def get_score_board(game_id: str, session: requests.Session) -> dict:
     result = {
         "home_team": data.get("HOME_NM",""),
         "away_team": data.get("AWAY_NM",""),
+        "stadium":   data.get("S_NM",""),
         "innings": {"home":[], "away":[]},
         "total":   {"home":{}, "away":{}},
     }
@@ -232,9 +233,11 @@ def get_box_score(game_id: str, session: requests.Session) -> tuple[list, list]:
         print(f"    오류: {e}")
         return [], []
 
-    # 두산이 홈(game_id[8:10]=="OB")이면 arrHitter[0], 원정이면 arrHitter[1]
+    # arrHitter[0]=원정팀, arrHitter[1]=홈팀
+    # 두산이 홈이면 game_id[8:10]=="OB" → arrHitter[1]
+    # 두산이 원정이면 game_id[10:12]=="OB" → arrHitter[0]
     is_home  = game_id[8:10] == "OB"
-    team_idx = 0 if is_home else 1
+    team_idx = 1 if is_home else 0
 
     # ── 타자 파싱 ──
     batters = []

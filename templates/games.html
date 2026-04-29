@@ -152,7 +152,8 @@ function renderCalendar(league) {
       const opp = g.home_team === '두산' ? g.away_team : g.home_team;
       const tag = useLink ? 'a href="/game/'+g.game_id+'"' : 'div';
       const endTag = useLink ? 'a' : 'div';
-      html += '<'+tag+' class="cal-game '+rc+'"><div class="cal-game-score">'+g.home_score+' : '+g.away_score+'</div><div class="cal-game-team">vs '+opp+'</div></'+endTag+'>';
+      const stadium = g.stadium ? ' · '+g.stadium : '';
+      html += '<'+tag+' class="cal-game '+rc+'"><div class="cal-game-score">'+g.home_score+' : '+g.away_score+'</div><div class="cal-game-team">vs '+opp+stadium+'</div></'+endTag+'>';
     }
     html += '</div>';
   }
