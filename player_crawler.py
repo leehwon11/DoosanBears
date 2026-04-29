@@ -218,7 +218,7 @@ def save_players_to_db(data: dict):
 
     now = datetime.now().isoformat()
 
-    # 삭제 전 기존 선수 정보 백업
+    # 삭제 전 기존 선수 정보 백업 (전체)
     existing_players = {}
     try:
         rows = conn.execute("SELECT * FROM players").fetchall()
@@ -226,6 +226,33 @@ def save_players_to_db(data: dict):
             d = dict(r)
             existing_players[d['name']] = d
     except:
+        pass
+
+    # 1군 선수 정보는 별도 백업 테이블에도 저장 (말소 시 참조용)
+    try:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS players_info_backup (
+                name TEXT PRIMARY KEY,
+                player_id TEXT, number TEXT, position TEXT,
+                batting TEXT, birth TEXT, height_weight TEXT,
+                updated_at TEXT
+            )
+        """)
+        # 현재 1군 active 선수 정보 백업
+        conn.execute("""
+            INSERT OR REPLACE INTO players_info_backup
+                (name, player_id, number, position, batting, birth, height_weight, updated_at)
+            SELECT name, player_id, number, position, batting, birth, height_weight, updated_at
+            FROM players WHERE status='active' AND batting != '' AND birth != ''
+        """)
+        conn.commit()
+        # 백업에서도 existing_players 보완
+        backup_rows = conn.execute("SELECT * FROM players_info_backup").fetchall()
+        for r in backup_rows:
+            d = dict(r)
+            if d['name'] not in existing_players or not existing_players[d['name']].get('batting'):
+                existing_players[d['name']] = d
+    except Exception as e:
         pass
 
     conn.execute("DELETE FROM players")
