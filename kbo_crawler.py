@@ -419,11 +419,32 @@ def _print_summary(data: dict):
 
 
 def is_game_finished(date: str = None) -> bool:
+    """경기 종료 여부 확인 - 스코어보드 이닝 수로 판단"""
     session   = _make_session()
     game_info = get_today_game_id(date, session)
     if not game_info:
         return False
-    return game_info.get("status") == "종료"
+
+    # 1차: 상태가 종료가 아니면 바로 False
+    if game_info.get("status") != "종료":
+        return False
+
+    # 2차: 스코어보드에서 실제 이닝 수 확인 (9이닝 이상이어야 진짜 종료)
+    try:
+        game_id = game_info.get("game_id")
+        score = get_score_board(game_id, session)
+        home_innings = score.get("innings", {}).get("home", [])
+        away_innings = score.get("innings", {}).get("away", [])
+        max_innings = max(len(home_innings), len(away_innings))
+        if max_innings < 9:
+            print(f"    이닝 수 부족 ({max_innings}이닝) — 미종료로 처리")
+            return False
+    except Exception as e:
+        print(f"    이닝 확인 오류: {e}")
+        # 오류 시 상태값만으로 판단
+        pass
+
+    return True
 
 
 if __name__ == "__main__":

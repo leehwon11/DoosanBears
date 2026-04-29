@@ -120,6 +120,30 @@ def start_scheduler():
         misfire_grace_time=300, # 5분 내 지연은 그냥 실행
     )
 
+    # 매일 오전 10:00 선수 엔트리 업데이트
+    scheduler.add_job(
+        update_players_job,
+        trigger=CronTrigger(hour=10, minute=0, timezone="Asia/Seoul"),
+        id="player_update",
+        name="선수 엔트리 업데이트",
+        max_instances=1,
+        misfire_grace_time=600,
+    )
+
+    # 퓨처스 크롤링 (16:15~23:45 30분마다)
+    scheduler.add_job(
+        run_futures_crawl_job,
+        trigger=CronTrigger(
+            hour="16,17,18,19,20,21,22,23",
+            minute="15,45",
+            timezone="Asia/Seoul",
+        ),
+        id="futures_crawl",
+        name="퓨처스 경기 크롤링",
+        max_instances=1,
+        misfire_grace_time=300,
+    )
+
     log.info("스케줄러 시작 — 매일 16:00~23:30 사이 30분 간격으로 실행")
     log.info("Ctrl+C 로 종료")
 
