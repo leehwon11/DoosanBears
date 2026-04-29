@@ -1,7 +1,6 @@
 import sqlite3
 conn = sqlite3.connect('doosan.db')
-rows = conn.execute('SELECT team, inning, score FROM inning_scores WHERE game_id="20260428SSOB0" ORDER BY team, inning').fetchall()
-for r in rows:
-    print(r)
-print("총 이닝 수:", len(rows))
+conn.execute("DELETE FROM inning_scores")
+conn.commit()
+print("이닝 데이터 초기화 완료")
 conn.close()

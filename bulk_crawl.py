@@ -98,7 +98,7 @@ def bulk_crawl_futures(start_date: str, end_date: str):
 
 def recrawl_innings_only(start_date: str, end_date: str):
     """이닝 데이터만 재크롤링 (타자/투수 기록 유지)"""
-    from kbo_crawler import crawl_game
+    from kbo_crawler import crawl_today_game as crawl_game
     from database import init_db, get_connection
 
     init_db()
