@@ -212,11 +212,16 @@ def save_game(data: dict):
     else:
         result = "무"
 
-    # ── games 저장 (중복 무시) ──
+    # ── games 저장 (있으면 업데이트) ──
     cur.execute("""
-        INSERT OR IGNORE INTO games
+        INSERT INTO games
             (game_id, date, home_team, away_team, home_score, away_score, result, crawled_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(game_id) DO UPDATE SET
+            home_score=excluded.home_score,
+            away_score=excluded.away_score,
+            result=excluded.result,
+            crawled_at=excluded.crawled_at
     """, (
         game_id,
         data.get("date"),
