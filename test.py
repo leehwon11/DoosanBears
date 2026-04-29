@@ -1,6 +1,7 @@
 import sqlite3
 conn = sqlite3.connect('doosan.db')
-rows = conn.execute("SELECT game_id, date, home_score, away_score, result FROM games WHERE result='무'").fetchall()
+rows = conn.execute('SELECT team, inning, score FROM inning_scores WHERE game_id="20260428SSOB0" ORDER BY team, inning').fetchall()
 for r in rows:
     print(r)
+print("총 이닝 수:", len(rows))
 conn.close()

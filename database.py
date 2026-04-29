@@ -200,8 +200,8 @@ def save_game(data: dict):
     home_score = game_info.get("home_score", score.get("total", {}).get("home", {}).get("R", 0))
     away_score = game_info.get("away_score", score.get("total", {}).get("away", {}).get("R", 0))
 
-    # 두산이 홈인지 원정인지 판단
-    is_home    = game_id[10:12] != "OB"  # game_id: 날짜+홈팀+원정팀
+    # 두산이 홈인지 원정인지 판단 (home_nm 기준)
+    is_home = (home_nm == "두산")
     doosan_r   = home_score if is_home else away_score
     opponent_r = away_score if is_home else home_score
 
