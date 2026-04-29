@@ -123,7 +123,7 @@ def start_scheduler():
     # 매일 오전 10:00 선수 엔트리 업데이트
     scheduler.add_job(
         update_players_job,
-        trigger=CronTrigger(hour=10, minute=0, timezone="Asia/Seoul"),
+        trigger=CronTrigger(hour=17, minute=0, timezone="Asia/Seoul"),
         id="player_update",
         name="선수 엔트리 업데이트",
         max_instances=1,

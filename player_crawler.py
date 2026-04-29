@@ -233,9 +233,18 @@ def save_players_to_db(data: dict):
     roster_info  = {p["name"]: p for p in data.get("roster", [])}
 
     # 1군 말소 = 2군으로 내려간 선수 → 2군 active로 저장
-    # 2군 엔트리에서 상세 정보 매칭, 없으면 1군 정보 사용
+    # 2군 엔트리 > 1군 roster > 기존 DB 순서로 정보 매칭
     for p in data.get("removed", []):
-        info = futures_info.get(p["name"]) or roster_info.get(p["name"]) or p
+        info = futures_info.get(p["name"]) or roster_info.get(p["name"])
+        if not info:
+            # 기존 DB에서 해당 선수 정보 가져오기
+            existing = conn.execute(
+                "SELECT * FROM players WHERE name=? ORDER BY updated_at DESC LIMIT 1", (p["name"],)
+            ).fetchone()
+            if existing:
+                info = dict(existing)
+        if not info:
+            info = p
         conn.execute("""
             INSERT INTO players (player_id, number, name, position, batting, birth, height_weight, status, team_level, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, 'active', '2군', ?)
