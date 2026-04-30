@@ -178,16 +178,19 @@ def players_page():
     except:
         players = []
         updated_at = None
-    conn.close()
-    # 당일 등록/말소
+    # 당일 등록/말소 (오늘 날짜 것만)
+    from datetime import datetime as _dt
+    today = _dt.now().strftime("%Y-%m-%d")
     try:
         daily_changes = conn.execute(
-            "SELECT * FROM players_daily_change ORDER BY change_type, team_level"
+            "SELECT * FROM players_daily_change WHERE updated_at LIKE ? ORDER BY change_type, team_level",
+            (today + '%',)
         ).fetchall()
         daily_changes = [dict(d) for d in daily_changes]
     except:
         daily_changes = []
 
+    conn.close()
     return render_template("players.html",
         players=[dict(p) for p in players],
         updated_at=updated_at["updated_at"][:10] if updated_at else "미업데이트",

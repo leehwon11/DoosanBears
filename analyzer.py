@@ -16,7 +16,11 @@ from database import save_ai_report, get_game_detail
 
 load_dotenv()
 
-client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+base_url = os.getenv("ANTHROPIC_BASE_URL")
+client = anthropic.Anthropic(
+    api_key=os.getenv("ANTHROPIC_API_KEY"),
+    base_url=base_url if base_url else None,
+)
 
 
 def _call_claude(prompt: str) -> str:
