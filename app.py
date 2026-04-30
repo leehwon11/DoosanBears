@@ -11,6 +11,36 @@ from database import init_db, get_recent_games, get_game_detail, get_player_stat
 load_dotenv()
 init_db()
 
+
+# KBO 리그 연도별 wOBA 상수 (매년 업데이트)
+KBO_WOBA_CONSTANTS = {
+    2023: {"woba_avg": 0.320, "woba_scale": 1.21, "r_pa": 0.123, "w_bb": 0.69, "w_1b": 0.89, "w_2b": 1.27, "w_3b": 1.62, "w_hr": 2.10},
+    2024: {"woba_avg": 0.325, "woba_scale": 1.22, "r_pa": 0.127, "w_bb": 0.69, "w_1b": 0.89, "w_2b": 1.27, "w_3b": 1.62, "w_hr": 2.10},
+    2025: {"woba_avg": 0.323, "woba_scale": 1.21, "r_pa": 0.125, "w_bb": 0.69, "w_1b": 0.89, "w_2b": 1.27, "w_3b": 1.62, "w_hr": 2.10},
+    2026: {"woba_avg": 0.323, "woba_scale": 1.21, "r_pa": 0.125, "w_bb": 0.69, "w_1b": 0.89, "w_2b": 1.27, "w_3b": 1.62, "w_hr": 2.10},
+}
+
+def calc_woba(ab, h, doubles, triples, hr, bb, year=None):
+    """wOBA 계산"""
+    from datetime import datetime
+    yr = year or datetime.now().year
+    c = KBO_WOBA_CONSTANTS.get(yr, KBO_WOBA_CONSTANTS[2025])
+    singles = h - doubles - triples - hr
+    denom = ab + bb
+    if denom == 0:
+        return 0.0
+    return (c["w_bb"]*bb + c["w_1b"]*singles + c["w_2b"]*doubles + c["w_3b"]*triples + c["w_hr"]*hr) / denom
+
+def calc_wrc_plus(woba, year=None):
+    """wRC+ 계산 (100=리그평균, 150=평균보다 50% 좋음)"""
+    from datetime import datetime
+    yr = year or datetime.now().year
+    c = KBO_WOBA_CONSTANTS.get(yr, KBO_WOBA_CONSTANTS[2025])
+    if c["r_pa"] == 0:
+        return 100
+    wrc_plus = ((woba - c["woba_avg"]) / c["woba_scale"] + c["r_pa"]) / c["r_pa"] * 100
+    return round(wrc_plus)
+
 app = Flask(__name__)
 
 
@@ -345,8 +375,8 @@ def player_page(pname):
             s['games'] += 1
             if d.get('result') == '승': s['wins'] += 1
             elif d.get('result') == '패': s['loses'] += 1
-            elif d.get('result') == '홀드': s['holds'] += 1
-            elif d.get('result') == '세이브': s['saves'] += 1
+            elif d.get('result') in ('홀드', 'H'): s['holds'] += 1
+            elif d.get('result') in ('세이브', '세', 'S'): s['saves'] += 1
             s['er'] += d.get('er', 0)
             s['so'] += d.get('so', 0)
             s['bb'] += d.get('bb', 0)
@@ -396,11 +426,12 @@ def player_page(pname):
             s['r']       += d.get('r', 0)
         for s in seasons.values():
             ab, h, hr, bb = s['ab'], s['h'], s['hr'], s['bb']
-            doubles, triples = s.get('doubles', 0), s.get('triples', 0)
+            doubles = s.get('doubles', 0) or 0
+            triples = s.get('triples', 0) or 0
             s['avg'] = f"{h/ab:.3f}" if ab > 0 else ".000"
             s['obp'] = f"{(h+bb)/(ab+bb):.3f}" if (ab+bb) > 0 else ".000"
             # SLG = (단타 + 2루타*2 + 3루타*3 + 홈런*4) / 타수
-            singles = h - doubles - triples - hr
+            singles = max(h - doubles - triples - hr, 0)
             tb = singles + doubles*2 + triples*3 + hr*4
             s['slg'] = f"{tb/ab:.3f}" if ab > 0 else ".000"
             obp_f = (h+bb)/(ab+bb) if (ab+bb) > 0 else 0
@@ -408,6 +439,10 @@ def player_page(pname):
             s['ops'] = f"{obp_f+slg_f:.3f}"
             s['doubles'] = doubles
             s['triples'] = triples
+            # wOBA / wRC+
+            woba = calc_woba(ab, h, doubles, triples, hr, bb, year=int(yr))
+            s['woba'] = f"{woba:.3f}"
+            s['wrc_plus'] = calc_wrc_plus(woba, year=int(yr))
         return sorted(seasons.values(), key=lambda x: x['year'], reverse=True)
 
     kbo_pitcher_seasons   = aggregate_by_season_pitcher([dict(r) for r in pitcher_stats])

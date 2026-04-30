@@ -150,7 +150,7 @@
       {% if is_pitcher %}
       <tr><th>시즌</th><th>경기</th><th>승</th><th>패</th><th>홀드</th><th>세이브</th><th>이닝</th><th>피안타</th><th>볼넷</th><th>삼진</th><th>자책</th><th>ERA</th><th>WHIP</th><th>피안타율</th><th>AI 분석</th></tr>
       {% else %}
-      <tr><th>시즌</th><th>경기</th><th>타율</th><th>안타</th><th>2루타</th><th>3루타</th><th>홈런</th><th>타점</th><th>볼넷</th><th>삼진</th><th>타수</th><th>출루율</th><th>장타율</th><th>OPS</th><th>AI 분석</th></tr>
+      <tr><th>시즌</th><th>경기</th><th>타율</th><th>안타</th><th>2루타</th><th>3루타</th><th>홈런</th><th>타점</th><th>볼넷</th><th>삼진</th><th>타수</th><th>출루율</th><th>장타율</th><th>OPS</th><th>wOBA</th><th>wRC+</th><th>AI 분석</th></tr>
       {% endif %}
     </thead>
     <tbody>
@@ -174,8 +174,8 @@
       {% else %}
       <td style="color:var(--gold)">{{ s.avg }}</td>
       <td {% if s.h > 0 %}class="highlight"{% endif %}>{{ s.h }}</td>
-      <td {% if s.doubles > 0 %}class="highlight"{% endif %}>{{ s.doubles if s.doubles is defined else 0 }}</td>
-      <td {% if s.triples > 0 %}class="highlight"{% endif %}>{{ s.triples if s.triples is defined else 0 }}</td>
+      <td {% if s.get('doubles', 0) > 0 %}class="highlight"{% endif %}>{{ s.get('doubles', 0) }}</td>
+      <td {% if s.get('triples', 0) > 0 %}class="highlight"{% endif %}>{{ s.get('triples', 0) }}</td>
       <td {% if s.hr > 0 %}class="highlight"{% endif %}>{{ s.hr }}</td>
       <td>{{ s.rbi }}</td>
       <td>{{ s.bb }}</td>
@@ -338,7 +338,7 @@ function calcSummary(stats) {
     const s = {w:0,l:0,hld:0,sav:0,so:0,er:0,bb:0,h:0};
     stats.forEach(p => {
       if (p.result==='승') s.w++; else if (p.result==='패') s.l++;
-      else if (p.result==='홀드') s.hld++; else if (p.result==='세이브') s.sav++;
+      else if (p.result==='홀드' || p.result==='H') s.hld++; else if (p.result==='세이브' || p.result==='세' || p.result==='S') s.sav++;
       s.so+=p.so||0; s.er+=p.er||0; s.bb+=p.bb||0; s.h+=p.h||0;
     });
     return s;

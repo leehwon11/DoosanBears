@@ -282,17 +282,22 @@ def get_box_score(game_id: str, session: requests.Session) -> tuple[list, list]:
             if i < len(table2_rows):
                 row2 = table2_rows[i].get("row", [])
                 for cell in row2:
-                    t = BeautifulSoup(cell.get("Text", ""), "html.parser").get_text(strip=True)
-                    if not t:
+                    raw = BeautifulSoup(cell.get("Text", ""), "html.parser").get_text(strip=True)
+                    if not raw:
                         continue
-                    if "홈" in t:
-                        hr_count += 1
-                    elif "삼진" in t:
-                        so_count += 1
-                    elif t.endswith("2") or "2루" in t:
-                        doubles += 1
-                    elif t.endswith("3") or "3루" in t:
-                        triples += 1
+                    # "4구/ 우2", "우홈/ 좌2" 처럼 /로 구분된 복합 표기 처리
+                    parts = [p.strip() for p in raw.split("/")]
+                    for t in parts:
+                        if not t:
+                            continue
+                        if "홈" in t:
+                            hr_count += 1
+                        elif "삼진" in t:
+                            so_count += 1
+                        elif (t.endswith("2") or t.endswith("2루")) and not t.startswith("4구"):
+                            doubles += 1
+                        elif t.endswith("3") or t == "3안":
+                            triples += 1
 
             batters.append({
                 "name":          name,
@@ -343,28 +348,34 @@ def get_box_score(game_id: str, session: requests.Session) -> tuple[list, list]:
             except ValueError:
                 # 문자면 역할 (선발 등)
                 role = role_raw if role_raw else "불펜"
-                result = _gt(row, 2)
-                ip     = _gt(row, 6)
-                bf     = _iv(row, 7)
-                h      = _iv(row, 10)
-                hr     = _iv(row, 11)
-                bb     = _iv(row, 12)
-                so     = _iv(row, 13)
-                er     = _iv(row, 14)
-                era    = _gt(row, 16)
+                result      = _gt(row, 2)
+                ip          = _gt(row, 6)
+                bf          = _iv(row, 7)
+                pitch_count = _iv(row, 8)
+                ab_against  = _iv(row, 9)
+                h           = _iv(row, 10)
+                hr          = _iv(row, 11)
+                bb          = _iv(row, 12)   # 4사구 (볼넷+사구)
+                so          = _iv(row, 13)
+                r           = _iv(row, 14)   # 실점
+                er          = _iv(row, 15)
+                era         = _gt(row, 16)
 
             pitchers.append({
-                "name":   name,
-                "role":   role,
-                "result": result,
-                "ip":     ip,
-                "bf":     bf,
-                "h":      h,
-                "hr":     hr,
-                "bb":     bb,
-                "so":     so,
-                "er":     er,
-                "era":    era,
+                "name":        name,
+                "role":        role,
+                "result":      result,
+                "ip":          ip,
+                "bf":          bf,
+                "pitch_count": pitch_count,
+                "ab_against":  ab_against,
+                "h":           h,
+                "hr":          hr,
+                "bb":          bb,
+                "so":          so,
+                "r":           r,
+                "er":          er,
+                "era":         era,
             })
     except Exception as e:
         print(f"    투수 파싱 오류: {e}")

@@ -90,14 +90,17 @@ def init_db():
             name      TEXT    NOT NULL,
             role      TEXT,               -- "선발" / "불펜" / "마무리"
             result    TEXT,               -- "승" / "패" / "홀드" / "세이브" / "-"
-            ip        TEXT,               -- 이닝 (예: "7.0")
-            bf        INTEGER DEFAULT 0,  -- 상대 타자 수
-            h         INTEGER DEFAULT 0,  -- 피안타
-            hr        INTEGER DEFAULT 0,  -- 피홈런
-            bb        INTEGER DEFAULT 0,  -- 볼넷
-            so        INTEGER DEFAULT 0,  -- 삼진
-            er        INTEGER DEFAULT 0,  -- 자책점
-            era       TEXT                -- 평균자책점
+            ip          TEXT,               -- 이닝 (예: "7.0")
+            bf          INTEGER DEFAULT 0,  -- 상대 타자 수
+            pitch_count INTEGER DEFAULT 0,  -- 투구수
+            ab_against  INTEGER DEFAULT 0,  -- 상대 타수
+            h           INTEGER DEFAULT 0,  -- 피안타
+            hr          INTEGER DEFAULT 0,  -- 피홈런
+            bb          INTEGER DEFAULT 0,  -- 4사구
+            so          INTEGER DEFAULT 0,  -- 삼진
+            r           INTEGER DEFAULT 0,  -- 실점
+            er          INTEGER DEFAULT 0,  -- 자책점
+            era         TEXT                -- 평균자책점
         )
     """)
 
@@ -275,13 +278,14 @@ def save_game(data: dict):
     for p in data.get("pitchers", []):
         cur.execute("""
             INSERT INTO pitcher_stats
-                (game_id, name, role, result, ip, bf, h, hr, bb, so, er, era)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (game_id, name, role, result, ip, bf, pitch_count, ab_against, h, hr, bb, so, r, er, era)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             game_id,
             p.get("name"), p.get("role"), p.get("result"), p.get("ip"),
-            p.get("bf", 0), p.get("h", 0), p.get("hr", 0),
-            p.get("bb", 0), p.get("so", 0), p.get("er", 0),
+            p.get("bf", 0), p.get("pitch_count", 0), p.get("ab_against", 0),
+            p.get("h", 0), p.get("hr", 0),
+            p.get("bb", 0), p.get("so", 0), p.get("r", 0), p.get("er", 0),
             p.get("era", ""),
         ))
 
