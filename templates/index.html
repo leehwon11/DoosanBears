@@ -123,33 +123,7 @@
   <p class="hero-sub">경기 후 AI가 분석한 두산 베어스 리포트</p>
 </div>
 
-{% if games %}
-{% set wins  = games | selectattr('result','equalto','승') | list | length %}
-{% set loses = games | selectattr('result','equalto','패') | list | length %}
-{% set draws = games | selectattr('result','equalto','무') | list | length %}
-<div class="stat-bar">
-  <div class="stat-item">
-    <div class="stat-num" style="color:#27AE60">{{ wins }}</div>
-    <div class="stat-label">최근 승</div>
-  </div>
-  <div class="stat-item">
-    <div class="stat-num" style="color:var(--red)">{{ loses }}</div>
-    <div class="stat-label">최근 패</div>
-  </div>
-  <div class="stat-item">
-    <div class="stat-num" style="color:var(--gold)">{{ draws }}</div>
-    <div class="stat-label">최근 무</div>
-  </div>
-</div>
-{% endif %}
-
-<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;padding-bottom:0.6rem;border-bottom:1px solid var(--border);">
-  <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:2px;display:flex;align-items:center;gap:0.6rem;">
-    <span style="display:inline-block;width:4px;height:22px;background:var(--red);border-radius:2px;flex-shrink:0;"></span>
-    최근 경기
-  </div>
-  <a href="/games" style="font-size:0.82rem;color:var(--gray);text-decoration:none;transition:color 0.2s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='var(--gray)'">전체 경기 보기 →</a>
-</div>
+<!-- 1. 시즌 스탯 -->
 {% if team_stats %}
 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-bottom:2rem;">
   <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem;text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:#27AE60;line-height:1;margin-bottom:4px;">{{ team_stats.wins }}</div><div style="font-size:0.72rem;color:var(--gray);letter-spacing:1px;">승</div></div>
@@ -163,7 +137,33 @@
 </div>
 {% endif %}
 
+<!-- 2. 다음 경기 예고 -->
+{% if next_game %}
+<div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.5rem;margin-bottom:2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+  <div>
+    <div style="font-size:0.72rem;font-weight:700;letter-spacing:2px;color:var(--red);text-transform:uppercase;margin-bottom:6px;">다음 경기</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:2px;">
+      {{ next_game.home }} vs {{ next_game.away }}
+    </div>
+    <div style="color:var(--gray);font-size:0.85rem;margin-top:4px;display:flex;gap:12px;flex-wrap:wrap;">
+      <span>📅 {{ next_game.date_str }}</span>
+      <span>⏰ {{ next_game.time }}</span>
+      <span>📍 {{ next_game.stadium }}</span>
+      {% if next_game.status %}<span style="color:var(--red);">{{ next_game.status }}</span>{% endif %}
+    </div>
+  </div>
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:3rem;color:var(--blue);letter-spacing:4px;">VS</div>
+</div>
+{% endif %}
 
+<!-- 3. 최근 경기 -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;padding-bottom:0.6rem;border-bottom:1px solid var(--border);">
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:2px;display:flex;align-items:center;gap:0.6rem;">
+    <span style="display:inline-block;width:4px;height:22px;background:var(--red);border-radius:2px;flex-shrink:0;"></span>
+    최근 경기
+  </div>
+  <a href="/games" style="font-size:0.82rem;color:var(--gray);text-decoration:none;" onmouseover="this.style.color='white'" onmouseout="this.style.color='var(--gray)'">전체 경기 보기 →</a>
+</div>
 {% if games %}
 <div class="games-grid">
   {% for g in games %}

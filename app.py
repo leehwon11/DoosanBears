@@ -24,6 +24,13 @@ def index():
     games = get_recent_games(limit=5)
     futures_games = get_recent_futures_games(limit=5)
 
+    # 다음 경기 예고
+    try:
+        from kbo_crawler import get_next_game
+        next_game = get_next_game()
+    except:
+        next_game = None
+
     # 팀 시즌 스탯 집계
     from datetime import datetime as _dt
     year = str(_dt.now().year)
@@ -73,7 +80,7 @@ def index():
         "so_pit": pit['so'] if pit else 0,
     }
 
-    return render_template("index.html", games=games, futures_games=futures_games, team_stats=team_stats)
+    return render_template("index.html", games=games, futures_games=futures_games, team_stats=team_stats, next_game=next_game)
 
 
 @app.route("/compare")

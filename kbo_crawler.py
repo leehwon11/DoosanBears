@@ -102,7 +102,8 @@ def _extract_game_id(text):
     return m.group(1) if m else ""
 
 def _is_finished(row_arr):
-    return "리뷰" in _cell(row_arr, 3) or "리뷰" in _cell(row_arr, 4)
+    c3, c4 = _cell(row_arr, 3), _cell(row_arr, 4)
+    return ("리뷰" in c3 and "프리뷰" not in c3) or ("리뷰" in c4 and "프리뷰" not in c4)
 
 
 # ──────────────────────────────────────────
@@ -462,6 +463,94 @@ def is_game_finished(date: str = None) -> bool:
         pass
 
     return True
+
+
+def get_next_game() -> dict | None:
+    """다음 예정 경기 정보 반환"""
+    from datetime import datetime as _dt
+    session = _make_session()
+    today = _dt.now()
+
+    for month_offset in [0, 1]:
+        if month_offset == 0:
+            target_month = today.month
+            target_year  = today.year
+        else:
+            target_month = today.month % 12 + 1
+            target_year  = today.year + (1 if today.month == 12 else 0)
+
+        try:
+            _headers = {
+                "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                "X-Requested-With": "XMLHttpRequest",
+                "Referer": f"{BASE_URL}/Schedule/GameList.aspx",
+            }
+            resp = session.post(
+                f"{BASE_URL}/ws/Schedule.asmx/GetScheduleList",
+                headers=_headers,
+                data={"leId":"1","srIdList":"0,9,6","seasonId":str(target_year),
+                      "gameMonth":str(target_month).zfill(2),"teamId":DOOSAN_TEAM_CODE},
+                timeout=15
+            )
+            data = resp.json()
+        except Exception as e:
+            continue
+
+        for item in data.get("rows", []):
+            row = item.get("row", [])
+            if len(row) < 8:
+                continue
+
+            col3 = row[3].get("Text","")
+            col4 = row[4].get("Text","")
+            is_finished = ("리뷰" in col3 and "프리뷰" not in col3) or ("리뷰" in col4 and "프리뷰" not in col4)
+
+            if is_finished:
+                continue
+
+            # 상태 확인
+            status = BeautifulSoup(row[8].get("Text",""), "html.parser").get_text(strip=True) if len(row) > 8 else ""
+            # 우천취소/더블헤더취소 등 취소 경기 스킵
+            if "취소" in status:
+                continue
+
+            date_text = BeautifulSoup(row[0].get("Text",""), "html.parser").get_text(strip=True)
+
+            # 오늘 이후 경기만 (오늘 경기는 스케줄러가 처리하므로 내일부터)
+            date_clean = date_text[:5].replace(".", "")
+            full_date_check = str(target_year) + date_clean
+            if full_date_check <= today.strftime("%Y%m%d"):
+                continue
+            time_text = BeautifulSoup(row[1].get("Text",""), "html.parser").get_text(strip=True)
+            play_text = row[2].get("Text","")
+            stadium   = BeautifulSoup(row[7].get("Text",""), "html.parser").get_text(strip=True)
+            status    = BeautifulSoup(row[8].get("Text",""), "html.parser").get_text(strip=True) if len(row) > 8 else ""
+
+            soup  = BeautifulSoup(play_text, "html.parser")
+            teams = [s.get_text(strip=True) for s in soup.find_all("span") if not s.get("class")]
+            teams = [t for t in teams if t and t != "vs"]
+
+            if len(teams) < 2:
+                continue
+
+            # 날짜 파싱 (MM.DD 형식)
+            date_clean = date_text[:5].replace(".", "")  # "04.09" → "0409"
+            full_date  = str(target_year) + date_clean   # "20260409"
+
+            # KBO 일정 API: teams[0]=원정팀, teams[1]=홈팀
+            away = teams[0]
+            home = teams[1]
+
+            return {
+                "date":     full_date,
+                "date_str": date_text,
+                "time":     time_text,
+                "home":     home,
+                "away":     away,
+                "stadium":  stadium,
+                "status":   status,
+            }
+    return None
 
 
 if __name__ == "__main__":
