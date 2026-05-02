@@ -60,14 +60,14 @@
   <button class="filter-btn active" onclick="setFilter('all',this)">전체 ({{ reports|length }})</button>
   <button class="filter-btn" onclick="setFilter('game',this)">경기 분석 ({{ reports|selectattr('report_type','equalto','game')|list|length }})</button>
   <button class="filter-btn" onclick="setFilter('player',this)">선수 분석 ({{ reports|selectattr('report_type','equalto','player')|list|length }})</button>
-  <button class="filter-btn" onclick="setFilter('season',this)">시즌 분석 ({{ reports|selectattr('report_type','startswith','player_season')|list|length }})</button>
+  <button class="filter-btn" onclick="setFilter('season',this)">시즌 분석 ({{ reports|selectattr('report_type','equalto','player_season')|list|length }})</button>
   <input class="search-input" type="text" placeholder="선수명 / 날짜 검색..." oninput="searchReports(this.value)" />
 </div>
 
 {% if reports %}
 <div class="report-list" id="report-list">
   {% for r in reports %}
-  {% set rtype = 'season' if r.report_type.startswith('player_season') else r.report_type %}
+  {% set rtype = 'season' if 'player_season' in r.report_type else r.report_type %}
   <div class="report-card {{ rtype }}" data-type="{{ rtype }}" data-search="{{ (r.player_name or '') }} {{ (r.date or '') }}"
        onclick="openModal({{ loop.index0 }})">
     <div style="flex:1;min-width:0;">
