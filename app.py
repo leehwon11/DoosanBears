@@ -120,21 +120,39 @@ def compare_page():
     from datetime import datetime as _dt
     conn = get_connection()
     try:
-        # batter_stats + pitcher_stats에 기록 있는 모든 선수
-        batters = conn.execute(
-            "SELECT DISTINCT name, position FROM batter_stats ORDER BY name"
+        # 포지션 4가지로 단순화
+        def simplify_pos(pos):
+            if not pos: return '기타'
+            if pos in ('투수',): return '투수'
+            if pos in ('포수',): return '포수'
+            if pos in ('1루수','2루수','3루수','유격수','내야수'): return '내야수'
+            if pos in ('좌익수','우익수','중견수','외야수'): return '외야수'
+            return '내야수'  # 지명타자 등은 내야수로
+
+        # 시즌별 선수 목록 (API에서 year 파라미터로 필터)
+        current_year = str(_dt.now().year)
+        target_year = request.args.get('year', current_year)
+
+        batters_raw = conn.execute(
+            """SELECT DISTINCT b.name, b.position
+               FROM batter_stats b JOIN games g ON b.game_id=g.game_id
+               WHERE substr(g.date,1,4)=? ORDER BY b.name""",
+            (target_year,)
         ).fetchall()
-        pitchers = conn.execute(
-            "SELECT DISTINCT name, '투수' as position FROM pitcher_stats ORDER BY name"
+        pitchers_raw = conn.execute(
+            """SELECT DISTINCT p.name, '투수' as position
+               FROM pitcher_stats p JOIN games g ON p.game_id=g.game_id
+               WHERE substr(g.date,1,4)=? ORDER BY p.name""",
+            (target_year,)
         ).fetchall()
-        # 중복 제거 후 합치기
+
         seen = set()
         players = []
-        for p in list(batters) + list(pitchers):
+        for p in list(batters_raw) + list(pitchers_raw):
             if p['name'] not in seen:
                 seen.add(p['name'])
-                players.append(p)
-        players = sorted(players, key=lambda x: x['name'])
+                players.append({'name': p['name'], 'position': simplify_pos(p['position'])})
+        players = sorted(players, key=lambda x: (x['position'], x['name']))
         years = conn.execute(
             "SELECT DISTINCT substr(date,1,4) yr FROM games ORDER BY yr DESC"
         ).fetchall()
