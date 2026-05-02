@@ -120,9 +120,21 @@ def compare_page():
     from datetime import datetime as _dt
     conn = get_connection()
     try:
-        players = conn.execute(
-            "SELECT DISTINCT name, position FROM players WHERE status='active' ORDER BY position, name"
+        # batter_stats + pitcher_stats에 기록 있는 모든 선수
+        batters = conn.execute(
+            "SELECT DISTINCT name, position FROM batter_stats ORDER BY name"
         ).fetchall()
+        pitchers = conn.execute(
+            "SELECT DISTINCT name, '투수' as position FROM pitcher_stats ORDER BY name"
+        ).fetchall()
+        # 중복 제거 후 합치기
+        seen = set()
+        players = []
+        for p in list(batters) + list(pitchers):
+            if p['name'] not in seen:
+                seen.add(p['name'])
+                players.append(p)
+        players = sorted(players, key=lambda x: x['name'])
         years = conn.execute(
             "SELECT DISTINCT substr(date,1,4) yr FROM games ORDER BY yr DESC"
         ).fetchall()
