@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>허블 · HUBBLE — NA5A Wiki</title>
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Special+Elite&family=Noto+Serif+KR:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+
+/* ════════════════════════════════
+   1. CSS 변수 & 글로벌 리셋
+════════════════════════════════ */
+:root {
+  --cream:     #F5F0E8;
+  --cream-dk:  #EDE6D6;
+  --navy:      #1A2744;
+  --gold:      #C8A84B;
+  --gold-lt:   #E2C97E;
+  --text:      #2A2015;
+  --muted:     #6B5C3E;
+  --border:    #986b58;
+  --border-lt: #DDD0B0;
+  --brown-hd:  #5C3D22;
+  --tan-row:   #EDE0CA;
+  --fn: 'IM Fell English','Noto Serif KR',Georgia,serif;
+  --ft: 'Special Elite',monospace;
+  --fk: 'Noto Serif KR',serif;
+  --topbar-h:  46px;
+}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+html { scroll-behavior:smooth; }
+body { background:var(--cream); color:var(--text); font-family:var(--fk); font-size:14px; line-height:1.85; }
+a { color:#2255BB; text-decoration:none; }
+a:hover { text-decoration:underline; }
+img { max-width:100%; display:block; }
+::-webkit-scrollbar { width:5px; }
+::-webkit-scrollbar-track { background:var(--cream-dk); }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+/* sticky 상단바 오프셋 보정 */
+[id] { scroll-margin-top:calc(var(--topbar-h) + 8px); }
+
+
+/* ════════════════════════════════
+   2. 상단바
+════════════════════════════════ */
+.topbar {
+  background:var(--navy);
+  border-bottom:2px solid var(--gold);
+  height:var(--topbar-h);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 24px;
+  position:sticky;
+  top:0;
+  z-index:200;
+}
+.logo { font-family:var(--ft); font-size:13px; letter-spacing:3px; color:var(--gold); text-decoration:none!important; }
+.logo:hover { color:var(--gold-lt); }
+.search { display:flex; }
+.search input {
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(200,168,75,.4);
+  border-right:none;
+  color:var(--cream);
+  padding:5px 12px;
+  font-family:var(--fk);
+  font-size:12px;
+  width:200px;
+  outline:none;
+}
+.search input:focus { border-color:var(--gold); }
+.search input::placeholder { color:rgba(245,240,232,.35); }
+.search button {
+  background:var(--gold);
+  border:none;
+  color:var(--navy);
+  padding:5px 12px;
+  font-family:var(--ft);
+  font-size:10px;
+  letter-spacing:1px;
+  cursor:pointer;
+}
+.search button:hover { background:var(--gold-lt); }
+
+
+/* ════════════════════════════════
+   3. 페이지 레이아웃
+════════════════════════════════ */
+.page { max-width:980px; margin:0 auto; padding:20px 20px 80px; }
+.title-wrap { border-bottom:2px solid var(--navy); padding-bottom:10px; margin-bottom:14px; }
+.title { font-family:var(--fn); font-size:28px; font-weight:400; color:var(--navy); }
+.title-sub { font-family:var(--ft); font-size:10px; letter-spacing:2px; color:var(--muted); margin-top:3px; }
+.meta {
+  font-family:var(--ft);
+  font-size:9px;
+  letter-spacing:1px;
+  color:var(--muted);
+  padding:4px 0 12px;
+  border-bottom:1px solid var(--border-lt);
+  margin-bottom:16px;
+  display:flex;
+  justify-content:space-between;
+}
+.article::after { content:''; display:block; clear:both; }
+
+
+/* ════════════════════════════════
+   4. 본문 텍스트
+════════════════════════════════ */
+.article p  { margin-bottom:10px; line-height:1.9; font-size:13px; }
+.article strong { font-weight:600; }
+.article em { font-style:italic; color:var(--muted); }
+.article ul, .article ol { padding-left:22px; margin-bottom:10px; }
+.article ul li { margin-bottom:12px; line-height:1.8; list-style:disc; padding-left:4px; }
+.article ul li::marker { color:#212529; font-size:16px; }
+
+/* 인라인 강조 */
+.keyword { color:#0077ff; font-weight:600; }      /* 스킬명/상태이상 */
+.pct     { color:#ff8400; font-weight:600; }      /* 수치 */
+.hb      { color:#cf3939; }                       /* 허블 이름 강조 */
+sup.fn   { font-family:var(--ft); font-size:9px; color:#0263b8; vertical-align:super; }
+
+/* 추천 조합 / 평가 리스트 */
+.combo-name {
+  font-family:var(--fk);
+  font-size:13px;
+  font-weight:600;
+  color:var(--navy);
+  margin-bottom:4px;
+  margin-top:12px;
+}
+.article li:first-child .combo-name { margin-top:0; }
+.combo-desc { font-size:13px; line-height:1.8; color:var(--text); }
+
+
+/* ════════════════════════════════
+   5. 섹션 헤더 (h2 / h3)
+════════════════════════════════ */
+.h2 {
+  font-family:var(--fn);
+  font-size:20px;
+  font-weight:400;
+  color:var(--navy);
+  border-bottom:2px solid var(--navy);
+  padding-bottom:5px;
+  margin:28px 0 12px;
+  display:flex;
+  align-items:baseline;
+  gap:8px;
+}
+.h3 {
+  font-family:var(--fn);
+  font-size:16px;
+  font-weight:400;
+  color:var(--navy);
+  border-bottom:1px solid var(--border);
+  padding-bottom:4px;
+  margin:20px 0 10px;
+  display:flex;
+  align-items:baseline;
+  gap:8px;
+}
+.hn        { font-family:var(--ft); font-size:16px; color:#0263b8; flex-shrink:0; }
+.edit-link { font-family:var(--ft); font-size:9px; color:#0275d8; margin-left:auto; font-weight:300; }
+.edit-link:hover { color:var(--muted); text-decoration:none; }
+
+
+/* ════════════════════════════════
+   6. 인포박스
+════════════════════════════════ */
+.infobox {
+  display:block;
+  margin:0 auto 20px;
+  width:100%;
+  max-width:800px;
+  border:2px solid #986b58;
+  font-size:12px;
+  line-height:1.5;
+  background:var(--cream-dk);
+}
+.ib-name      { background:#252525; color:#9a785d; text-align:center; padding:10px 12px; border-bottom:1px solid var(--border); }
+.ib-name-ko   { font-family:var(--fn); font-size:20px; font-weight:400; display:block; line-height:1.3; }
+.ib-name-en   { font-family:var(--ft); font-size:11px; letter-spacing:2px; color:#9a785d; display:block; margin-top:2px; }
+.ib-imgs      { display:grid; grid-template-columns:1fr 1fr; border-bottom:1px solid var(--border); background:#2A1E10; }
+.ib-img-cell  { text-align:center; overflow:hidden; }
+.ib-img-cell img { width:100%; height:auto; display:block; object-fit:contain; }
+.ib-img-ph    { height:auto; display:flex; align-items:center; justify-content:center; font-family:var(--ft); font-size:9px; letter-spacing:1px; color:rgba(200,168,75,.5); }
+.ib-labels    { display:grid; grid-template-columns:1fr 1fr; border-bottom:1px solid var(--border); }
+.ib-label     { text-align:center; padding:4px 8px; font-family:var(--fk); font-size:11px; background:#553d2d; color:#bb9d87; }
+
+/* 인포박스 표 */
+.ib-t         { width:100%; border-collapse:collapse; }
+.ib-t tr      { border-bottom:1px solid var(--border-lt); }
+.ib-t tr:last-child { border-bottom:none; }
+.ib-t .ik     { background:#d8b793; font-family:var(--fk); font-size:12px; color:#764b35; padding:5px 6px; vertical-align:middle; text-align:center; font-weight:600; }
+.ib-t .iv     { padding:5px 7px; color:var(--text); font-size:12px; vertical-align:middle; background:var(--cream); word-break:keep-all; }
+.ib-t .iv-center { text-align:center; }
+.ib-chara-head { background:#252525; color:#9a785d; text-align:center; padding:6px; font-family:var(--fk); font-size:12px; font-weight:600; letter-spacing:1px; border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+.ib-t .ik-full { background:#d8b793; color:#764b35; font-family:var(--fk); font-size:11px; font-weight:600; padding:5px 9px; text-align:center; border-bottom:1px solid var(--border); word-break:keep-all; }
+.ib-t .iv-full { text-align:center; padding:7px 9px; color:var(--text); font-size:12px; line-height:1.7; background:var(--cream); }
+
+/* UDIMO */
+.ib-udimo         { background:#d8b793; color:#764b35; text-align:center; padding:5px; font-family:var(--fk); font-size:11px; font-weight:600; letter-spacing:2px; }
+.ib-udimo-img     { background:var(--cream-dk); text-align:center; padding:12px 8px; }
+.ib-udimo-img img { max-width:180px; margin:0 auto; }
+.ib-udimo-caption { text-align:center; font-family:var(--ft); font-size:10px; letter-spacing:2px; color:var(--muted); padding:4px; background:var(--cream-dk); }
+
+/* 공통 아이콘 이미지 */
+.stats-img { display:block; width:20px; height:auto; margin:0 auto; }
+.kt-img    { display:block; width:35px; height:auto; margin:0 auto; }
+
+
+/* ════════════════════════════════
+   7. 목차
+════════════════════════════════ */
+.toc       { border:1px solid var(--border); background:var(--cream-dk); display:inline-block; min-width:200px; padding:12px 16px; margin-bottom:18px; }
+.toc-title { font-family:var(--ft); font-size:13px; letter-spacing:3px; color:var(--muted); text-align:center; padding-bottom:8px; margin-bottom:8px; border-bottom:1px solid var(--border-lt); }
+.toc ol    { list-style:none; padding:0; }
+.toc>ol>li { line-height:1.8; }
+.toc a     { display:flex; align-items:baseline; gap:5px; color:var(--muted); font-size:12px; }
+.toc a:hover { color:var(--navy); text-decoration:none; }
+.tn        { font-family:var(--ft); font-size:11px; color:#0263b8; min-width:22px; flex-shrink:0; }
+.toc .sub  { padding-left:16px; margin-top:1px; list-style:none; }
+.toc .sub a    { font-size:11px; }
+.toc .sub .tn  { min-width:28px; font-size:9px; }
+
+
+/* ════════════════════════════════
+   8. 개요 박스 / 공식 소개 박스
+════════════════════════════════ */
+.intro-box {
+  border:2px dashed #986b58;
+  border-left:5px solid #000;
+  padding:14px 18px;
+  margin:10px 0;
+  background:#f2e9de;
+  font-size:13px;
+  line-height:1.9;
+  color:var(--text);
+}
+.intro-box .intro-red { color:#9a785d; }
+
+.official-box { border:2px solid #986b58; margin:10px 0; overflow:hidden; }
+.official-head { background:#252525; color:#9a785d; text-align:center; padding:8px 12px; }
+.official-head .oh-title { font-family:var(--fk); font-size:14px; font-weight:600; display:block; }
+.official-head .oh-sub   { font-family:var(--fk); font-size:17px; color:#9a785d; display:block; margin-top:2px; }
+.official-link { background:var(--cream-dk); padding:7px 12px; display:flex; align-items:center; justify-content:center; gap:8px; font-size:12px; border-top:1px solid var(--border); }
+.official-link a { color:#008000; }
+.official-link::before { content:'🔗'; font-size:12px; }
+
+
+/* ════════════════════════════════
+   9. 능력치 표
+════════════════════════════════ */
+.stat-table { width:100%; border-collapse:collapse; margin:10px 0; font-size:12px; border:2px solid #966a57; table-layout:fixed; }
+.stat-table th:first-child { width:60px; }
+.stat-table th { background:#252525; color:#9a785d; padding:8px 10px; text-align:center; font-family:var(--fk); font-size:11px; font-weight:600; border:1px solid #dddddd; }
+.stat-table td { padding:6px 10px; border:1px solid #dddddd; text-align:center; vertical-align:middle; }
+.stat-table .insight-cell { background:#553d2d; color:#bb9d87; font-weight:600; font-size:12px; }
+.stat-table .lv-cell      { background:#d8b793; color:#764b35; font-size:11px; }
+.stat-table .val-cell     { background:#f2e9de; }
+.stat-table .val-cell-alt { background:#f2e9de; }
+
+
+/* ════════════════════════════════
+   10. 통찰 블록 & 재료 그리드
+════════════════════════════════ */
+.insight-block      { border:2px solid #986b58; margin:12px 0; overflow:hidden; }
+.insight-block-head { background:#252525; color:#9a785d; text-align:center; padding:6px 12px; font-family:var(--fk); font-size:17px; font-weight:600; }
+.insight-block-body { background:#f2e9de; padding:10px 14px; font-size:12px; line-height:1.8; text-align:center; }
+.insight-block-body .i-item { color:#ff6f00; font-weight:600; }
+
+/* 재료 그리드 */
+.insight-mat      { margin-top:8px; border-top:1px solid var(--border); padding-top:4px; display:flex; gap:3px; justify-content:center; }
+.insight-mat-item { flex:0 0 calc((100% - 15px) / 6); background:#3F3F3F; color:#DEDEDE; text-align:center; font-size:10px; padding:0; border:2px solid #3f3f3f; }
+.insight-mat-img  { background:#5a5a5a; padding:3px; display:block; line-height:0; }
+.insight-mat-img img { width:80%; height:auto; display:block; margin:0 auto; }
+.insight-mat-txt  { background:#3f3f3f; color:#DEDEDE; font-size:12px; padding:3px 2px; text-align:center; }
+.insight-mat-lv .insight-mat-img { background:#212121; }
+
+/* 등급별 하단 색상 */
+.insight-mat-img.grade-2 { border-bottom:6px solid #466541; }
+.insight-mat-img.grade-3 { border-bottom:6px solid #555b7b; }
+.insight-mat-img.grade-4 { border-bottom:6px solid #82638b; }
+.insight-mat-img.grade-5 { border-bottom:6px solid #ead586; }
+.insight-mat-img.grade-6 { border-bottom:6px solid #e3a829; }
+
+
+/* ════════════════════════════════
+   11. 형상 / 계승 표
+════════════════════════════════ */
+.keyed-table        { width:100%; border-collapse:collapse; margin:10px 0; font-size:12px; border:2px solid #986b58; }
+.keyed-table .kt-head { background:#252525; color:#9a785d; text-align:center; padding:6px; font-family:var(--fk); font-size:12px; font-weight:600; border:1px solid #dddddd; }
+.keyed-table .kt-key  { background:#d8b793; padding:6px 10px; text-align:center; font-weight:600; border:1px solid #dddddd; vertical-align:middle; width:20%; }
+.keyed-table .kt-val  { padding:6px 12px; border:1px solid #dddddd; background:#f2e9de; line-height:1.7; text-align:center; }
+.keyed-table .kt-sub  { background:#553d2d; color:#bb9d87; text-align:center; padding:5px; font-family:var(--fk); font-size:11px; font-weight:600; border:1px solid #dddddd; }
+
+
+/* ════════════════════════════════
+   12. 마도술 (스킬) 블록
+════════════════════════════════ */
+.spell-block { border:2px solid #986b58; margin:12px 0; overflow:hidden; }
+.spell-head  { background:#252525; color:#9a785d; text-align:center; padding:7px; font-family:var(--fk); font-size:13px; font-weight:600; border:1px solid #dddddd; }
+
+/* 일러스트 영역 */
+.spell-illust-wrap  { border-bottom:1px solid var(--border); }
+.spell-illust-label { background:#553d2d; color:#bb9d87; font-family:var(--fk); font-size:10px; text-align:center; padding:3px; border:1px solid #dddddd; }
+.spell-illust-cell  { background:#1A1210; display:flex; align-items:center; justify-content:center; min-height:100px; overflow:hidden; border:1px solid #dddddd; }
+.spell-illust-cell img { width:100%; display:block; object-fit:cover; }
+.spell-illust-ph    { height:100px; display:flex; align-items:center; justify-content:center; font-family:var(--ft); font-size:9px; color:rgba(200,168,75,.3); letter-spacing:1px; }
+
+/* 스킬 설명 표 */
+.spell-table    { width:100%; border-collapse:collapse; }
+.spell-table th { background:#553d2d; color:#bb9d87; padding:6px; text-align:center; font-size:10px; font-family:var(--fk); font-weight:600; border:1px solid #dddddd; letter-spacing:1px; }
+.spell-table td { padding:6px 10px; border:1px solid #dddddd; font-size:12px; line-height:1.7; vertical-align:top; }
+
+/* 스킬 등급 셀 */
+.spell-table .s-grade { background:#f2e9de; text-align:center; font-family:var(--ft); color:var(--brown-hd); vertical-align:top; padding:0; width:20%; }
+.s-star     { background:#d8b793; color:#764b35; text-align:center; padding:4px 0; font-size:13px; display:block; }
+.s-type     { display:flex; align-items:center; justify-content:center; padding:4px 0; background:#f2e9de; margin:0; min-height:40px; width:100%; }
+.s-type-solo { display:flex; align-items:center; justify-content:center; padding:4px 0; background:#f2e9de; margin:0; width:100%; height:100%; min-height:60px; }
+.spell-table .s-grade .spell-img { display:block; width:100%; height:auto; margin:0 auto; }
+
+/* 스킬 설명 셀 */
+.spell-table .s-val { background:#f2e9de; display:table-cell; width:auto; font-size:12px; color:#363a3d; text-align:center; vertical-align:middle; padding:6px 10px; }
+.s-val     { display:block; width:auto; font-size:12px; color:#363a3d; text-align:center; }
+.s-val em  { display:block; font-style:italic; color:#363a3d; font-size:12px; margin-top:2px; padding-top:4px; border-top:2px solid #986b58; text-align:center; }
+
+
+/* ════════════════════════════════
+   13. 추천 의지 그리드
+════════════════════════════════ */
+.wish-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:0; margin:10px 0; border:2px solid #986b58; }
+.wish-item { border:none; border-right:0.5px solid #dddddd; overflow:hidden; background:var(--cream-dk); text-align:center; }
+.wish-item:last-child { border-right:none; }
+.wish-rank { background:#553d2d; color:#bb9d87; font-family:var(--fk); font-size:10px; font-weight:600; padding:4px; border:1px solid #dddddd; }
+.wish-img  { background:#f2e9de; min-height:80px; display:flex; align-items:center; justify-content:center; }
+.wish-img img { width:100%; display:block; object-fit:cover; }
+
+
+/* ════════════════════════════════
+   14. 물품 카드
+   구조: 헤더(배경 이미지) 위에 물품 이미지가 absolute로 겹침
+         → 본문(이름/가격/설명) → 푸터 이미지(항상 맨 아래)
+════════════════════════════════ */
+.item-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:10px 0; align-items:start; }
+
+.item-card {
+  position:relative;
+  background:#ffffff;
+  border:1px solid var(--border);
+  overflow:hidden;
+  font-family:'Batang','바탕',serif;
+  display:flex;
+  flex-direction:column;
+  min-height:500px;
+}
+
+/* 헤더: 배경 이미지 영역 */
+.item-card-header         { position:relative; width:100%; line-height:0; }
+.item-card-header > img   { width:100%; display:block; max-height:220px; object-fit:cover; object-position:top; }
+
+/* 물품 이미지: 헤더 위에 수직 중앙 겹침 */
+.item-card-item-img       { position:absolute; top:50%; transform:translateY(-50%); left:0; right:0; display:flex; align-items:center; justify-content:center; height:160px; }
+.item-card-item-img img   { max-width:75%; max-height:140px; object-fit:contain; }
+
+/* 본문 */
+.item-card-body-wrap { flex:1; display:flex; flex-direction:column; }
+.item-card-name      { font-size:18px; font-weight:700; text-align:center; color:#000; padding:6px 10px 2px; font-family:'Batang','바탕',serif; }
+.item-card-en        { font-size:12px; text-align:center; color:#616161; padding-bottom:4px; }
+.item-card-divider   { width:100%; line-height:0; }
+.item-card-divider img { width:100%; display:block; }
+.item-card-price     { font-size:13px; font-weight:700; color:#40403D; padding:6px 10px 4px; display:flex; align-items:center; gap:4px; }
+.item-card-desc      { font-size:12px; line-height:1.7; color:#40403D; padding:0 10px 14px; flex:1; }
+
+/* 푸터: 항상 맨 아래 */
+.item-card-footer     { width:100%; line-height:0; margin-top:auto; }
+.item-card-footer img { width:100%; display:block; }
+
+/* 물품 섹션 소제목 */
+.item-section-title { font-family:var(--fk); font-size:13px; font-weight:600; margin:14px 0 8px; display:flex; align-items:center; gap:6px; }
+.item-section-title::before { content:'•'; color:var(--gold); }
+
+
+/* ════════════════════════════════
+   15. 문화 카드 그리드
+════════════════════════════════ */
+.culture-grid       { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:10px 0; align-items:start; }
+.culture-card       { border:1px solid var(--border); overflow:hidden;background:#f3f3f3;}
+.culture-card-img   {min-height:120px; display:flex; align-items:center; justify-content:center;}
+.culture-card-img img { width:100%; display:block; object-fit:cover; }
+.culture-card-title { background:#f3f3f3; color:#0a0a0a; text-align:right; padding:5px 8px; font-family:var(--fk); font-size:11px; font-weight:600; }
+.culture-card-en    { font-family:var(--ft); font-size:9px; letter-spacing:1px; color:#616161; text-align:right; }
+.culture-card .fold      { margin:0; border:none; border-top:1px solid var(--border); }
+.culture-card .fold-head { background:#f3f3f3; padding:6px 10px; }
+.culture-card .fold-body { border-top:1px solid var(--border-lt); background:#f3f3f3; }
+.culture-card-header { width:100%; line-height:0; }
+.culture-card-header img { width:100%; display:block; max-height:50px; object-fit:cover; object-position:top; }
+.culture-card-footer { width:100%; line-height:0; margin-top:auto; }
+.culture-card-footer img { width:100%; display:block; }
+
+
+/* ════════════════════════════════
+   16. 접기 박스
+════════════════════════════════ */
+.fold { border:1px solid var(--border); margin:6px 0; }
+.fold-head {
+  font-family:var(--fk);
+  font-size:11px;
+  color:var(--muted);
+  padding:5px 10px;
+  background:#f3f3f3;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  user-select:none;
+  border-bottom:1px solid transparent;
+}
+.fold-head:hover { color:var(--navy); }
+.fold .fold-body   { padding:15px 18px!important; display:none; line-height:1.5!important; background:#f3f3f3!important; }
+.fold .fold-body p { text-indent:12px!important; margin:0 0 2px 0!important; line-height:1.5!important; }
+.fold-body p:last-child { margin-bottom:0; }
+.fold.open .fold-body  { display:block; }
+.fold.open .fold-head  { border-bottom:1px solid var(--border-lt); }
+.fold-arr { font-size:10px; transition:transform .2s; flex-shrink:0; }
+.fold.open .fold-arr   { transform:rotate(90deg); }
+
+
+/* ════════════════════════════════
+   17. 황무지 대사 표
+════════════════════════════════ */
+.field-block { border:2px solid #976b58; margin:12px 0; overflow:hidden; }
+.field-head  { background:#252525; color:#9a785d; text-align:center; padding:7px; font-family:var(--fk); font-size:13px; font-weight:600; letter-spacing:2px; }
+.field-table { width:100%; border-collapse:collapse; }
+.field-table td { padding:8px 12px; border:1px solid var(--border-lt); font-size:12px; line-height:1.7; vertical-align:middle; }
+.field-table .f-plain   { background:#f2e9de; text-align:center; }
+.field-table .f-trigger { background:#252525; color:#9a785d; text-align:center; font-family:var(--fk); font-size:11px; font-weight:600; width:120px; border:1px solid #dddddd; }
+.field-table .f-resp    { background:#f2e9de; }
+
+
+/* ════════════════════════════════
+   18. 음성 표
+════════════════════════════════ */
+.voice-table        { width:100%; border-collapse:collapse; margin:10px 0; font-size:12px; border:2px solid #986b58; }
+.voice-table .v-head { background:#252525; color:#9a785d; text-align:center; padding:7px; font-family:var(--fk); font-size:13px; font-weight:600; letter-spacing:2px; }
+.voice-table .vk    { background:#d8b793; color:#764b35; padding:5px 8px; text-align:center; font-family:var(--fk); font-size:12px; font-weight:600; border:1px solid var(--border-lt); width:120px; vertical-align:middle; }
+.voice-table .vv    { padding:5px 12px; border:1px solid #dddddd; background:#f2e9de; color:#363a3d; line-height:1.7; font-style:italic; }
+.voice-table .vv .top { border-bottom:1px solid #dddddd; padding-bottom:5px; margin-bottom:5px; }
+
+
+/* ════════════════════════════════
+   19. 의상 블록
+════════════════════════════════ */
+.costume-block { border:2px solid #986b58; margin:12px 0; overflow:hidden; }
+.costume-head  { background:#252525; color:#9a785d; text-align:center; padding:6px; font-family:var(--fk); font-size:12px; font-weight:600; border:1px solid #dddddd; }
+.costume-main-img     { text-align:center; background:#f4efe8; padding:12px; }
+.costume-main-img img { max-width:240px; margin:0 auto; }
+.costume-main-img-ph  { min-height:200px; display:flex; align-items:center; justify-content:center; font-family:var(--ft); font-size:9px; color:rgba(200,168,75,.4); letter-spacing:1px; }
+.costume-caption      { background:#553d2d; color:#bb9d87; text-align:center; padding:5px; font-family:var(--fk); font-size:11px; }
+
+/* 의상 정보 표 */
+.costume-info-table        { width:100%; border-collapse:collapse; }
+.costume-info-table .ci-k  { background:#d8b793; color:#764b35; padding:6px 10px; text-align:center; font-family:var(--fk); font-size:11px; font-weight:600; border:1px solid #dddddd; width:100px; vertical-align:middle; }
+.costume-info-table .ci-v  { padding:6px 12px; border:1px solid var(--border-lt); background:#f2e9de; font-size:12px; vertical-align:top; text-align:center; }
+
+/* SD 이미지 */
+.costume-sd-img     { display:flex; align-items:center; justify-content:center; min-height:80px; background:var(--cream-dk); }
+.costume-sd-img img { object-fit:contain; }
+.costume-sd-ph      { min-height:80px; display:flex; align-items:center; justify-content:center; font-family:var(--ft); font-size:9px; color:rgba(200,168,75,.4); }
+
+
+/* ════════════════════════════════
+   20. 각주
+════════════════════════════════ */
+.footnotes { margin-top:28px; padding-top:10px; border-top:1px solid var(--border-lt); }
+.fn-item   { display:flex; gap:8px; line-height:1.6; font-size:11px; color:var(--muted); margin-bottom:3px; }
+.fn-n      { font-family:var(--ft); font-size:10px; color:#0263b8; flex-shrink:0; }
+
+/* 각주 툴팁 */
+.fn-tooltip {
+  position: relative;
+  display: inline;
+  cursor: pointer;
+}
+.fn-tooltip .fn-tip {
+  display: none;
+  position: absolute;
+  bottom: 120%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 11px;
+  color: var(--text);
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,.15);
+  z-index: 100;
+  font-family: var(--fk);
+  font-style: normal;
+  font-weight: normal;
+}
+.fn-tooltip:hover .fn-tip { display: block; }
+
+
+/* ════════════════════════════════
+   21. 반응형 (모바일 640px 이하)
+════════════════════════════════ */
+@media(max-width:640px) {
+  .infobox { width:100%; margin:0 0 16px 0; }
+  .title   { font-size:22px; }
+  .search  { display:none; }
+  .wish-grid, .culture-grid { grid-template-columns:1fr 1fr; }
+  .item-grid    { grid-template-columns:1fr; }   /* 물품: 1열 */
+  .culture-grid { grid-template-columns:1fr; }   /* 문화: 1열 */
+}
+
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════
+     상단바
+══════════════════════════════ -->
+<div class="topbar">
+  <a href="#" class="logo">WIKI</a>
+  <div class="search">
+    <input type="text" placeholder="문서 검색...">
+    <button>SEARCH</button>
+  </div>
+</div>
+
+<div class="page">
+  <div class="title-wrap">
+    <h1 class="title">허블 · HUBLE</h1>
+    <div class="title-sub">NA5A CHARACTER WIKI</div>
+  </div>
+  <div class="meta"><span>마지막 수정: 2026.04.16</span><span>NA5A</span></div>
+
+  <div class="article">
+
+    <!-- ══ 인포박스 ══ -->
+    <div class="infobox">
+      <div class="ib-name">
+        <span class="ib-name-ko">허블</span>
+        <span class="ib-name-en">HUBLE</span>
+      </div>
+      <div class="ib-imgs">
+        <div class="ib-img-cell"><div class="ib-img-ph"><img src="images/wiki/huble_before.jpg"></div></div>
+        <div class="ib-img-cell"><div class="ib-img-ph">INSIGHT</div></div>
+      </div>
+      <div class="ib-labels">
+        <div class="ib-label">기본</div>
+        <div class="ib-label">우주의 소리</div>
+      </div>
+      <table class="ib-t">
+        <colgroup><col style="width:20%"><col style="width:30%"><col style="width:20%"><col style="width:30%"></colgroup>
+        <tr>
+          <td class="ik">영감</td>
+          <td class="iv iv-center"><img src="images/wiki/지능.png" class="stats-img">지능</td>
+          <td class="ik">데미지 유형</td>
+          <td class="iv iv-center"><img src="images/wiki/정신적외상.png" class="stats-img">정신적 외상</td>
+        </tr>
+        <tr>
+          <td class="ik">성급</td>
+          <td class="iv iv-center">✦✦✦✦✦✦</td>
+          <td class="ik">역할 태그</td>
+          <td class="iv iv-center">보조 | 약화 | 계시</td>
+        </tr>
+        <tr>
+          <td class="ik">서명</td>
+          <td class="iv iv-center" colspan="3"><img src="images/huble_sign.png" style="display:block;margin:0 auto;width:120px;height:auto;"></td>
+        </tr>
+        <tr>
+          <td class="ik">성우</td>
+          <td class="iv iv-center" colspan="3">
+            🇰🇷 <span class="fn-tooltip">이상호<sup class="fn">[1]</sup><span class="fn-tip"><span class="fn-n">[1]</span> 비공식</span></span><br>
+            🇺🇸 ■<br>
+            🇨🇳 ■<br>
+            🇯🇵 ■
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="infobox">
+      <div class="ib-chara-head">캐릭터 정보</div>
+      <table class="ib-t">
+        <colgroup><col style="width:20%"><col style="width:30%"><col style="width:20%"><col style="width:30%"></colgroup>
+        <tr>
+          <td class="ik">매개체</td>
+          <td class="iv iv-center">인텔 80486</td>
+          <td class="ik">영감</td>
+          <td class="iv iv-center">천문 기록자 [지능] 우주 도감</td>
+        </tr>
+        <tr>
+          <td class="ik">조향 노트</td>
+          <td class="iv iv-center">알데히드향 / 물, 유리, 종이, 금속</td>
+          <td class="ik">규격</td>
+          <td class="iv iv-center">70 1/8×37 33/64x24 1/64 인치<br>178.1×95.3×61.0 cm</td>
+        </tr>
+        <tr><td class="ik-full" colspan="4">작품 소개</td></tr>
+        <tr>
+          <td class="iv-full" colspan="4">초자연적인 존재의 예술품으로 20세기 후엽 전시, 출품 기간 미상, 4월 24일 봄 탄생, 출품 지역 미상. 어느 날 미합중국 플로리다주의 숲 속에서 갑작스럽게 모습을 드러냈고, 세계를 순회하다 성 파블로프 재단 본부에 수용되었다.</td>
+        </tr>
+      </table>
+      <div class="ib-udimo">UDIMO</div>
+      <div class="ib-udimo-img">
+        <div style="height:130px;display:flex;align-items:center;justify-content:center;font-family:var(--ft);font-size:9px;color:rgba(200,168,75,.3);letter-spacing:1px;">IMAGE</div>
+      </div>
+      <div class="ib-udimo-caption">우주 망원경</div>
+    </div>
+
+    <!-- ══ 목차 ══ -->
+    <div class="toc">
+      <div class="toc-title">목차</div>
+      <ol>
+        <li><a href="#s1"><span class="tn">1.</span><span>개요</span></a></li>
+        <li><a href="#s2"><span class="tn">2.</span><span>공식 소개</span></a></li>
+        <li><a href="#s3"><span class="tn">3.</span><span>작중 행적</span></a>
+          <ol class="sub">
+            <li><a href="#s3-1"><span class="tn">3.1.</span><span>1990</span></a></li>
+            <li><a href="#s3-2"><span class="tn">3.2.</span><span>1987 우주의 서곡</span></a></li>
+            <li><a href="#s3-3"><span class="tn">3.3.</span><span>1977</span></a></li>
+            <li><a href="#s3-4"><span class="tn">3.4.</span><span>1930</span></a></li>
+          </ol>
+        </li>
+        <li><a href="#s4"><span class="tn">4.</span><span>성능</span></a>
+          <ol class="sub">
+            <li><a href="#s4-1"><span class="tn">4.1.</span><span>능력치</span></a></li>
+            <li><a href="#s4-2"><span class="tn">4.2.</span><span>통찰</span></a></li>
+            <li><a href="#s4-3"><span class="tn">4.3.</span><span>형상</span></a></li>
+            <li><a href="#s4-4"><span class="tn">4.4.</span><span>계승</span></a></li>
+            <li><a href="#s4-5"><span class="tn">4.5.</span><span>마도술</span></a></li>
+          </ol>
+        </li>
+        <li><a href="#s5"><span class="tn">5.</span><span>운영</span></a>
+          <ol class="sub">
+            <li><a href="#s5-1"><span class="tn">5.1.</span><span>추천 조합</span></a></li>
+            <li><a href="#s5-2"><span class="tn">5.2.</span><span>추천 의지</span></a></li>
+          </ol>
+        </li>
+        <li><a href="#s6"><span class="tn">6.</span><span>평가</span></a>
+          <ol class="sub">
+            <li><a href="#s6-1"><span class="tn">6.1.</span><span>장점</span></a></li>
+            <li><a href="#s6-2"><span class="tn">6.2.</span><span>단점</span></a></li>
+          </ol>
+        </li>
+        <li><a href="#s7"><span class="tn">7.</span><span>물품</span></a></li>
+        <li><a href="#s8"><span class="tn">8.</span><span>문화</span></a></li>
+        <li><a href="#s9"><span class="tn">9.</span><span>황무지 대사</span></a></li>
+        <li><a href="#s10"><span class="tn">10.</span><span>음성</span></a></li>
+        <li><a href="#s11"><span class="tn">11.</span><span>캐릭터성</span></a></li>
+        <li><a href="#s12"><span class="tn">12.</span><span>의상</span></a></li>
+        <li><a href="#s13"><span class="tn">13.</span><span>기타</span></a></li>
+      </ol>
+    </div>
+
+    <!-- ══ 1. 개요 ══ -->
+    <h2 class="h2" id="s1"><span class="hn">1.</span>개요<a href="#" class="edit-link">[편집]</a></h2>
+    <div class="intro-box">
+      폭풍우의 영향으로 인간의 육체와 정신을 얻게 된 우주 망원경.<br><br>
+      지구에서 눈을 뜬 후에도 데이터를 수집하는 일을<br>
+      계속하고 있으며 폭풍우 현상을 '이해'하기 위해 움직인다.<br><br>
+      그가 수집한 수많은 데이터들은 삭제되지 않는다.<br><br>
+      <span class="intro-red">"우주는 지식의 요람이자 만물의 근원. 또한 끝이 보이지 않는 데이터들의 바다지."</span>
+    </div>
+    <p>모바일 게임 <a href="http://namu.wiki/w/%EB%A6%AC%EB%B2%84%EC%8A%A4:%201999">리버스: 1999</a>의 비공식 등장인물.</p>
+
+    <!-- ══ 2. 공식 소개 ══ -->
+    <h2 class="h2" id="s2"><span class="hn">2.</span>공식 소개<a href="#" class="edit-link">[편집]</a></h2>
+    <div class="official-box">
+      <div class="official-head">
+        <span class="oh-title">허블</span>
+        <span class="oh-sub">마도학자 1분 요약</span>
+      </div>
+      <div class="official-link"><a href="#">링크 (공식 네이버 카페)</a></div>
+    </div>
+
+    <!-- ══ 3. 작중 행적 ══ -->
+    <h2 class="h2" id="s3"><span class="hn">3.</span>작중 행적<a href="#" class="edit-link">[편집]</a></h2>
+    <h3 class="h3" id="s3-1"><span class="hn">3.1.</span>1990<a href="#" class="edit-link">[편집]</a></h3>
+    <p>스토리 적어요</p>
+    <h3 class="h3" id="s3-2"><span class="hn">3.2.</span>1987 우주의 서곡<a href="#" class="edit-link">[편집]</a></h3>
+    <p>스토리 적어요</p>
+    <h3 class="h3" id="s3-3"><span class="hn">3.3.</span>1977<a href="#" class="edit-link">[편집]</a></h3>
+    <p>스토리 적어요</p>
+    <h3 class="h3" id="s3-4"><span class="hn">3.4.</span>1930<a href="#" class="edit-link">[편집]</a></h3>
+    <p>스토리 적어요</p>
+
+    <!-- ══ 4. 성능 ══ -->
+    <h2 class="h2" id="s4"><span class="hn">4.</span>성능<a href="#" class="edit-link">[편집]</a></h2>
+
+    <!-- 4.1 능력치 -->
+    <h3 class="h3" id="s4-1"><span class="hn">4.1.</span>능력치<a href="#" class="edit-link">[편집]</a></h3>
+    <table class="stat-table">
+      <thead>
+        <tr>
+          <th>통찰</th><th>레벨</th>
+          <th><img src="images/wiki/attack.png" class="stats-img">공격</th>
+          <th><img src="images/wiki/health.png" class="stats-img">HP</th>
+          <th><img src="images/wiki/realityDEF.png" class="stats-img">현실 방어</th>
+          <th><img src="images/wiki/mentalDEF.png" class="stats-img">정신 방어</th>
+          <th><img src="images/wiki/technique.png" class="stats-img">치명타 기술</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="insight-cell" rowspan="2">0</td><td class="lv-cell">1</td><td class="val-cell">248</td><td class="val-cell">1560</td><td class="val-cell">120</td><td class="val-cell">132</td><td class="val-cell">256</td></tr>
+        <tr><td class="lv-cell">30</td><td class="val-cell-alt">378</td><td class="val-cell-alt">2370</td><td class="val-cell-alt">183</td><td class="val-cell-alt">201</td><td class="val-cell-alt">256</td></tr>
+        <tr><td class="insight-cell" rowspan="2">1</td><td class="lv-cell">1</td><td class="val-cell">415</td><td class="val-cell">2610</td><td class="val-cell">201</td><td class="val-cell">221</td><td class="val-cell">290</td></tr>
+        <tr><td class="lv-cell">40</td><td class="val-cell-alt">633</td><td class="val-cell-alt">3970</td><td class="val-cell-alt">307</td><td class="val-cell-alt">326</td><td class="val-cell-alt">290</td></tr>
+        <tr><td class="insight-cell" rowspan="2">2</td><td class="lv-cell">1</td><td class="val-cell">670</td><td class="val-cell">4210</td><td class="val-cell">323</td><td class="val-cell">355</td><td class="val-cell">325</td></tr>
+        <tr><td class="lv-cell">50</td><td class="val-cell-alt">943</td><td class="val-cell-alt">5920</td><td class="val-cell-alt">455</td><td class="val-cell-alt">500</td><td class="val-cell-alt">325</td></tr>
+        <tr><td class="insight-cell" rowspan="2">3</td><td class="lv-cell">1</td><td class="val-cell">977</td><td class="val-cell">6140</td><td class="val-cell">472</td><td class="val-cell">518</td><td class="val-cell">370</td></tr>
+        <tr><td class="lv-cell">60</td><td class="val-cell-alt">1109</td><td class="val-cell-alt">6990</td><td class="val-cell-alt">536</td><td class="val-cell-alt">588</td><td class="val-cell-alt">370</td></tr>
+      </tbody>
+    </table>
+
+    <!-- 4.2 통찰 -->
+    <h3 class="h3" id="s4-2"><span class="hn">4.2.</span>통찰<a href="#" class="edit-link">[편집]</a></h3>
+    <div class="insight-block">
+      <div class="insight-block-head">0 통찰 → 1 통찰</div>
+      <div class="insight-block-body">
+        기본 속성 증가<br><span class="i-item">심우주</span> 계승 레벨업<br>허블 레벨 최대치 <span class="i-item">40레벨</span>까지 증가
+        <div class="insight-mat">
+          <div class="insight-mat-item insight-mat-lv"><div class="insight-mat-img"><img src="images/wiki/insight30.png"></div><div class="insight-mat-txt">LV.30</div></div>
+          <div class="insight-mat-item"><div class="insight-mat-img grade-3"><img src="images/wiki/톱니동전.png"></div><div class="insight-mat-txt">톱니 동전×18000</div></div>
+          <div class="insight-mat-item"><div class="insight-mat-img grade-3"><img src="images/wiki/암석의서낱장.png"></div><div class="insight-mat-txt">암석의 서 낱장×3</div></div>
+          <div class="insight-mat-item"><div class="insight-mat-img grade-3"><img src="images/wiki/천체의서낱장.png"></div><div class="insight-mat-txt">천체의 서 낱장×3</div></div>
+          <div class="insight-mat-item"><div class="insight-mat-img grade-3"><img src="images/wiki/멈추지않는바퀴.png"></div><div class="insight-mat-txt">멈추지 않는 바퀴×5</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="insight-block">
+      <div class="insight-block-head">1 통찰 → 2 통찰</div>
+      <div class="insight-block-body">
+        기본 속성 증가<br><span class="i-item">심우주</span> 계승 레벨업<br><span class="i-item">허블</span> 본질 해제<br>공명 <span class="i-item">10레벨</span>까지 오픈<br>허블 레벨 최대치 <span class="i-item">50레벨</span>까지 증가
+        <div class="insight-mat">
+          <div class="insight-mat-item insight-mat-lv"><div class="insight-mat-img"><img src="images/wiki/insight40.png"></div><div class="insight-mat-txt">LV.40</div></div>
+          <div class="insight-mat-item"><div class="insight-mat-img grade-3"><img src="images/wiki/톱니동전.png"></div><div class="insight-mat-txt">톱니 동전×18000</div></div>
+          <div class="insight-mat-item"><div class="insight-mat-img grade-4"><img src="images/wiki/암석의서두루마리.png"></div><div class="insight-mat-txt">암석의 서 두루마리×5</div></div>
+          <div class="insight-mat-item"><div class="insight-mat-img grade-4"><img src="images/wiki/천체의서두루마리.png"></div><div class="insight-mat-txt">천체의 서 두루마리×5</div></div>
+          <div class="insight-mat-item"><div class="insight-mat-img grade-3"><img src="images/wiki/행운의주문.png"></div><div class="insight-mat-txt">행운의 주문×6</div></div>
+          <div class="insight-mat-item"><div class="insight-mat-img grade-4"><img src="images/wiki/날개열쇠.png"></div><div class="insight-mat-txt">날개 열쇠×5</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="insight-block">
+      <div class="insight-block-head">2 통찰 → 3 통찰</div>
+      <div class="insight-block-body">
+        기본 속성 증가<br><span class="i-item">심우주</span> 계승 레벨업<br>공명 <span class="i-item">15레벨</span>까지 오픈<br>허블 레벨 최대치 <span class="i-item">60레벨</span>까지 증가
+        <div class="insight-mat">
+          <div class="insight-mat-item insight-mat-lv"><div class="insight-mat-img"><img src="images/wiki/insight50.png"></div><div class="insight-mat-txt">LV.50</div></div>
+          <div class="insight-mat-item"><div class="insight-mat-img grade-3"><img src="images/wiki/톱니동전.png"></div><div class="insight-mat-txt">톱니 동전×200000</div></div>
+          <div class="insight-mat-item"><div class="insight-mat-img grade-5"><img src="images/wiki/암석의서전권.png"></div><div class="insight-mat-txt">암석의 서 전권×8</div></div>
+          <div class="insight-mat-item"><div class="insight-mat-img grade-5"><img src="images/wiki/천체의서전권.png"></div><div class="insight-mat-txt">천체의 서 전권×8</div></div>
+          <div class="insight-mat-item"><div class="insight-mat-img grade-5"><img src="images/wiki/적금나침반.png"></div><div class="insight-mat-txt">적금 나침반×5</div></div>
+          <div class="insight-mat-item"><div class="insight-mat-img grade-6"><img src="images/wiki/황금양털.png"></div><div class="insight-mat-txt">황금 양털×3</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4.3 형상 -->
+    <h3 class="h3" id="s4-3"><span class="hn">4.3.</span>형상<a href="#" class="edit-link">[편집]</a></h3>
+    <table class="keyed-table">
+      <tr><td class="kt-head" colspan="2">형상</td></tr>
+      <tr><td class="kt-key">LV.1</td><td class="kt-val"><span class="keyword">[심우주 로그]</span> <span class="keyword">[관측 로그]</span><span class="fn-tooltip">
+  <sup class="fn">[관측 로그]</sup>
+  <span class="fn-tip">허블이 약화 주문을 사용할 때마다 1스택 획득 (최대 6스택). 스택당 아군 정신 피해 +3%</span>
+</span> 최대 스택이 <span class="pct">8</span>까지 증가. <span class="keyword">[분석 완료]</span><sup class="fn">[분석 완료]</sup> 발동 시 아군 전체 치명타 기술 추가 <span class="pct">+15</span>.</td></tr>
+      <tr><td class="kt-key">LV.2</td><td class="kt-val"><span class="keyword">[성간 스캔]</span> 주문 1/2/3단계 시 주는 정신 피해가 <span class="pct">110%/150%/200%</span>까지 증가. <span class="keyword">[데이터 취약점]</span><sup class="fn">[데이터 취약점]</sup> 지속 턴 수 <span class="pct">1</span> 증가.</td></tr>
+      <tr><td class="kt-key">LV.3</td><td class="kt-val"><span class="keyword">[천체 간섭]</span> 전투 진입 시 <span class="keyword">[관측 로그]</span> <span class="pct">1</span>스택 추가 획득. 시전 시 아군 전체 받는 피해 추가 <span class="pct">-8%</span>.</td></tr>
+      <tr><td class="kt-key">LV.4</td><td class="kt-val"><span class="keyword">[성간 스캔]</span> 주문 1/2/3단계 시 주는 정신 피해가 <span class="pct">125%/170%/230%</span>까지 증가. <span class="keyword">[데이터 취약점]</span> 상태의 적 공격 시 주는 피해 추가 <span class="pct">+10%</span>.</td></tr>
+      <tr><td class="kt-key">LV.5</td><td class="kt-val"><span class="keyword">[우주적 파노라마]</span> <span class="keyword">[관측 로그]</span> 스택당 피해량 증가가 <span class="pct">+8%</span>까지 증가 (최대 <span class="pct">+48%</span>). 시전 후 <span class="keyword">[분석 완료]</span> 효과 <span class="pct">1</span>턴 연장.</td></tr>
+    </table>
+    <p>서포터 성능을 강화하는 1·3형상의 체감이 상당하며, 특히 3형상의 경우 천체 간섭의 버프량이 증가해 효율이 높다. 딜러로 운용하고자 한다면 성간 스캔을 강화하는 2·4형상, 혹은 최종술식을 강화하는 5형상까지의 진입을 권장한다.</p>
+
+    <!-- 4.4 계승 -->
+    <h3 class="h3" id="s4-4"><span class="hn">4.4.</span>계승<a href="#" class="edit-link">[편집]</a></h3>
+    <table class="keyed-table">
+      <tr><td class="kt-head" colspan="2">계승</td></tr>
+      <tr><td class="kt-sub" colspan="2">심우주</td></tr>
+      <tr>
+        <td class="kt-key"><img src="images/wiki/계승1.png" class="kt-img"></td>
+        <td class="kt-val">전투 시작 시 <span class="keyword">[관측 로그]</span><sup class="fn">[관측 로그]</sup> 2스택 획득. 성간 스캔 시전 시 <span class="keyword">[관측 로그]</span> 1스택 획득(최대 6스택). <span class="keyword">[데이터 취약점]</span> 상태의 적 공격 시 주는 피해 <span class="pct">16%</span> 증가.</td>
+      </tr>
+      <tr>
+        <td class="kt-key"><img src="images/wiki/계승2.png" class="kt-img"></td>
+        <td class="kt-val">전투 진입 시 주는 피해 <span class="pct">8%</span> 증가.</td>
+      </tr>
+      <tr>
+        <td class="kt-key"><img src="images/wiki/계승3.png" class="kt-img"></td>
+        <td class="kt-val"><span class="keyword">[관측 로그]</span> 6스택 도달 시 <span class="keyword">[분석 완료]</span> 효과 강화. 추가로, 모든 적군에게 <span class="keyword">[데이터 취약점]</span> 부여.</td>
+      </tr>
+    </table>
+
+    <!-- 4.5 마도술 -->
+    <h3 class="h3" id="s4-5"><span class="hn">4.5.</span>마도술<a href="#" class="edit-link">[편집]</a></h3>
+    <div class="spell-block">
+      <div class="spell-head">성간 스캔</div>
+      <div class="spell-illust-wrap">
+        <div class="spell-illust-label">일러스트</div>
+        <div class="spell-illust-cell"><div class="spell-illust-ph">ILLUST</div></div>
+      </div>
+      <table class="spell-table">
+        <tr><th colspan="2">설명</th></tr>
+        <tr>
+          <td class="s-grade"><div class="s-star">✦</div><div class="s-type"><img src="images/wiki/debuff.png" class="spell-img"></div></td>
+          <td class="s-val">단일 공격, 적군에게 <span class="pct">90%</span>의 정신 피해를 줌. 목표에게 <span class="keyword">[데이터 취약점]</span> 부여, 2턴간 지속.<br><em>천체를 방관하는 망원경.</em></td>
+        </tr>
+        <tr>
+          <td class="s-grade"><div class="s-star">✦✦</div><div class="s-type"><img src="images/wiki/debuff.png" class="spell-img"></div></td>
+          <td class="s-val">단일 공격, 적군에게 <span class="pct">130%</span>의 정신 피해를 줌. 목표에게 <span class="keyword">[데이터 취약점]</span> 부여, 효과 <span class="pct">+15%</span>, 2턴간 지속.<br><em>천체를 방관하는 망원경. 지구의 저궤도를 공전한다.</em></td>
+        </tr>
+        <tr>
+          <td class="s-grade"><div class="s-star">✦✦✦</div><div class="s-type"><img src="images/wiki/debuff.png" class="spell-img"></div></td>
+          <td class="s-val">단일 공격, 적군에게 <span class="pct">175%</span>의 정신 피해를 줌. 목표에게 <span class="keyword">[데이터 취약점]</span> 부여, 효과 <span class="pct">+18%</span>, 2턴간 지속. <span class="keyword">[관측 로그]</span> 1스택 획득.<br><em>천체를 방관하는 망원경. 우주의 모든 미지의 정보를 수집한다.</em></td>
+        </tr>
+      </table>
+    </div>
+    <div class="spell-block">
+      <div class="spell-head">천체 간섭</div>
+      <div class="spell-illust-wrap">
+        <div class="spell-illust-label">일러스트</div>
+        <div class="spell-illust-cell"><div class="spell-illust-ph">ILLUST</div></div>
+      </div>
+      <table class="spell-table">
+        <tr><th colspan="2">설명</th></tr>
+        <tr>
+          <td class="s-grade"><div class="s-star">✦</div><div class="s-type"><img src="images/wiki/buff.png" class="spell-img"></div></td>
+          <td class="s-val">광역 버프, 아군 전체 공격력 <span class="pct">+10%</span>, 치명타 기술 <span class="pct">+18</span>, 2턴간 지속.<br><em>별들은 서로의 인력으로 존재한다.</em></td>
+        </tr>
+        <tr>
+          <td class="s-grade"><div class="s-star">✦✦</div><div class="s-type"><img src="images/wiki/buff.png" class="spell-img"></div></td>
+          <td class="s-val">광역 버프, 아군 전체 공격력 <span class="pct">+14%</span>, 치명타 기술 <span class="pct">+24</span>, 2턴간 지속.<br><em>별들은 서로의 인력으로 존재한다. 혼자 빛나는 별은 없다.</em></td>
+        </tr>
+        <tr>
+          <td class="s-grade"><div class="s-star">✦✦✦</div><div class="s-type"><img src="images/wiki/buff.png" class="spell-img"></div></td>
+          <td class="s-val">광역 버프, 아군 전체 공격력 <span class="pct">+18%</span>, 치명타 기술 <span class="pct">+30</span>, 2턴간 지속. 이번 턴 받는 피해 <span class="pct">-10%</span>.<br><em>별들은 서로의 인력으로 존재한다. 그것이 우주의 법칙이다.</em></td>
+        </tr>
+      </table>
+    </div>
+    <div class="spell-block">
+      <div class="spell-head">우주적 파노라마</div>
+      <div class="spell-illust-wrap">
+        <div class="spell-illust-label">일러스트</div>
+        <div class="spell-illust-cell"><div class="spell-illust-ph">ILLUST</div></div>
+      </div>
+      <table class="spell-table">
+        <tr><th colspan="2">설명</th></tr>
+        <tr>
+          <td class="s-grade" style="vertical-align:middle;"><div class="s-type-solo"><img src="images/wiki/buff.png" class="spell-img"></div></td>
+          <td class="s-val">광역 공격. 적군에게 <span class="pct">300%</span>의 정신 피해를 줌. 적군에게 <span class="keyword">[데이터 오류]</span> 부여, 2턴간 지속.<br><span class="keyword">[관측 로그]</span> 보유 시, 스택당 피해량 <span class="pct">+5%</span> 증가 (최대 <span class="pct">+30%</span>). 시전 후 <span class="keyword">[관측 로그]</span> 전 스택 소모.<br><em>우주가 담아온 모든 것들이 쏟아진다. 그 누구도 감당할 수 없는 광경이.</em></td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- ══ 5. 운영 ══ -->
+    <h2 class="h2" id="s5"><span class="hn">5.</span>운영<a href="#" class="edit-link">[편집]</a></h2>
+
+    <!-- 5.1 추천 조합 -->
+    <h3 class="h3" id="s5-1"><span class="hn">5.1.</span>추천 조합<a href="#" class="edit-link">[편집]</a></h3>
+    <ul>
+      <li>
+        <div class="combo-name">허블 | 37 | 투스 페어리 | 키페리나</div>
+        <div class="combo-desc">허블을 정신적 외상 메인딜러로 운용하는 조합. 37의 추가 행동 지원과 버프로 허블의 스킬 사이클을 가속하고, 투스 페어리가 치명타 저항을 감소시켜 <span class="keyword">[분석 완료]</span> 효과의 치명타 기술 버프를 극대화한다. 키페리나는 보호막으로 생존을 담당하면서 계시 버프를 추가로 제공한다. 5형상이 필수적이다.</div>
+      </li>
+      <li>
+        <div class="combo-name">릴리아 | 허블 | 투스 페어리 | 머큐리아</div>
+        <div class="combo-desc">릴리아를 메인딜러로 채용하는 치명타 특화 조합. 허블의 치명타 기술 버프와 <span class="keyword">[데이터 취약점]</span> 약화가 릴리아의 딜을 직접 증폭하며, 투스 페어리의 치명타 저항 감소와 시너지가 좋다. 머큐리아는 치명타 피해 및 마법 위력 버프로 파티 전체 고점을 끌어올린다. 2형상 또는 4형상을 추천한다.</div>
+      </li>
+      <li>
+        <div class="combo-name">레굴루스 | 보이저 | 허블 | 투스 페어리</div>
+        <div class="combo-desc">레굴루스를 메인딜러로 하는 정신적 외상 조합. 허블의 <span class="keyword">[데이터 취약점]</span>이 레굴루스의 피해량을 직접 증폭하며, 보이저가 서브딜과 유틸을 담당한다. 투스 페어리는 힐과 치명타 저항 감소로 안정성을 책임진다. 명함, 1형상, 3형상일 때 사용한다.</div>
+      </li>
+    </ul>
+
+    <!-- 5.2 추천 의지 -->
+    <h3 class="h3" id="s5-2"><span class="hn">5.2.</span>추천 의지<a href="#" class="edit-link">[편집]</a></h3>
+    <div class="wish-grid">
+      <div class="wish-item"><div class="wish-rank">1순위</div><div class="wish-img"><img src="images/wiki/별무리의소리.png"></div></div>
+      <div class="wish-item"><div class="wish-rank">2순위</div><div class="wish-img"><img src="images/wiki/침묵과동경.png"></div></div>
+      <div class="wish-item"><div class="wish-rank">3순위</div><div class="wish-img"><img src="images/wiki/멋진신세계.png"></div></div>
+      <div class="wish-item"><div class="wish-rank">4순위</div><div class="wish-img"><img src="images/wiki/필요한기록.png"></div></div>
+    </div>
+
+    <!-- ══ 6. 평가 ══ -->
+    <h2 class="h2" id="s6"><span class="hn">6.</span>평가<a href="#" class="edit-link">[편집]</a></h2>
+    <p>지능 영감 정신적 외상 약화·버프 서포터.</p>
+    <p>버프와 약화를 동시에 수행하는 올라운더형 서포터로, <span class="keyword">[관측 로그]</span> 스택 시스템을 통해 아군 전체의 정신적 외상 피해를 지속적으로 끌어올리는 것이 핵심이다. 치명타 기술 버프(<span class="keyword">[천체 간섭]</span>)와 받는 피해 증가(<span class="keyword">[데이터 취약점]</span>)를 동시에 제공하기 때문에 치명타 기반 딜러와 정신적 외상 딜러 양쪽 모두에게 기용할 수 있다는 범용성이 가장 큰 장점이다. 특히 5형상에서는 메인딜러로도 운용이 가능할 만큼 자체 화력이 올라가 형상 진입에 따라 역할이 유연하게 바뀌는 독특한 캐릭터이다.</p>
+    <p>다만 서포터로서의 역할이 주가 되는 명함~3형상 구간에서는 버프 수치 자체가 기존 고성능 서포터들에 비해 압도적이지 않아, 파티 구성에 따라 체감 효율이 크게 달라진다. <span class="keyword">[관측 로그]</span> 스택을 쌓는 조건이 약화 주문 시전에 한정되어 있어 스킬 사이클 관리가 요구되며, 스택이 소모되는 최종술식 타이밍을 잘못 잡으면 손해가 생긴다는 운영 난이도도 존재한다.</p>
+
+    <h3 class="h3" id="s6-1"><span class="hn">6.1.</span>장점<a href="#" class="edit-link">[편집]</a></h3>
+    <ul>
+      <li>
+        <div class="combo-name">버프·약화 동시 수행</div>
+        <div class="combo-desc"><span class="keyword">[천체 간섭]</span>으로 아군 공격력·치명타 기술을 올리면서 <span class="keyword">[성간 스캔]</span>으로 <span class="keyword">[데이터 취약점]</span>을 부여해 받는 피해까지 증가시킨다. 한 캐릭터가 두 역할을 소화하기 때문에 파티 슬롯 효율이 높다.</div>
+      </li>
+      <li>
+        <div class="combo-name">높은 치명타 기술 기본 스탯</div>
+        <div class="combo-desc">허블은 기본 치명타 기술 수치가 높은 편에 속해, 치명타 기술을 요구하는 딜러들과 조합 시 의지나 공명 투자 없이도 버프 효과를 충분히 누릴 수 있다.</div>
+      </li>
+      <li>
+        <div class="combo-name">형상에 따른 유연한 운용</div>
+        <div class="combo-desc">명함~3형상은 서포터, 2·4형상은 서브딜러 겸 서포터, 5형상은 메인딜러로 운용 가능해 형상 투자량에 따라 역할 선택지가 넓다. 광상 이후에는 성능이 대폭 강화될 것으로 기대된다.</div>
+      </li>
+    </ul>
+
+    <h3 class="h3" id="s6-2"><span class="hn">6.2.</span>단점<a href="#" class="edit-link">[편집]</a></h3>
+    <ul>
+      <li>
+        <div class="combo-name">스택 의존도</div>
+        <div class="combo-desc"><span class="keyword">[관측 로그]</span> 스택이 쌓이기 전까지는 버프 효율이 낮고, 최종술식 사용 시 스택이 전부 소모되어 다음 사이클까지 공백이 생긴다. 단기전보다 턴이 길어질수록 강해지는 구조다.</div>
+      </li>
+      <li>
+        <div class="combo-name">약화 단일 대상 한계</div>
+        <div class="combo-desc"><span class="keyword">[성간 스캔]</span>의 <span class="keyword">[데이터 취약점]</span>은 단일 대상에만 적용되어 다수 적을 상대하는 광역 스테이지에서는 약화 효율이 떨어진다. 최종술식의 <span class="keyword">[데이터 오류]</span>로 광역 커버는 가능하나 지속 턴이 짧다.</div>
+      </li>
+    </ul>
+
+    <!-- ══ 7. 물품 ══ -->
+    <h2 class="h2" id="s7"><span class="hn">7.</span>물품<a href="#" class="edit-link">[편집]</a></h2>
+    <div style="font-family:var(--fk);font-size:16px;font-weight:600;margin:14px 0 8px;display:flex;align-items:center;gap:6px;"><span style="color:black;">•</span>기본</div>
+    <div class="item-grid">
+      <div class="item-card">
+        <div class="item-card-header">
+          <img src="images/wiki/item_header.png">
+          <div class="item-card-item-img"><img src="images/wiki/헤드셋.png"></div>
+        </div>
+        <div class="item-card-body-wrap">
+          <div class="item-card-name">통신 헤드셋</div>
+          <div class="item-card-en">Communication Headset</div>
+          <div class="item-card-divider"><img src="images/wiki/item_divider.png"></div>
+          <div class="item-card-price"><img src="images/wiki/감정가.png" style="width:16px;height:16px;object-fit:contain;"> 1120</div>
+          <div class="item-card-desc">우주의 소리를 들을 수 있는 헤드셋이다. 평범한 인간들은 착용해도 무언가 웅웅거리는 공허함만을 느낄 뿐이다. 그러나 그에게는 모든 것이 들린다. 별이 노래하는 소리, 블랙홀이 행성을 삼키는 소리, 성간 너머 생명체들의 소리가 들린다.</div>
+        </div>
+        <div class="item-card-footer"><img src="images/wiki/item_footer.png"></div>
+      </div>
+      <div class="item-card">
+        <div class="item-card-header">
+          <img src="images/wiki/item_header.png">
+          <div class="item-card-item-img"><img src="images/wiki/나침반.png"></div>
+        </div>
+        <div class="item-card-body-wrap">
+          <div class="item-card-name">우주 항해 나침반</div>
+          <div class="item-card-en">Celestial Navigation Compass</div>
+          <div class="item-card-divider"><img src="images/wiki/item_divider.png"></div>
+          <div class="item-card-price">감정가 없음</div>
+          <div class="item-card-desc">우주 망원경의 항해 방향을 잡아주는 나침반이다. 그는 우주에서 온 존재이지만 지구의 저궤도를 벗어난 적이 없기 때문에, 언젠가 길잡이를 따라 최초의 우주 항해를 시작하게 될 것이다.</div>
+        </div>
+        <div class="item-card-footer"><img src="images/wiki/item_footer.png"></div>
+      </div>
+      <div class="item-card">
+        <div class="item-card-header">
+          <img src="images/wiki/item_header.png">
+          <div class="item-card-item-img"><img src="images/wiki/베레모.png"></div>
+        </div>
+        <div class="item-card-body-wrap">
+          <div class="item-card-name">별이 달린 베레모</div>
+          <div class="item-card-en">Star-Studded Beret</div>
+          <div class="item-card-divider"><img src="images/wiki/item_divider.png"></div>
+          <div class="item-card-price"><img src="images/wiki/가격.png" style="width:16px;height:16px;object-fit:contain;"> 400</div>
+          <div class="item-card-desc">평범한 베레모에 진짜 별의 조각을 달아 수선한 것이다. 그 별은 지구로부터 약 400 광년 떨어져있다.</div>
+        </div>
+        <div class="item-card-footer"><img src="images/wiki/item_footer.png"></div>
+      </div>
+    </div>
+
+    <!-- ══ 8. 문화 ══ -->
+    <h2 class="h2" id="s8"><span class="hn">8.</span>문화<a href="#" class="edit-link">[편집]</a></h2>
+    <div class="culture-grid">
+      <div class="culture-card">
+  <!-- 헤더 이미지 추가 -->
+  <div class="culture-card-header">
+    <img src="images/wiki/history_header.png">
+  </div>
+  <div class="culture-card-img"><img src="images/wiki/history1.png" style="width:100%;height:auto;"></div>
+  <div class="culture-card-title">살아있는 우주 기록<br><span class="culture-card-en">A Living Testament of the Void</span></div>
+  <!-- 푸터 이미지 추가 -->
+  <div class="culture-card-footer">
+    <img src="images/wiki/history_footer.png">
+  </div>
+  <div class="fold">
+    <div class="fold-head"><span class="fold-arr">▶</span><span>[펼치기 · 접기]</span></div>
+    <div class="fold-body"><p>"통신이 돼?"</p>
+            <p>"아니... 안 되는 것 같은데."</p>
+            <p>"대체 뭐가 문제인 거야? 시스템도 잘 돌아가고, 부품이 고장 난 것도 아니잖아."</p>
+            <p>사실 저 먼 우주에 있는 우주 망원경과 통신을 하는 건 쉬운 일이 아니다. 아무리 지구를 중심으로 돌고 있다 해도, 떨어진 거리에 비례해 통신의 난이도는 올라가기 마련이다.</p>
+            <br>
+            <p>그것은 자아가 없기에 수동적으로 지구의 저궤도를 따라 공전하며, 명령에 따라 지구를 관찰하는 거대한 카메라에 불과하다.</p>
+            <p>천체를 방관하는 망원경에게 무엇을 기대하는가? 인간들은 너무 많은 것을 기대한다.</p>
+
+</div>
+  </div>
+</div>
+      <div class="culture-card">
+        <div class="culture-card-header">
+    <img src="images/wiki/history_header.png">
+  </div>
+        <div class="culture-card-img"><div class="culture-card-img-ph"><img src="images/wiki/history2.png" style="width:100%;height:auto;"></div></div>
+        <div class="culture-card-title">아무도 모르는 불시착<br><span class="culture-card-en">An Unchronicled Descent</span></div>
+        <div class="culture-card-footer">
+    <img src="images/wiki/history_footer.png">
+  </div>
+        <div class="fold">
+          <div class="fold-head"><span class="fold-arr">▶</span><span>[펼치기 · 접기]</span></div>
+          <div class="fold-body">
+            <p>"...이봐. 방금 무슨 소리 나지 않았어?"</p>
+            <p>"기껏해야 날짐승 소리겠지."</p>
+            <p>"그게 아니라니까? 뭔가 떨어지는 소리였어. 쿵하고."</p>
+            <p>"그래, 그래. 너 며칠 잠 못 잤지? 좀 자라. 이따 교대해."</p>
+            <p>"너 내 말 듣고 있어? 진짜라니까!"</p>
+            <p>"어디서 났는데?"</p>
+            <p>"그러니까... 저쪽에서."</p>
+            <p>"장난해? 완전 숲 방향이잖아."</p>
+            <p>"아, 답답해. 거짓말 아니라니까?"</p>
+            <p>"상식적으로 생각해 봐. 그런 소리가 들렸다고 해도 여기까지 들리겠냐고. 우리는 입구 쪽이고, 네가 말한 방향은 깊은 숲이고."</p>
+            <p>남자가 가리키는 방향은 아무것도 보이지 않는 암흑 그 자체였다. 깊은 밤, 그것도 숲 속에서 들려오는 소리는 오로지 바람에 풀과 나무가 스치는 소리, 날짐승의 숨소리, 물이 흐르는 소리. 그것이 전부여야만 한다.</p>
+            <p>"적당히 해라. 안 그래도 아갼 근무라 짜증 나는데 네 헛소리까지 들어줄 기운 없어."</p>
+            <p>"하.... 그래, 됐다. 먼저 잘 테니까 나중에 깨워."</p>
+            <p>건물의 불이 꺼졌다. 랜턴의 빛만이 희마하게 비칠 뿐이었다. 그랬기에 저 멀리, 숲 속에서 일어나는 일을 한낱 인간의 시력으로는 눈치챌 수 없었다.</p>
+            <p>"............"</p>
+            <p>날짐승이 황급히 도망치는 움직임, 새들이 불안한 듯 날개를 퍼덕이며 날아가는 움직임, 나무가 놀라 바람에게 소식을 전하는 움직임. 그리고 한 소년이 일어나는 움직임.</p>
+            <p>"푸른 별..."</p>
+          </div>
+        </div>
+      </div>
+      <div class="culture-card">
+        <div class="culture-card-header">
+    <img src="images/wiki/history_header.png">
+  </div>
+        <div class="culture-card-img"><div class="culture-card-img-ph"><img src="images/wiki/history3.png" style="width:100%;height:auto;"></div></div>
+        <div class="culture-card-title">천문의 기록자<br><span class="culture-card-en">The Recorder of the Stars</span></div>
+        <div class="culture-card-footer">
+    <img src="images/wiki/history_footer.png">
+  </div>
+        <div class="fold">
+          <div class="fold-head"><span class="fold-arr">▶</span><span>[펼치기 · 접기]</span></div>
+          <div class="fold-body">
+            <p><b>판도라 윌슨</b> : 오늘은 매우 특별한 손님이 와주셨군요. 안녕하세요, 허블 씨.</p>
+            <p><span class="hb"><b>허블</b></span> : 반갑습니다. 지구에서는 첫인사를 이렇게 말하던데요. 상대를 처음 만났을 때의 예의와 기쁨을 표현하기 위해서.</p>
+            <p><b>판도라 윌슨</b> : 생각보다 수다스러운 성격이시군요. 그것도 지식을 학습한 결과인가요?</p>
+            <p><span class="hb"><b>허블</b></span> : 인간은 우주의 지적 생명체 중 가히 최상위라고 볼 수 있습니다. 그들의 지식은 제게 도움이 되죠. 학습이란 타인의 지식을 자신의 것으로 만드는 행위니까... 그 정의에 의하면, 네. 그렇습니다.</p>
+            <p><b>판도라 윌슨</b> : 대답이 거침없으시네요. 순간 허블 씨가 이진법으로 말하고 있다는 사실을 잊을 뻔했습니다, 하하!</p>
+            <p><span class="hb"><b>허블</b></span> : 인간의 말은 참 소통하기 편한 수단이죠. 언어는 다르더라도요. 소리라는 것을 내기 위한 환경 또한 갖춰져 있으니 오히려 말을 하지 않는다면 이상한 것 아닌가요?</p>
+            <p><b>판도라 윌슨</b> : 그렇습니까? 그럼 한 가지 여쭙죠. 허블 씨는 스스로를 무엇이라고 생각하고 계십니까?</p>
+            <p><span class="hb"><b>허블</b></span> : 육체의 형태와 정신의 흐름. 어느 것에 기반한 답을 원하십니까?</p>
+            <p><b>판도라 윌슨</b> : 판단 기준에 따라 결과가 달라지나요?</p>
+            <p><span class="hb"><b>허블</b></span> : 아뇨, 달라지지 않습니다. 이 육체와 정신은 가상의 데이터고 초자연적인 힘에 의해 구현화된 것뿐입니다. 그러니까 저는, 스스로를 가상의 매개체라고 생각합니다. 머나먼 우주에서의 저와 지구에서의 저를 이어주는 통신 수단이죠.</p>
+            <p><b>판도라 윌슨</b> : 구체적인 답변 감사합니다. 허블 씨는 어쩌면... 이미 인간일지도 모르겠네요.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 9. 황무지 대사 ══ -->
+    <h2 class="h2" id="s9"><span class="hn">9.</span>황무지 대사<a href="#" class="edit-link">[편집]</a></h2>
+    <div class="field-block">
+      <div class="field-head">황무지 대화</div>
+      <table class="field-table">
+        <tr><td class="f-plain" colspan="2">…<br>초콜릿 맛, 딸기 맛, 버터크림 맛, 블루베리 맛...</td></tr>
+        <tr><td class="f-trigger">&lt;허블, 뭘 하고 있어?&gt;</td><td class="f-resp">안녕, 타임키퍼. 어떤 마카롱을 먹을지 고민하고 있었어.<br>네가 한 번 추천해줄래?</td></tr>
+        <tr><td class="f-trigger">&lt;허블, 나도 하나 줄 있어?&gt;</td><td class="f-resp">아, 타임키퍼. ...미안. 아무리 너라도 마카롱은 주기 힘들어.</td></tr>
+      </table>
+    </div>
+    <div class="field-block">
+      <div class="field-head">황무지 대화</div>
+      <table class="field-table">
+        <tr><td class="f-plain" colspan="2">음...<br>방금 성간 너머의 어떤 별 하나가 죽었어.<br>그거 알아? 태양과 비슷하거나 작은 별은 적색거성이 된 후 백생외성으로 죽어.<br>하지만 태양의 질량 10배 이상의 별은 핵이 붕괴해서 초신성 폭발을 일으키지.<br>그렇게 중성자별이 되거나 블랙홀이 돼.<br>참으로 화려한 죽음이야...... 난 그 모든 것을 기록으로 남기고 싶어.</td></tr>
+      </table>
+    </div>
+    <ul><li>신뢰도 100%</li></ul>
+
+    <!-- ══ 10. 음성 ══ -->
+    <h2 class="h2" id="s10"><span class="hn">10.</span>음성<a href="#" class="edit-link">[편집]</a></h2>
+    <table class="voice-table">
+      <tr><td class="v-head" colspan="2">음성<p><i>— VOICE —</i></p></td></tr>
+      <tr><td class="vk">첫 만남</td><td class="vv">안녕. ...이름은 허블이야. 더 할 말은 없는데. 뭘 더 말해야 하지?</td></tr>
+      <tr><td class="vk">가방 속 날씨</td><td class="vv">날씨라는 건 원래 가방 속에서도 나타나는 현상인 거야? 아니라고? 그럼 이건 뭔데?</td></tr>
+      <tr><td class="vk">미래에 관하여</td><td class="vv">나는 지구에 대해서는 몰라. 하지만 인류가 닿지 못한 곳이라면 알고 있어... 우주 말이야. 네가 필요하다면, 알려줄게.</td></tr>
+      <tr><td class="vk">혼자일 때</td><td class="vv">......보이저의 연주 소리. 오늘도 기분이 좋은가 보네.</td></tr>
+      <tr><td class="vk">인사</td><td class="vv">주파수 이상 없음... 좋아. 오늘도 통신할 수 있을 것 같아.</td></tr>
+      <tr><td class="vk">아침</td><td class="vv">보이저는 항상 아침마다 바이올린을 켜. 난 그걸 옆에서 듣고. 소리가 없는 곳에서 온 존재가 소리를 연주한다는 것은... 놀라운 일이지. 안 그래?</td></tr>
+      <tr><td class="vk">신뢰-아침</td><td class="vv">응, 안녕. 왜 이렇게 일찍 일어났냐고? 눈이 떠졌으니까. 그대로 침대에 누워있는 행위는 불필요하거든.</td></tr>
+      <tr><td class="vk">밤</td><td class="vv">인간의 하루는 비효율적이야. 24시간이나 있는 시간의 3분의 1을 자는 데 소비하지. 내 시간 개념이 이상한 거라고? 미안, 이해할 수 없어.</td></tr>
+      <tr><td class="vk">신뢰-밤</td><td class="vv">오늘 밤은 하늘이 맑을 예정이야. 그러니까 할 일을 빨리 끝내고 와. 우주를 보기 좋은 날씨니까.</td></tr>
+      <tr><td class="vk">모자와 머리</td><td class="vv">폭풍우의 영향이라고 해도, 왜 이런 인간의 모습이 됐는지 몰라. 누군가는 죽은 사람의 몸에 들어간 게 아니냐고 하는데... 느껴져. 나는 살아있어.</td></tr>
+      <tr><td class="vk">소매와 손</td><td class="vv">아, 이런. 컵을 떨어뜨렸어. 아직 손을 쓰는 게 익숙하지 않아서 그래. 괜찮아. 그러고 보니 내 피는 무슨 색인지 궁금하지 않아?</td></tr>
+      <tr><td class="vk">의상과 체형</td><td class="vv">이 옷은 내가 지구에 불시착했을 때 입고 있던 옷이야. 맨몸이었다면 그건 그거대로 더 큰 문제가 아니냐고 하던데. 하긴, 지구에서 옷을 입지 않은 인간은 드무니까.</td></tr>
+      <tr><td class="vk">취향</td><td class="vv">혹시... 이곳의 마카롱은 얼마나 비싼 편이지? 큼, 아무 것도 아니야.</td></tr>
+      <tr><td class="vk">칭찬</td><td class="vv">보이저의 연주는 아주 훌륭해. 들어본 적이 없다면 내가 추천하지. 너도 분명 좋아할 거야. 세이렌의 노랫소리보다 사람을 더 홀리거든...</td></tr>
+      <tr><td class="vk">친밀</td><td class="vv">돈이 필요해? 얼마나? 근처에 은행이 있던데, 몇 장 가져다줄까?</td></tr>
+      <tr><td class="vk">잡담 I</td><td class="vv">우주가 유한하다고 생각해 본 적 있어? 안타깝게도 그 답은 나도 몰라. 난 지구의 저궤도에서만 공전할 뿐이었으니까. 보이저한테 물어보니까 그냥 웃더라고.</td></tr>
+      <tr><td class="vk">잡담 II</td><td class="vv">인간은 6대 미각을 느낀다고 하던데 난 아직까지 단맛이 제일 좋아. 특히 마카롱은... 정말 신선한 충격이었지. 인간의 육체를 얻고 난 후 먹은 음식들 중에서 가장 맛있는 것 같아.</td></tr>
+      <tr><td class="vk">혼잣말</td><td class="vv">폭풍우가 아니었다면 나는 존재하지 않았겠지... 본체가 아닌, 나.</td></tr>
+      <tr><td class="vk">팀 합류</td><td class="vv">도움이 될 수 있도록 노력하지.</td></tr>
+      <tr><td class="vk">전투 전</td><td class="vv">먼저 상대를 분석한 후 약점을 노려.</td></tr>
+      <tr><td class="vk">주문 선택 I</td><td class="vv">스캔 준비 완료.</td></tr>
+      <tr><td class="vk">주문 선택 II</td><td class="vv">내 도움이 필요해?</td></tr>
+      <tr><td class="vk">고급 주문 선택</td><td class="vv">조금 더 쉬워질 거야.</td></tr>
+      <tr><td class="vk">최종 술식 선택</td><td class="vv">지금이 최적의 공격 타이밍이야. 기회를 잡아.</td></tr>
+      <tr><td class="vk">마도술 시전 I</td><td class="vv"><div class="top">찾았다.</div><div class="bottom">집중해.</div></td></tr>
+      <tr><td class="vk">마도술 시전 II</td><td class="vv"><div class="top">지금부터 내가 알려주는 대로 접근해.</div><div class="bottom">주파수를 맞춰봐. 내가 길을 열어줄게.</div></td></tr>
+      <tr><td class="vk">최종 술식 소환</td><td class="vv">우주는 항상 인간들에게 말을 걸고 있어. 그러니까 귀를 기울이고 잘 들어봐. 지금부터.</td></tr>
+      <tr><td class="vk">피격 1</td><td class="vv">좀 아프네.</td></tr>
+      <tr><td class="vk">피격 2</td><td class="vv">이 몸도 치료를 받을 수 있나?</td></tr>
+      <tr><td class="vk">전투 승리</td><td class="vv">네가 잘했으니까 당연한 결과가 따라오는 거야. 그러니까 수고했어.</td></tr>
+      <tr><td class="vk">통찰</td><td class="vv">비슷한 감각을 느껴본 적이 있어... 내 본체가 말썽이었을 때 인간들이 수리해 줬는데 그때와 유사한 것 같군. ...표정이 왜 그래?</td></tr>
+      <tr><td class="vk">최고 통찰</td><td class="vv">한계를 뛰어넘는다는 것은 내게 있어 부품을 교체한다는 것과 같은 말이야. 하지만 인간은... 좀 다르네. 이런 느낌인 건가? 역시 놀라워. 인간의 육체를 얻은 후부터 알 수 없는 일들 투성이야.</td></tr>
+    </table>
+
+    <!-- ══ 11. 캐릭터성 ══ -->
+    <h2 class="h2" id="s11"><span class="hn">11.</span>캐릭터성<a href="#" class="edit-link">[편집]</a></h2>
+    <p>모티브는 허블 우주 망원경.</p>
+
+    <!-- ══ 12. 의상 ══ -->
+    <h2 class="h2" id="s12"><span class="hn">12.</span>의상<a href="#" class="edit-link">[편집]</a></h2>
+
+    <!-- 기본 의상 -->
+    <div class="costume-block">
+      <div class="costume-head">기본</div>
+      <div class="costume-main-img"><div class="costume-main-img-ph"><img src="images/wiki/기본의상.png"></div></div>
+      <div class="costume-caption">자아를 얻게 된 소년이다.</div>
+      <table class="costume-info-table">
+        <tr><td class="ci-k">획득 방법</td><td class="ci-v">캐릭터 획득</td></tr>
+        <tr>
+          <td class="ci-k">SD 일러스트</td>
+          <td class="ci-v">
+            <div class="costume-sd-img">
+              <img src="images/wiki/huble_sd1.png" style="height:200px;width:auto;object-fit:contain;">
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td class="ci-k">스탠딩 일러스트</td>
+          <td class="ci-v">
+            <div class="fold">
+              <div class="fold-head"><span class="fold-arr">▶</span><span>[ 펼치기 · 접기 ]</span></div>
+              <div class="fold-body">
+                <img src="images/wiki/기본의상.png" style="max-width:56%;margin:0 auto;">
+              </div>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- 우주의 소리 의상 -->
+    <div class="costume-block">
+      <div class="costume-head">우주의 소리</div>
+      <div class="costume-main-img"><div class="costume-main-img-ph">STANDING IMAGE</div></div>
+      <div class="costume-caption">우주, 끝이 없는 지식의 바다.</div>
+      <table class="costume-info-table">
+        <tr><td class="ci-k">획득 방법</td><td class="ci-v">2 통찰 달성</td></tr>
+        <tr><td class="ci-k">SD 일러스트</td><td class="ci-v"><div class="costume-sd-img"><div class="costume-sd-ph">SD IMAGE</div></div></td></tr>
+        <tr>
+          <td class="ci-k">스탠딩 일러스트</td>
+          <td class="ci-v">
+            <div class="fold">
+              <div class="fold-head"><span class="fold-arr">▶</span><span>[ 펼치기 · 접기 ]</span></div>
+              <div class="fold-body"><div style="min-height:100px;display:flex;align-items:center;justify-content:center;font-family:var(--ft);font-size:9px;color:rgba(200,168,75,.3);">STANDING IMAGE</div></div>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- 지휘하는 결 의상 (Garment) -->
+    <div class="costume-block">
+      <div class="costume-head">지휘하는 결</div>
+      <div class="costume-main-img"><div class="costume-main-img-ph"><img src="images/wiki/지휘하는결.png"></div></div>
+      <div class="costume-caption">그는 이제 더이상 방관하지 않는다. 지휘봉을 손에 쥐고, 뜻하는 대로 소리를 이끌어간다.</div>
+      <table class="costume-info-table">
+        <tr><td class="ci-k">시리즈</td><td class="ci-v"><b>0에서 21까지</b></td></tr>
+        <tr><td class="ci-k">획득 방법</td><td class="ci-v">클래식 유후 CD 해제 후 데시벨 10 레벨 달성</td></tr>
+        <tr><td class="ci-k">등급</td><td class="ci-v"><b>Garment</b></td></tr>
+        <tr>
+          <td class="ci-k">SD 일러스트</td>
+          <td class="ci-v">
+            <div class="costume-sd-img">
+              <img src="images/wiki/huble_sd1.png" style="height:200px;width:auto;object-fit:contain;">
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td class="ci-k">스탠딩 일러스트</td>
+          <td class="ci-v">
+            <div class="fold">
+              <div class="fold-head"><span class="fold-arr">▶</span><span>[ 펼치기 · 접기 ]</span></div>
+              <div class="fold-body">
+                <img src="images/wiki/지휘하는결.png" style="max-width:56%;margin:0 auto;">
+              </div>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- ══ 13. 기타 ══ -->
+    <h2 class="h2" id="s13"><span class="hn">13.</span>기타<a href="#" class="edit-link">[편집]</a></h2>
+    <p>작성하세요</p>
+
+    <!-- ══ 각주 ══ -->
+    <div class="footnotes">
+      <div class="fn-item"><span class="fn-n">[1]</span><span>비공식</span></div>
+      <div class="fn-item">
+        <span class="fn-n">[관측 로그]</span><sup class="fn">1.1</sup> <sup class="fn">1.2</sup> <sup class="fn">1.3</sup>
+        <span>허블이 약화 주문을 사용할 때마다 1스택 획득 (최대 6스택). 스택 수에 따라 아군 전체의 정신적 외상 피해량이 증가한다. (스택당 <span class="pct">+3%</span>)</span>
+      </div>
+      <div class="fn-item">
+        <span class="fn-n">[분석 완료]</span><sup class="fn">2.1</sup> <sup class="fn">2.2</sup>
+        <span>아군 전체의 치명타 기술 <span class="pct">+25</span> / 1턴 지속.</span>
+      </div>
+      <div class="fn-item">
+        <span class="fn-n">[데이터 취약점]</span><sup class="fn">3.1</sup> <sup class="fn">3.2</sup>
+        <span>해당 적이 받는 정신적 외상 피해 <span class="pct">+12%</span> / 2턴 지속.</span>
+      </div>
+      <div class="fn-item">
+        <span class="fn-n">[데이터 오류]</span><sup class="fn">4.1</sup>
+        <span>적의 피해량 <span class="pct">-15%</span>, 치명타율 <span class="pct">-20%</span> / 2턴 지속.</span>
+      </div>
+    </div>
+
+  </div><!-- /.article -->
+</div><!-- /.page -->
+
+<script>
+// 접기 박스 토글
+document.querySelectorAll('.fold-head').forEach(function(h) {
+  h.addEventListener('click', function() {
+    h.parentElement.classList.toggle('open');
+  });
+});
+
+// 목차 앵커 — sticky 상단바 오프셋 보정
+document.querySelectorAll('a[href^="#"]').forEach(function(link) {
+  link.addEventListener('click', function(e) {
+    var id = this.getAttribute('href').slice(1);
+    if (!id) return;
+    var target = document.getElementById(id);
+    if (!target) return;
+    e.preventDefault();
+    var top = target.getBoundingClientRect().top + window.pageYOffset - 46 - 8;
+    window.scrollTo({ top: top, behavior: 'smooth' });
+  });
+});
+</script>
+
+<script>
+// 검색 기능
+(function() {
+  const input  = document.querySelector('.search input');
+  const button = document.querySelector('.search button');
+
+  // 검색 실행
+  function doSearch() {
+    const query = input.value.trim();
+    if (!query) return;
+
+    // 기존 하이라이트 제거
+    document.querySelectorAll('.search-highlight').forEach(function(el) {
+      el.outerHTML = el.innerHTML;
+    });
+
+    if (!query) return;
+
+    // 텍스트 노드 탐색 후 하이라이트
+    const article = document.querySelector('.article');
+    highlight(article, query);
+
+    // 첫 번째 결과로 스크롤
+    const first = document.querySelector('.search-highlight');
+    if (first) {
+      first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else {
+      alert('검색 결과가 없습니다: ' + query);
+    }
+  }
+
+  // 재귀적으로 텍스트 노드 찾아서 하이라이트
+  function highlight(node, query) {
+    if (node.nodeType === 3) { // 텍스트 노드
+      const idx = node.nodeValue.toLowerCase().indexOf(query.toLowerCase());
+      if (idx !== -1) {
+        const span = document.createElement('span');
+        span.className = 'search-highlight';
+        span.style.cssText = 'background:#ffe066;color:#000;border-radius:2px;padding:0 2px;';
+        const before = document.createTextNode(node.nodeValue.slice(0, idx));
+        const match  = document.createTextNode(node.nodeValue.slice(idx, idx + query.length));
+        const after  = document.createTextNode(node.nodeValue.slice(idx + query.length));
+        span.appendChild(match);
+        node.parentNode.insertBefore(before, node);
+        node.parentNode.insertBefore(span, node);
+        node.parentNode.insertBefore(after, node);
+        node.parentNode.removeChild(node);
+      }
+    } else if (node.nodeType === 1 && node.nodeName !== 'SCRIPT' && node.nodeName !== 'STYLE') {
+      Array.from(node.childNodes).forEach(function(child) {
+        highlight(child, query);
+      });
+    }
+  }
+
+  // 버튼 클릭
+  button.addEventListener('click', doSearch);
+
+  // 엔터키
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') doSearch();
+  });
+
+  // 검색창 비우면 하이라이트 제거
+  input.addEventListener('input', function() {
+    if (!input.value.trim()) {
+      document.querySelectorAll('.search-highlight').forEach(function(el) {
+        el.outerHTML = el.innerHTML;
+      });
+    }
+  });
+})();
+</script>
+</body>
+</html>
