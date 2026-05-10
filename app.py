@@ -768,8 +768,7 @@ def api_recent_games():
 @app.route("/api/games/calendar")
 def api_games_calendar():
     from database import get_connection
-    from datetime import datetime as _dt
-    year  = request.args.get("year", str(_dt.now().year))
+    year  = request.args.get("year", str(datetime.now().year))
     month = request.args.get("month", str(datetime.now().month).zfill(2))
     month = month.zfill(2)
     conn = get_connection()
