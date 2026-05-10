@@ -881,45 +881,7 @@ def api_team_stats():
         conn.close()
 
 
-@app.route("/api/compare")
-def api_compare():
-    from database import get_connection
-    p1   = request.args.get("p1", "")
-    p2   = request.args.get("p2", "")
-    year = request.args.get("year", str(datetime.now().year))
-    if not p1 or not p2:
-        return jsonify({"error": "p1, p2 필요"}), 400
-    conn = get_connection()
-    try:
-        result = {}
-        for name in [p1, p2]:
-            batter = conn.execute("""
-                SELECT SUM(b.ab) ab, SUM(b.h) h, SUM(b.hr) hr,
-                       SUM(b.rbi) rbi, SUM(b.bb) bb, SUM(b.so) so,
-                       SUM(b.doubles) doubles, SUM(b.triples) triples,
-                       COUNT(*) games
-                FROM batter_stats b JOIN games g ON b.game_id=g.game_id
-                WHERE b.name=? AND g.date LIKE ?
-            """, (name, f"{year}%")).fetchone()
-            pitcher = conn.execute("""
-                SELECT SUM(p.er) er, SUM(p.so) so, SUM(p.h) h,
-                       SUM(p.bb) bb, SUM(p.hr) hr, COUNT(*) games
-                FROM pitcher_stats p JOIN games g ON p.game_id=g.game_id
-                WHERE p.name=? AND g.date LIKE ?
-            """, (name, f"{year}%")).fetchone()
-            result[name] = {
-                "batter":  dict(batter)  if batter  else {},
-                "pitcher": dict(pitcher) if pitcher else {},
-            }
-        return jsonify(result)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-    finally:
-        conn.close()
 
-@app.errorhandler(404)
-def not_found(e):
-    return jsonify({"error": "찾을 수 없습니다"}), 404
 
 
 @app.errorhandler(500)
