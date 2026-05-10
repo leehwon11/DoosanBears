@@ -744,6 +744,179 @@ def api_ai_reports():
     return jsonify([dict(r) for r in reports])
 
 
+
+# ──────────────────────────────────────────
+# 모바일 앱 API 엔드포인트
+# ──────────────────────────────────────────
+
+@app.route("/api/games/recent")
+def api_recent_games():
+    from database import get_connection
+    limit = request.args.get("limit", 10, type=int)
+    conn = get_connection()
+    try:
+        rows = conn.execute(
+            "SELECT * FROM games ORDER BY date DESC LIMIT ?", (limit,)
+        ).fetchall()
+        return jsonify([dict(r) for r in rows])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
+
+
+@app.route("/api/games/calendar")
+def api_games_calendar():
+    from database import get_connection
+    year  = request.args.get("year", str(datetime.now().year))
+    month = request.args.get("month", str(datetime.now().month).zfill(2))
+    month = month.zfill(2)
+    conn = get_connection()
+    try:
+        rows = conn.execute(
+            "SELECT * FROM games WHERE date LIKE ? ORDER BY date",
+            (f"{year}{month}%",)
+        ).fetchall()
+        return jsonify([dict(r) for r in rows])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
+
+
+@app.route("/api/next-game")
+def api_next_game():
+    try:
+        from kbo_crawler import get_next_game
+        data = get_next_game()
+        return jsonify(data if data else {})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/players")
+def api_players():
+    from database import get_connection
+    conn = get_connection()
+    try:
+        rows = conn.execute(
+            "SELECT * FROM players WHERE status='active' ORDER BY team_level, position, CAST(number AS INTEGER)"
+        ).fetchall()
+        return jsonify([dict(r) for r in rows])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
+
+
+@app.route("/api/player/<name>")
+def api_player_detail(name):
+    from database import get_connection
+    conn = get_connection()
+    try:
+        player = conn.execute(
+            "SELECT * FROM players WHERE name=? LIMIT 1", (name,)
+        ).fetchone()
+        batter_stats = conn.execute("""
+            SELECT b.*, g.date FROM batter_stats b
+            JOIN games g ON b.game_id=g.game_id
+            WHERE b.name=? ORDER BY g.date DESC
+        """, (name,)).fetchall()
+        pitcher_stats = conn.execute("""
+            SELECT p.*, g.date FROM pitcher_stats p
+            JOIN games g ON p.game_id=g.game_id
+            WHERE p.name=? ORDER BY g.date DESC
+        """, (name,)).fetchall()
+        return jsonify({
+            "player":        dict(player) if player else {},
+            "batter_stats":  [dict(r) for r in batter_stats],
+            "pitcher_stats": [dict(r) for r in pitcher_stats],
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
+
+
+@app.route("/api/stats/team")
+def api_team_stats():
+    from database import get_connection
+    year = request.args.get("year", str(datetime.now().year))
+    conn = get_connection()
+    try:
+        games = conn.execute(
+            "SELECT * FROM games WHERE date LIKE ? ORDER BY date", (f"{year}%",)
+        ).fetchall()
+        wins  = sum(1 for g in games if dict(g)["result"] == "승")
+        loses = sum(1 for g in games if dict(g)["result"] == "패")
+        draws = sum(1 for g in games if dict(g)["result"] == "무")
+        batters = conn.execute("""
+            SELECT SUM(b.ab) ab, SUM(b.h) h, SUM(b.hr) hr, SUM(b.rbi) rbi
+            FROM batter_stats b JOIN games g ON b.game_id=g.game_id
+            WHERE g.date LIKE ?
+        """, (f"{year}%",)).fetchone()
+        pitchers = conn.execute("""
+            SELECT SUM(p.er) er, SUM(p.so) so
+            FROM pitcher_stats p JOIN games g ON p.game_id=g.game_id
+            WHERE g.date LIKE ?
+        """, (f"{year}%",)).fetchone()
+        b = dict(batters) if batters else {}
+        p = dict(pitchers) if pitchers else {}
+        ab, h = b.get("ab",0) or 0, b.get("h",0) or 0
+        total_ip = len(games) * 9
+        return jsonify({
+            "year":   year,
+            "wins":   wins,
+            "loses":  loses,
+            "draws":  draws,
+            "avg":    f"{h/ab:.3f}" if ab > 0 else ".000",
+            "hr":     b.get("hr", 0),
+            "rbi":    b.get("rbi", 0),
+            "era":    f"{(p.get('er',0) or 0)*9/total_ip:.2f}" if total_ip > 0 else "0.00",
+            "so_pit": p.get("so", 0),
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
+
+
+@app.route("/api/compare")
+def api_compare():
+    from database import get_connection
+    p1   = request.args.get("p1", "")
+    p2   = request.args.get("p2", "")
+    year = request.args.get("year", str(datetime.now().year))
+    if not p1 or not p2:
+        return jsonify({"error": "p1, p2 필요"}), 400
+    conn = get_connection()
+    try:
+        result = {}
+        for name in [p1, p2]:
+            batter = conn.execute("""
+                SELECT SUM(b.ab) ab, SUM(b.h) h, SUM(b.hr) hr,
+                       SUM(b.rbi) rbi, SUM(b.bb) bb, SUM(b.so) so,
+                       SUM(b.doubles) doubles, SUM(b.triples) triples,
+                       COUNT(*) games
+                FROM batter_stats b JOIN games g ON b.game_id=g.game_id
+                WHERE b.name=? AND g.date LIKE ?
+            """, (name, f"{year}%")).fetchone()
+            pitcher = conn.execute("""
+                SELECT SUM(p.er) er, SUM(p.so) so, SUM(p.h) h,
+                       SUM(p.bb) bb, SUM(p.hr) hr, COUNT(*) games
+                FROM pitcher_stats p JOIN games g ON p.game_id=g.game_id
+                WHERE p.name=? AND g.date LIKE ?
+            """, (name, f"{year}%")).fetchone()
+            result[name] = {
+                "batter":  dict(batter)  if batter  else {},
+                "pitcher": dict(pitcher) if pitcher else {},
+            }
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
+
 @app.errorhandler(404)
 def not_found(e):
     return jsonify({"error": "찾을 수 없습니다"}), 404
