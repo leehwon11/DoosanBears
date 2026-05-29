@@ -1,210 +1,121 @@
 """
 두산 베어스 분석 웹사이트 - DB 설계 & 초기화
 =============================================
-SQLite 사용 (파일 하나로 관리, Railway 배포에 적합)
-
-테이블 구조:
-  1. games         - 경기 기본 정보 & 스코어
-  2. inning_scores - 이닝별 점수
-  3. batter_stats  - 타자 기록
-  4. pitcher_stats - 투수 기록
-  5. ai_reports    - Claude AI 분석 리포트
-
-실행:
-  python database.py
+Supabase REST API 사용 (PostgreSQL 기반)
 """
 
-import sqlite3
 import os
+import requests
 from datetime import datetime
 
-DB_PATH = os.getenv("DB_PATH", "doosan.db")
+SUPABASE_URL = os.getenv("SUPABASE_URL", "").rstrip("/")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
+
+HEADERS = {
+    "apikey": SUPABASE_KEY,
+    "Authorization": f"Bearer {SUPABASE_KEY}",
+    "Content-Type": "application/json",
+    "Prefer": "return=representation",
+}
+
+
+def _get(table: str, params: dict = None) -> list:
+    resp = requests.get(f"{SUPABASE_URL}/rest/v1/{table}", headers=HEADERS, params=params)
+    if resp.status_code == 200:
+        return resp.json()
+    return []
+
+
+def _post(table: str, data) -> dict:
+    h = {**HEADERS, "Prefer": "resolution=merge-duplicates,return=representation"}
+    resp = requests.post(f"{SUPABASE_URL}/rest/v1/{table}", headers=h, json=data)
+    return resp.json() if resp.ok else {}
+
+
+def _delete(table: str, params: dict):
+    requests.delete(f"{SUPABASE_URL}/rest/v1/{table}", headers=HEADERS, params=params)
+
+
+def _patch(table: str, params: dict, data: dict):
+    h = {**HEADERS, "Prefer": "return=representation"}
+    resp = requests.patch(f"{SUPABASE_URL}/rest/v1/{table}", headers=h, params=params, json=data)
+    return resp.json() if resp.ok else {}
+
+
+# ── Row 호환 클래스 ──
+class Row(dict):
+    def __getattr__(self, key):
+        try:
+            return self[key]
+        except KeyError:
+            return None
+
+
+def _rows(data: list) -> list:
+    return [Row(r) for r in data]
 
 
 def get_connection():
-    """DB 연결 반환. 어디서든 이 함수로 연결해요."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row  # 딕셔너리처럼 접근 가능
-    conn.execute("PRAGMA foreign_keys = ON")
-    return conn
+    """Supabase에서는 연결 객체 불필요 — 호환용 더미 반환"""
+    return _SupabaseConn()
+
+
+class _SupabaseConn:
+    """SQLite conn 인터페이스를 흉내낸 Supabase 래퍼"""
+
+    def execute(self, sql: str, params=None):
+        return _FakeResult([])
+
+    def close(self):
+        pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        pass
+
+
+class _FakeResult:
+    def __init__(self, rows):
+        self._rows = rows
+
+    def fetchall(self):
+        return self._rows
+
+    def fetchone(self):
+        return self._rows[0] if self._rows else None
 
 
 def init_db():
-    """테이블이 없으면 생성합니다. 서버 시작할 때 한 번 호출해요."""
-    conn = get_connection()
-    cur = conn.cursor()
-
-    # ── 1. 경기 기본 정보 ──────────────────────────
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS games (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            game_id     TEXT    UNIQUE NOT NULL,  -- KBO gmkey (예: 20260424OBHH02)
-            date        TEXT    NOT NULL,          -- "20260424"
-            home_team   TEXT    NOT NULL,
-            away_team   TEXT    NOT NULL,
-            home_score  INTEGER,
-            away_score  INTEGER,
-            result      TEXT,                      -- "승" / "패" / "무"
-            stadium     TEXT,
-            crawled_at  TEXT    NOT NULL           -- 크롤링 시각
-        )
-    """)
-
-    # ── 2. 이닝별 점수 ─────────────────────────────
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS inning_scores (
-            id       INTEGER PRIMARY KEY AUTOINCREMENT,
-            game_id  TEXT    NOT NULL,
-            team     TEXT    NOT NULL,   -- "doosan" / "opponent"
-            inning   INTEGER NOT NULL,  -- 1 ~ 12
-            score    INTEGER NOT NULL DEFAULT 0
-        )
-    """)
-
-    # ── 3. 타자 기록 ───────────────────────────────
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS batter_stats (
-            id        INTEGER PRIMARY KEY AUTOINCREMENT,
-            game_id   TEXT    NOT NULL,
-            name      TEXT    NOT NULL,
-            position  TEXT,
-            batting_order INTEGER DEFAULT 0,  -- 타순
-            ab        INTEGER DEFAULT 0,   -- 타수
-            h         INTEGER DEFAULT 0,   -- 안타
-            doubles   INTEGER DEFAULT 0,   -- 2루타
-            triples   INTEGER DEFAULT 0,   -- 3루타
-            hr        INTEGER DEFAULT 0,   -- 홈런
-            rbi       INTEGER DEFAULT 0,   -- 타점
-            r         INTEGER DEFAULT 0,   -- 득점
-            bb        INTEGER DEFAULT 0,   -- 볼넷
-            so        INTEGER DEFAULT 0,   -- 삼진
-            avg       TEXT                 -- 타율 (예: ".287")
-        )
-    """)
-
-    # ── 4. 투수 기록 ───────────────────────────────
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS pitcher_stats (
-            id        INTEGER PRIMARY KEY AUTOINCREMENT,
-            game_id   TEXT    NOT NULL,
-            name      TEXT    NOT NULL,
-            role      TEXT,               -- "선발" / "불펜" / "마무리"
-            result    TEXT,               -- "승" / "패" / "홀드" / "세이브" / "-"
-            ip          TEXT,               -- 이닝 (예: "7.0")
-            bf          INTEGER DEFAULT 0,  -- 상대 타자 수
-            pitch_count INTEGER DEFAULT 0,  -- 투구수
-            ab_against  INTEGER DEFAULT 0,  -- 상대 타수
-            h           INTEGER DEFAULT 0,  -- 피안타
-            hr          INTEGER DEFAULT 0,  -- 피홈런
-            bb          INTEGER DEFAULT 0,  -- 4사구
-            so          INTEGER DEFAULT 0,  -- 삼진
-            r           INTEGER DEFAULT 0,  -- 실점
-            er          INTEGER DEFAULT 0,  -- 자책점
-            era         TEXT                -- 평균자책점
-        )
-    """)
-
-    # ── 5. 퓨처스 경기 ────────────────────────────
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS futures_games (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            game_id     TEXT    UNIQUE NOT NULL,
-            date        TEXT    NOT NULL,
-            home_team   TEXT,
-            away_team   TEXT,
-            home_score  INTEGER,
-            away_score  INTEGER,
-            result      TEXT,
-            stadium     TEXT,
-            crawled_at  TEXT    NOT NULL
-        )
-    """)
-
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS futures_batter_stats (
-            id        INTEGER PRIMARY KEY AUTOINCREMENT,
-            game_id   TEXT    NOT NULL REFERENCES futures_games(game_id),
-            name      TEXT    NOT NULL,
-            position  TEXT,
-            batting_order INTEGER DEFAULT 0,
-            ab        INTEGER DEFAULT 0,
-            h         INTEGER DEFAULT 0,
-            hr        INTEGER DEFAULT 0,
-            rbi       INTEGER DEFAULT 0,
-            r         INTEGER DEFAULT 0,
-            bb        INTEGER DEFAULT 0,
-            so        INTEGER DEFAULT 0,
-            avg       TEXT
-        )
-    """)
-
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS futures_pitcher_stats (
-            id        INTEGER PRIMARY KEY AUTOINCREMENT,
-            game_id   TEXT    NOT NULL REFERENCES futures_games(game_id),
-            name      TEXT    NOT NULL,
-            role      TEXT,
-            result    TEXT,
-            ip        TEXT,
-            bf        INTEGER DEFAULT 0,
-            h         INTEGER DEFAULT 0,
-            hr        INTEGER DEFAULT 0,
-            bb        INTEGER DEFAULT 0,
-            so        INTEGER DEFAULT 0,
-            er        INTEGER DEFAULT 0,
-            era       TEXT
-        )
-    """)
-
-    # ── 6. AI 분석 리포트 ──────────────────────────
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS ai_reports (
-            id           INTEGER PRIMARY KEY AUTOINCREMENT,
-            game_id      TEXT    NOT NULL,
-            report_type  TEXT    NOT NULL,  -- "game" (경기 종합) / "player" (선수 개인)
-            player_name  TEXT,              -- report_type이 "player"일 때만 사용
-            content      TEXT    NOT NULL,  -- Claude가 생성한 분석 텍스트
-            created_at   TEXT    NOT NULL
-        )
-    """)
-
-    conn.commit()
-    conn.close()
-    print(f"DB 초기화 완료: {DB_PATH}")
+    """Supabase에서는 테이블을 SQL Editor에서 직접 생성합니다."""
+    print("Supabase 모드: 테이블은 Supabase SQL Editor에서 생성 필요")
+    print(f"SUPABASE_URL: {SUPABASE_URL}")
+    print(f"SUPABASE_KEY 설정됨: {'예' if SUPABASE_KEY else '아니오'}")
 
 
 # ──────────────────────────────────────────
-# 저장 함수들 (kbo_crawler.py 결과를 받아서 저장)
+# 저장 함수들
 # ──────────────────────────────────────────
 
 def save_game(data: dict):
-    """
-    crawl_today_game() 결과를 DB에 저장합니다.
-    이미 저장된 game_id면 덮어쓰지 않고 스킵해요.
-    """
     if not data:
         return
 
-    conn = get_connection()
-    cur = conn.cursor()
     now = datetime.now().isoformat()
-
     game_info = data.get("game_info", {})
     score     = data.get("score_board", {})
     game_id   = game_info.get("game_id")
 
     if not game_id:
         print("game_id 없음 — 저장 스킵")
-        conn.close()
         return
 
-    # game_info에서 직접 점수/팀명 가져오기 (크롤러 최종버전 기준)
     home_nm    = game_info.get("home_nm", score.get("home_team", ""))
     away_nm    = game_info.get("away_nm", score.get("away_team", ""))
-    home_score = game_info.get("home_score", score.get("total", {}).get("home", {}).get("R", 0))
-    away_score = game_info.get("away_score", score.get("total", {}).get("away", {}).get("R", 0))
+    home_score = game_info.get("home_score", 0)
+    away_score = game_info.get("away_score", 0)
 
-    # 두산이 홈인지 원정인지 판단 (home_nm 기준)
     is_home = (home_nm == "두산")
     doosan_r   = home_score if is_home else away_score
     opponent_r = away_score if is_home else home_score
@@ -216,225 +127,200 @@ def save_game(data: dict):
     else:
         result = "무"
 
-    # ── games 저장 (있으면 업데이트) ──
     stadium = score.get("stadium", "")
 
-    cur.execute("""
-        INSERT INTO games
-            (game_id, date, home_team, away_team, home_score, away_score, result, stadium, crawled_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(game_id) DO UPDATE SET
-            home_score=excluded.home_score,
-            away_score=excluded.away_score,
-            result=excluded.result,
-            stadium=excluded.stadium,
-            crawled_at=excluded.crawled_at
-    """, (
-        game_id,
-        data.get("date"),
-        home_nm,
-        away_nm,
-        home_score,
-        away_score,
-        result,
-        stadium,
-        now,
-    ))
+    # games upsert
+    _post("games", {
+        "game_id": game_id,
+        "date": data.get("date"),
+        "home_team": home_nm,
+        "away_team": away_nm,
+        "home_score": home_score,
+        "away_score": away_score,
+        "result": result,
+        "stadium": stadium,
+        "crawled_at": now,
+    })
 
-    # ── inning_scores 저장 ──
+    # inning_scores - 기존 삭제 후 재저장
+    _delete("inning_scores", {"game_id": f"eq.{game_id}"})
     innings = score.get("innings", {})
-    # 기존 이닝 데이터 삭제 후 재저장 (중복 방지)
-    cur.execute("DELETE FROM inning_scores WHERE game_id=?", (game_id,))
+    inning_rows = []
     for team_key, team_label in [("home", "doosan" if is_home else "opponent"),
                                   ("away", "opponent" if is_home else "doosan")]:
         for i, s in enumerate(innings.get(team_key, []), start=1):
-            cur.execute("""
-                INSERT INTO inning_scores (game_id, team, inning, score)
-                VALUES (?, ?, ?, ?)
-            """, (game_id, team_label, i, s))
+            inning_rows.append({"game_id": game_id, "team": team_label, "inning": i, "score": s})
+    if inning_rows:
+        _post("inning_scores", inning_rows)
 
-    # ── batter_stats 저장 ──
-    # 기존 타자/투수 기록 삭제 후 재저장 (중복 방지)
-    cur.execute("DELETE FROM batter_stats WHERE game_id=?", (game_id,))
-    cur.execute("DELETE FROM pitcher_stats WHERE game_id=?", (game_id,))
-
+    # batter_stats
+    _delete("batter_stats", {"game_id": f"eq.{game_id}"})
+    batter_rows = []
     for b in data.get("batters", []):
-        cur.execute("""
-            INSERT INTO batter_stats
-                (game_id, name, position, batting_order, ab, h, doubles, triples, hr, rbi, r, bb, so, avg)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            game_id,
-            b.get("name"), b.get("position"),
-            b.get("batting_order", 0),
-            b.get("ab", 0), b.get("h", 0),
-            b.get("doubles", 0), b.get("triples", 0),
-            b.get("hr", 0),
-            b.get("rbi", 0), b.get("r", 0), b.get("bb", 0),
-            b.get("so", 0), b.get("avg", ""),
-        ))
+        batter_rows.append({
+            "game_id": game_id,
+            "name": b.get("name"),
+            "position": b.get("position"),
+            "batting_order": b.get("batting_order", 0),
+            "ab": b.get("ab", 0),
+            "h": b.get("h", 0),
+            "doubles": b.get("doubles", 0),
+            "triples": b.get("triples", 0),
+            "hr": b.get("hr", 0),
+            "rbi": b.get("rbi", 0),
+            "r": b.get("r", 0),
+            "bb": b.get("bb", 0),
+            "so": b.get("so", 0),
+            "avg": b.get("avg", ""),
+        })
+    if batter_rows:
+        _post("batter_stats", batter_rows)
 
-    # ── pitcher_stats 저장 ──
+    # pitcher_stats
+    _delete("pitcher_stats", {"game_id": f"eq.{game_id}"})
+    pitcher_rows = []
     for p in data.get("pitchers", []):
-        cur.execute("""
-            INSERT INTO pitcher_stats
-                (game_id, name, role, result, ip, bf, pitch_count, ab_against, h, hr, bb, so, r, er, era)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            game_id,
-            p.get("name"), p.get("role"), p.get("result"), p.get("ip"),
-            p.get("bf", 0), p.get("pitch_count", 0), p.get("ab_against", 0),
-            p.get("h", 0), p.get("hr", 0),
-            p.get("bb", 0), p.get("so", 0), p.get("r", 0), p.get("er", 0),
-            p.get("era", ""),
-        ))
+        pitcher_rows.append({
+            "game_id": game_id,
+            "name": p.get("name"),
+            "role": p.get("role"),
+            "result": p.get("result"),
+            "ip": p.get("ip"),
+            "bf": p.get("bf", 0),
+            "pitch_count": p.get("pitch_count", 0),
+            "ab_against": p.get("ab_against", 0),
+            "h": p.get("h", 0),
+            "hr": p.get("hr", 0),
+            "bb": p.get("bb", 0),
+            "so": p.get("so", 0),
+            "r": p.get("r", 0),
+            "er": p.get("er", 0),
+            "era": p.get("era", ""),
+        })
+    if pitcher_rows:
+        _post("pitcher_stats", pitcher_rows)
 
-    conn.commit()
-    conn.close()
     print(f"저장 완료: {game_id} ({result})")
 
 
-def save_ai_report(game_id: str, report_type: str, content: str, player_name: str = None):
-    """AI 분석 리포트를 저장합니다."""
-    conn = get_connection()
-    conn.execute("""
-        INSERT INTO ai_reports (game_id, report_type, player_name, content, created_at)
-        VALUES (?, ?, ?, ?, ?)
-    """, (game_id, report_type, player_name, content, datetime.now().isoformat()))
-    conn.commit()
-    conn.close()
-
-
-# ──────────────────────────────────────────
-# 조회 함수들 (Flask에서 사용)
-# ──────────────────────────────────────────
-
-def get_recent_games(limit: int = 10) -> list:
-    """최근 경기 목록 반환 (메인 페이지용)"""
-    conn = get_connection()
-    rows = conn.execute("""
-        SELECT * FROM games
-        ORDER BY date DESC
-        LIMIT ?
-    """, (limit,)).fetchall()
-    conn.close()
-    return [dict(r) for r in rows]
-
-
-def get_game_detail(game_id: str) -> dict:
-    """경기 상세 정보 반환 (경기 리포트 페이지용)"""
-    conn = get_connection()
-
-    game     = conn.execute("SELECT * FROM games WHERE game_id = ?", (game_id,)).fetchone()
-    innings  = conn.execute("SELECT * FROM inning_scores WHERE game_id = ? ORDER BY team, inning", (game_id,)).fetchall()
-    batters  = conn.execute("SELECT * FROM batter_stats WHERE game_id = ?", (game_id,)).fetchall()
-    pitchers = conn.execute("SELECT * FROM pitcher_stats WHERE game_id = ?", (game_id,)).fetchall()
-    reports  = conn.execute("SELECT * FROM ai_reports WHERE game_id = ?", (game_id,)).fetchall()
-
-    conn.close()
-    return {
-        "game":     dict(game) if game else {},
-        "innings":  [dict(r) for r in innings],
-        "batters":  [dict(r) for r in batters],
-        "pitchers": [dict(r) for r in pitchers],
-        "reports":  [dict(r) for r in reports],
-    }
-
-
-def get_player_stats(name: str) -> list:
-    """선수 시즌 전체 기록 반환 (선수 페이지용)"""
-    conn = get_connection()
-    rows = conn.execute("""
-        SELECT b.*, g.date, g.result
-        FROM batter_stats b
-        JOIN games g ON b.game_id = g.game_id
-        WHERE b.name = ?
-        ORDER BY g.date DESC
-    """, (name,)).fetchall()
-    conn.close()
-    return [dict(r) for r in rows]
-
-
-# ──────────────────────────────────────────
-# 실행
-# ──────────────────────────────────────────
-
-if __name__ == "__main__":
-    init_db()
-
-    # 테이블 목록 확인
-    conn = get_connection()
-    tables = conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
-    print("생성된 테이블:", [t["name"] for t in tables])
-    conn.close()
-
-
 def save_futures_game(data: dict):
-    """퓨처스 경기 데이터를 DB에 저장합니다."""
     if not data:
         return
 
-    conn = get_connection()
-    cur  = conn.cursor()
-    now  = datetime.now().isoformat()
-
+    now = datetime.now().isoformat()
     game_info = data.get("game_info", {})
     score     = data.get("score_board", {})
     game_id   = game_info.get("game_id")
     if not game_id:
-        conn.close()
         return
 
     is_home   = game_id[8:10] == "OB"
-    doosan_r  = game_info.get("home_score" if is_home else "away_score", 0)
-    opponent_r = game_info.get("away_score" if is_home else "home_score", 0)
-    result = "승" if doosan_r > opponent_r else "패" if doosan_r < opponent_r else "무"
+    home_nm   = game_info.get("home_nm", score.get("home_team", ""))
+    away_nm   = game_info.get("away_nm", score.get("away_team", ""))
+    hs        = game_info.get("home_score", 0)
+    as_       = game_info.get("away_score", 0)
+    doosan_r  = hs if is_home else as_
+    opp_r     = as_ if is_home else hs
+    result    = "승" if doosan_r > opp_r else "패" if doosan_r < opp_r else "무"
 
-    home_nm = game_info.get("home_nm", score.get("home_team",""))
-    away_nm = game_info.get("away_nm", score.get("away_team",""))
+    _post("futures_games", {
+        "game_id": game_id,
+        "date": data.get("date"),
+        "home_team": home_nm,
+        "away_team": away_nm,
+        "home_score": hs,
+        "away_score": as_,
+        "result": result,
+        "crawled_at": now,
+    })
 
-    cur.execute("""
-        INSERT OR IGNORE INTO futures_games
-            (game_id, date, home_team, away_team, home_score, away_score, result, crawled_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    """, (game_id, data.get("date"), home_nm, away_nm,
-          game_info.get("home_score",0), game_info.get("away_score",0), result, now))
+    _delete("futures_batter_stats", {"game_id": f"eq.{game_id}"})
+    _delete("futures_pitcher_stats", {"game_id": f"eq.{game_id}"})
 
-    # 기존 퓨처스 기록 삭제 후 재저장
-    cur.execute("DELETE FROM futures_batter_stats WHERE game_id=?", (game_id,))
-    cur.execute("DELETE FROM futures_pitcher_stats WHERE game_id=?", (game_id,))
-
+    batter_rows = []
     for b in data.get("batters", []):
-        cur.execute("""
-            INSERT INTO futures_batter_stats
-                (game_id, name, position, batting_order, ab, h, hr, rbi, r, bb, so, avg)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (game_id, b.get("name"), b.get("position"), b.get("batting_order",0),
-              b.get("ab",0), b.get("h",0), b.get("hr",0), b.get("rbi",0),
-              b.get("r",0), b.get("bb",0), b.get("so",0), b.get("avg","")))
+        batter_rows.append({
+            "game_id": game_id,
+            "name": b.get("name"), "position": b.get("position"),
+            "batting_order": b.get("batting_order", 0),
+            "ab": b.get("ab", 0), "h": b.get("h", 0), "hr": b.get("hr", 0),
+            "rbi": b.get("rbi", 0), "r": b.get("r", 0),
+            "bb": b.get("bb", 0), "so": b.get("so", 0), "avg": b.get("avg", ""),
+        })
+    if batter_rows:
+        _post("futures_batter_stats", batter_rows)
 
+    pitcher_rows = []
     for p in data.get("pitchers", []):
-        cur.execute("""
-            INSERT INTO futures_pitcher_stats
-                (game_id, name, role, result, ip, bf, h, hr, bb, so, er, era)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (game_id, p.get("name"), p.get("role"), p.get("result"), p.get("ip"),
-              p.get("bf",0), p.get("h",0), p.get("hr",0), p.get("bb",0),
-              p.get("so",0), p.get("er",0), p.get("era","")))
+        pitcher_rows.append({
+            "game_id": game_id,
+            "name": p.get("name"), "role": p.get("role"), "result": p.get("result"),
+            "ip": p.get("ip"), "bf": p.get("bf", 0),
+            "h": p.get("h", 0), "hr": p.get("hr", 0),
+            "bb": p.get("bb", 0), "so": p.get("so", 0),
+            "er": p.get("er", 0), "era": p.get("era", ""),
+        })
+    if pitcher_rows:
+        _post("futures_pitcher_stats", pitcher_rows)
 
-    conn.commit()
-    conn.close()
     print(f"퓨처스 저장 완료: {game_id} ({result})")
 
 
+def save_ai_report(game_id: str, report_type: str, content: str, player_name: str = None):
+    _post("ai_reports", {
+        "game_id": game_id,
+        "report_type": report_type,
+        "player_name": player_name,
+        "content": content,
+        "created_at": datetime.now().isoformat(),
+    })
+
+
+# ──────────────────────────────────────────
+# 조회 함수들
+# ──────────────────────────────────────────
+
+def get_recent_games(limit: int = 10) -> list:
+    rows = _get("games", {"order": "date.desc", "limit": limit})
+    return [Row(r) for r in rows]
+
+
 def get_recent_futures_games(limit: int = 10) -> list:
-    """최근 퓨처스 경기 목록"""
-    conn = get_connection()
     try:
-        rows = conn.execute(
-            "SELECT * FROM futures_games ORDER BY date DESC LIMIT ?", (limit,)
-        ).fetchall()
+        rows = _get("futures_games", {"order": "date.desc", "limit": limit})
+        return [Row(r) for r in rows]
     except:
-        rows = []
-    conn.close()
-    return [dict(r) for r in rows]
+        return []
+
+
+def get_game_detail(game_id: str) -> dict:
+    game     = _get("games",         {"game_id": f"eq.{game_id}"})
+    innings  = _get("inning_scores", {"game_id": f"eq.{game_id}", "order": "team.asc,inning.asc"})
+    batters  = _get("batter_stats",  {"game_id": f"eq.{game_id}"})
+    pitchers = _get("pitcher_stats", {"game_id": f"eq.{game_id}"})
+    reports  = _get("ai_reports",    {"game_id": f"eq.{game_id}"})
+
+    return {
+        "game":     Row(game[0]) if game else {},
+        "innings":  _rows(innings),
+        "batters":  _rows(batters),
+        "pitchers": _rows(pitchers),
+        "reports":  _rows(reports),
+    }
+
+
+def get_player_stats(name: str) -> list:
+    # batter_stats에서 name으로 필터, games join은 REST API에서 복잡하므로 별도 조회
+    rows = _get("batter_stats", {"name": f"eq.{name}", "order": "game_id.desc"})
+    result = []
+    for r in rows:
+        game = _get("games", {"game_id": f"eq.{r['game_id']}"})
+        if game:
+            r["date"] = game[0].get("date", "")
+            r["result"] = game[0].get("result", "")
+        result.append(Row(r))
+    return result
+
+
+if __name__ == "__main__":
+    init_db()
