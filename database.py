@@ -5,8 +5,8 @@ Supabase PostgreSQL 직접 연결 (psycopg2)
 """
 
 import os
-import psycopg2
-import psycopg2.extras
+import psycopg
+from psycopg.rows import dict_row
 from datetime import datetime
 
 SUPABASE_HOST = f"db.{os.getenv('SUPABASE_PROJECT_ID', 'grdukdqfciipooradmds')}.supabase.co"
@@ -16,10 +16,8 @@ DSN = f"host={SUPABASE_HOST} port=5432 dbname=postgres user=postgres password={D
 
 
 def get_connection():
-    conn = psycopg2.connect(DSN)
+    conn = psycopg.connect(DSN, row_factory=dict_row)
     conn.autocommit = False
-    # sqlite3.Row처럼 dict 접근 가능하게
-    conn.cursor_factory = psycopg2.extras.RealDictCursor
     return _PGConn(conn)
 
 
