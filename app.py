@@ -621,12 +621,13 @@ def api_analyze_player_season():
         if is_pitcher:
             table = "pitcher_stats" if league == "kbo" else "futures_pitcher_stats"
             join  = "games" if league == "kbo" else "futures_games"
-            year_filter = f"AND g.date LIKE '{year}%'" if year else ""
+            year_filter = "AND g.date LIKE ?" if year else ""
+            params = (player_name,) + ((f"{year}%",) if year else ())
             stats = conn.execute(f"""
                 SELECT p.*, g.date FROM {table} p
                 JOIN {join} g ON p.game_id = g.game_id
                 WHERE p.name = ? {year_filter} ORDER BY g.date DESC
-            """, (player_name,)).fetchall()
+            """, params).fetchall()
             stats = [dict(r) for r in stats]
             lines = [f"{s['date'][4:6]}/{s['date'][6:]} {s['ip']}이닝 {s['er']}자책 {s['so']}삼진 ERA {s['era']}" for s in stats]
             stat_summary = "\n".join(lines[:30])
@@ -643,12 +644,13 @@ def api_analyze_player_season():
         else:
             table = "batter_stats" if league == "kbo" else "futures_batter_stats"
             join  = "games" if league == "kbo" else "futures_games"
-            year_filter = f"AND g.date LIKE '{year}%'" if year else ""
+            year_filter = "AND g.date LIKE ?" if year else ""
+            params = (player_name,) + ((f"{year}%",) if year else ())
             stats = conn.execute(f"""
                 SELECT b.*, g.date FROM {table} b
                 JOIN {join} g ON b.game_id = g.game_id
                 WHERE b.name = ? {year_filter} ORDER BY g.date DESC
-            """, (player_name,)).fetchall()
+            """, params).fetchall()
             stats = [dict(r) for r in stats]
             total_ab  = sum(s['ab'] for s in stats)
             total_h   = sum(s['h'] for s in stats)
