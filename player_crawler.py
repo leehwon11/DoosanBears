@@ -195,28 +195,14 @@ def crawl_players() -> dict:
 
 
 def save_players_to_db(data: dict):
+    # players, players_info_backup, players_daily_change 테이블은
+    # database.py의 init_db()가 Postgres 스키마로 이미 만들어둠 (여기서 재정의하지 않음)
     from database import get_connection, init_db
     init_db()
     conn = get_connection()
 
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS players (
-            id             INTEGER PRIMARY KEY AUTOINCREMENT,
-            player_id      TEXT,
-            number         TEXT,
-            name           TEXT NOT NULL,
-            position       TEXT,
-            batting        TEXT,
-            birth          TEXT,
-            height_weight  TEXT,
-            status         TEXT DEFAULT 'active',
-            team_level     TEXT DEFAULT '1군',
-            updated_at     TEXT NOT NULL
-        )
-    """)
-    conn.commit()
-
     now = datetime.now().isoformat()
+    today = data.get("date") or now[:10]
 
     # 삭제 전 기존 선수 정보 백업 (전체)
     existing_players = {}
@@ -225,24 +211,15 @@ def save_players_to_db(data: dict):
         for r in rows:
             d = dict(r)
             existing_players[d['name']] = d
-    except:
-        pass
+    except Exception:
+        conn.rollback()
 
     # 1군 선수 정보는 별도 백업 테이블에도 저장 (말소 시 참조용)
     try:
         conn.execute("""
-            CREATE TABLE IF NOT EXISTS players_info_backup (
-                name TEXT PRIMARY KEY,
-                player_id TEXT, number TEXT, position TEXT,
-                batting TEXT, birth TEXT, height_weight TEXT,
-                updated_at TEXT
-            )
-        """)
-        # 현재 1군 active 선수 정보 백업
-        conn.execute("""
-            INSERT OR REPLACE INTO players_info_backup
-                (name, player_id, number, position, batting, birth, height_weight, updated_at)
-            SELECT name, player_id, number, position, batting, birth, height_weight, updated_at
+            INSERT INTO players_info_backup
+                (name, player_id, number, position, batting, birth, height_weight, status, team_level, updated_at)
+            SELECT name, player_id, number, position, batting, birth, height_weight, status, team_level, updated_at
             FROM players WHERE status='active' AND batting != '' AND birth != ''
         """)
         conn.commit()
@@ -253,59 +230,47 @@ def save_players_to_db(data: dict):
             if d['name'] not in existing_players or not existing_players[d['name']].get('batting'):
                 existing_players[d['name']] = d
     except Exception as e:
-        pass
+        print(f"백업(1차) 저장 실패: {e}")
+        conn.rollback()
 
-    # 당일 등록/말소 별도 저장
+    # 당일 등록/말소 별도 저장 (players_daily_change: date, change_type, player_name, detail, created_at)
     try:
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS players_daily_change (
-                id         INTEGER PRIMARY KEY AUTOINCREMENT,
-                name       TEXT,
-                number     TEXT,
-                position   TEXT,
-                change_type TEXT,  -- 'registered' or 'removed'
-                team_level TEXT,
-                updated_at TEXT
-            )
-        """)
-        conn.execute("DELETE FROM players_daily_change")
+        conn.execute("DELETE FROM players_daily_change WHERE date=?", (today,))
         for p in data.get("registered", []):
+            detail = f"{p.get('number','')}번 {p.get('position','')} (1군)"
             conn.execute(
-                "INSERT INTO players_daily_change (name, number, position, change_type, team_level, updated_at) VALUES (?,?,?,'registered','1군',?)",
-                (p["name"], p.get("number",""), p.get("position",""), now)
+                "INSERT INTO players_daily_change (date, change_type, player_name, detail, created_at) VALUES (?,'registered',?,?,?)",
+                (today, p["name"], detail, now)
             )
         for p in data.get("removed", []):
+            detail = f"{p.get('number','')}번 {p.get('position','')} (1군)"
             conn.execute(
-                "INSERT INTO players_daily_change (name, number, position, change_type, team_level, updated_at) VALUES (?,?,?,'removed','1군',?)",
-                (p["name"], p.get("number",""), p.get("position",""), now)
+                "INSERT INTO players_daily_change (date, change_type, player_name, detail, created_at) VALUES (?,'removed',?,?,?)",
+                (today, p["name"], detail, now)
             )
         for p in data.get("futures_registered", []):
+            detail = f"{p.get('number','')}번 {p.get('position','')} (2군)"
             conn.execute(
-                "INSERT INTO players_daily_change (name, number, position, change_type, team_level, updated_at) VALUES (?,?,?,'registered','2군',?)",
-                (p["name"], p.get("number",""), p.get("position",""), now)
+                "INSERT INTO players_daily_change (date, change_type, player_name, detail, created_at) VALUES (?,'registered',?,?,?)",
+                (today, p["name"], detail, now)
             )
         for p in data.get("futures_removed", []):
+            detail = f"{p.get('number','')}번 {p.get('position','')} (2군)"
             conn.execute(
-                "INSERT INTO players_daily_change (name, number, position, change_type, team_level, updated_at) VALUES (?,?,?,'removed','2군',?)",
-                (p["name"], p.get("number",""), p.get("position",""), now)
+                "INSERT INTO players_daily_change (date, change_type, player_name, detail, created_at) VALUES (?,'removed',?,?,?)",
+                (today, p["name"], detail, now)
             )
+        conn.commit()
     except Exception as e:
         print(f"당일 변동 저장 실패: {e}")
+        conn.rollback()
 
-    # 선수 정보 백업 테이블 생성/업데이트
+    # 선수 정보 백업 테이블 업데이트 (2차 - batting/birth 있는 모든 선수)
     try:
         conn.execute("""
-            CREATE TABLE IF NOT EXISTS players_info_backup (
-                name TEXT PRIMARY KEY,
-                player_id TEXT, number TEXT, position TEXT,
-                batting TEXT, birth TEXT, height_weight TEXT,
-                updated_at TEXT
-            )
-        """)
-        conn.execute("""
-            INSERT OR REPLACE INTO players_info_backup
-                (name, player_id, number, position, batting, birth, height_weight, updated_at)
-            SELECT name, player_id, number, position, batting, birth, height_weight, updated_at
+            INSERT INTO players_info_backup
+                (name, player_id, number, position, batting, birth, height_weight, status, team_level, updated_at)
+            SELECT name, player_id, number, position, batting, birth, height_weight, status, team_level, updated_at
             FROM players WHERE batting != '' AND birth != ''
         """)
         conn.commit()
@@ -316,16 +281,17 @@ def save_players_to_db(data: dict):
             if d['name'] not in existing_players or not existing_players[d['name']].get('batting'):
                 existing_players[d['name']] = d
     except Exception as e:
-        print(f"백업 저장 실패: {e}")
+        print(f"백업(2차) 저장 실패: {e}")
+        conn.rollback()
 
     conn.execute("DELETE FROM players")
 
-    # 1군
+    # 1군 (player_id 빈 문자열은 UNIQUE 제약과 충돌하지 않도록 NULL로 저장)
     for p in data.get("roster", []):
         conn.execute("""
             INSERT INTO players (player_id, number, name, position, batting, birth, height_weight, status, team_level, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, 'active', '1군', ?)
-        """, (p["player_id"], p["number"], p["name"], p["position"],
+        """, (p.get("player_id") or None, p["number"], p["name"], p["position"],
               p["batting"], p["birth"], p["height_weight"], now))
 
     # 2군 전체 선수 정보 맵 (이름 기준으로 상세 정보 조회용)
@@ -345,7 +311,7 @@ def save_players_to_db(data: dict):
         conn.execute("""
             INSERT INTO players (player_id, number, name, position, batting, birth, height_weight, status, team_level, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, 'active', '2군', ?)
-        """, (info.get("player_id", p.get("player_id","")),
+        """, (info.get("player_id") or p.get("player_id") or None,
               p["number"], p["name"], p["position"],
               info.get("batting",""), info.get("birth",""), info.get("height_weight",""), now))
 
@@ -357,7 +323,7 @@ def save_players_to_db(data: dict):
         conn.execute("""
             INSERT INTO players (player_id, number, name, position, batting, birth, height_weight, status, team_level, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, 'active', '2군', ?)
-        """, (p["player_id"], p["number"], p["name"], p["position"],
+        """, (p.get("player_id") or None, p["number"], p["name"], p["position"],
               p["batting"], p["birth"], p["height_weight"], now))
 
     # 2군 말소 = 1군으로 올라간 선수 → 이미 1군 roster에 있으므로 스킵
