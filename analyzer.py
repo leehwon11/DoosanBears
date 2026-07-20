@@ -23,22 +23,25 @@ client = anthropic.Anthropic(
 )
 
 
-def _call_claude(prompt: str) -> str:
-    """Claude API 호출. 오류 시 재시도."""
+def _call_claude(prompt: str, max_tokens: int = 2048) -> str:
+    """Claude API 호출. 오류 시 재시도. 재시도 소진 시 예외를 던짐(빈 리포트 저장 방지)."""
+    last_err = None
     for attempt in range(3):
         try:
             message = client.messages.create(
                 model="claude-sonnet-4-5",
-                max_tokens=1024,
+                max_tokens=max_tokens,
                 messages=[{"role": "user", "content": prompt}]
             )
             return message.content[0].text
         except anthropic.RateLimitError as e:
+            last_err = e
             wait = (attempt + 1) * 15
             print(f"    API 한도 초과 — {wait}초 후 재시도...")
             time.sleep(wait)
         except Exception as e:
             raise e
+    raise RuntimeError(f"Claude API 호출 3회 재시도 후 실패: {last_err}")
 
 
 def analyze_game(game_id: str) -> str:
@@ -105,7 +108,7 @@ def analyze_game(game_id: str) -> str:
 
 수치를 적극 인용하고, 감정적 표현보다 객관적·분석적 문체로 작성하십시오.
 """
-    result = _call_claude(prompt)
+    result = _call_claude(prompt, max_tokens=3072)
     save_ai_report(game_id, "game", result)
     print(f"경기 종합 평가 저장 완료: {game_id}")
     return result
@@ -184,7 +187,7 @@ WHIP: {round((player_data['h'] + player_data['bb']) / float(player_data.get('ip'
 수치를 근거로 객관적·분석적 문체로 작성하십시오. (2~3문단)
 """
 
-    result = _call_claude(prompt)
+    result = _call_claude(prompt, max_tokens=1536)
     save_ai_report(game_id, "player", result, player_name)
     print(f"선수 평가 저장 완료: {player_name} ({game_id})")
     return result
@@ -201,7 +204,7 @@ def analyze_all(game_id: str):
         name = player.get("name")
         if name:
             analyze_player(game_id, name)
-            time.sleep(2)
+            time.sleep(1)
     print("=== AI 분석 완료 ===\n")
 
 

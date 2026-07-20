@@ -665,7 +665,7 @@ def api_analyze_player_season():
 3~4문단으로 시즌 전체 흐름 평가, 강점, 약점, 발전 방향을 팬 입장에서 따뜻하게 작성해주세요."""
 
         from analyzer import _call_claude
-        result = _call_claude(prompt)
+        result = _call_claude(prompt, max_tokens=2048)
 
         conn.execute(
             "INSERT INTO ai_reports (game_id, report_type, player_name, content, created_at) VALUES ('season', ?, ?, ?, ?)",
