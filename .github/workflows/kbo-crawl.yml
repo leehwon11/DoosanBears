@@ -1,0 +1,37 @@
+name: 두산 베어스 자동 크롤링
+
+on:
+  schedule:
+    - cron: "0,30 7-14 * * *"   # KBO 1군 경기 크롤링: KST 16:00~23:30, 30분 간격
+    - cron: "15,45 7-14 * * *"  # 퓨처스 경기 크롤링: KST 16:15~23:45, 30분 간격
+    - cron: "0 8 * * *"         # 선수 엔트리 업데이트: KST 17:00
+  workflow_dispatch: {}         # 수동 실행 버튼
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 의존성 설치
+        run: pip install requests beautifulsoup4 "psycopg[binary]>=3.2" selenium webdriver-manager
+
+      - name: 작업 실행
+        env:
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        run: |
+          case "${{ github.event.schedule }}" in
+            "0,30 7-14 * * *")
+              python -c "from scheduler import run_crawl_job; run_crawl_job()" ;;
+            "15,45 7-14 * * *")
+              python -c "from scheduler import run_futures_crawl_job; run_futures_crawl_job()" ;;
+            "0 8 * * *")
+              python -c "from scheduler import update_players_job; update_players_job()" ;;
+            *)
+              python -c "from scheduler import run_crawl_job; run_crawl_job()" ;;
+          esac
