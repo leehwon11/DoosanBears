@@ -9,10 +9,15 @@ import psycopg
 from psycopg.rows import dict_row
 from datetime import datetime
 
-SUPABASE_HOST = f"db.{os.getenv('SUPABASE_PROJECT_ID', 'grdukdqfciipooradmds')}.supabase.co"
-DB_PASSWORD   = os.getenv("DB_PASSWORD", "")
+# Supabase 직접 연결(db.<ref>.supabase.co)은 2024년부터 IPv6 전용이라
+# Render/Railway 등 아웃바운드 IPv6 미지원 호스트에서는 접속이 안 됨.
+# 그래서 IPv4를 지원하는 Session Pooler(Supavisor) 주소를 사용함.
+SUPABASE_POOLER_HOST = os.getenv("SUPABASE_POOLER_HOST", "aws-1-ap-northeast-2.pooler.supabase.com")
+SUPABASE_POOLER_PORT = os.getenv("SUPABASE_POOLER_PORT", "5432")
+DB_USER      = f"postgres.{os.getenv('SUPABASE_PROJECT_ID', 'grdukdqfciipooradmds')}"
+DB_PASSWORD  = os.getenv("DB_PASSWORD", "")
 
-DSN = f"host={SUPABASE_HOST} port=5432 dbname=postgres user=postgres password={DB_PASSWORD} sslmode=require"
+DSN = f"host={SUPABASE_POOLER_HOST} port={SUPABASE_POOLER_PORT} dbname=postgres user={DB_USER} password={DB_PASSWORD} sslmode=require"
 
 
 def get_connection():

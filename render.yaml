@@ -8,6 +8,10 @@ services:
     envVars:
       - key: SUPABASE_PROJECT_ID
         sync: false
+      - key: SUPABASE_POOLER_HOST
+        value: aws-1-ap-northeast-2.pooler.supabase.com
+      - key: SUPABASE_POOLER_PORT
+        value: "5432"
       - key: DB_PASSWORD
         sync: false
       - key: ANTHROPIC_API_KEY
