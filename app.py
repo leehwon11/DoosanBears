@@ -339,7 +339,7 @@ def player_page(pname):
     """, (pname,)).fetchall()
 
     pitcher_stats = conn.execute("""
-        SELECT p.*, g.date, g.result, g.home_team, g.away_team, '1군' as league
+        SELECT p.*, g.date, g.result AS game_result, g.home_team, g.away_team, '1군' as league
         FROM pitcher_stats p JOIN games g ON p.game_id = g.game_id
         WHERE p.name = ? ORDER BY g.date DESC
     """, (pname,)).fetchall()
@@ -356,7 +356,7 @@ def player_page(pname):
 
     try:
         futures_pitcher = conn.execute("""
-            SELECT p.*, g.date, g.result, g.home_team, g.away_team, '퓨처스' as league
+            SELECT p.*, g.date, g.result AS game_result, g.home_team, g.away_team, '퓨처스' as league
             FROM futures_pitcher_stats p JOIN futures_games g ON p.game_id = g.game_id
             WHERE p.name = ? ORDER BY g.date DESC
         """, (pname,)).fetchall()

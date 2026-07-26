@@ -212,7 +212,7 @@
 {% for g in stats %}
 <span data-year="{{ g.date[:4] }}" data-date="{{ g.date[4:6] }}/{{ g.date[6:] }}"
   data-opp="{{ g.away_team if g.home_team == '두산' else g.home_team }}"
-  data-result="{{ g.result or '' }}"
+  data-result="{{ (g.game_result if is_pitcher else g.result) or '' }}"
   data-gameid="{{ g.game_id }}"
   {% if is_pitcher %}
   data-ip="{{ g.ip }}" data-h="{{ g.h }}" data-hr="{{ g.hr }}"
