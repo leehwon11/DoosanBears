@@ -163,6 +163,7 @@ def update_players_job():
         log.info(f"선수 목록 업데이트 완료: {len(data['roster'])}명")
     except Exception as e:
         log.error(f"선수 목록 업데이트 실패: {e}")
+        raise  # GitHub Actions에서 실패로 표시되도록 (예전엔 실패해도 success로 보였음)
 
 
 def run_now():
