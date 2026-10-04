@@ -537,13 +537,5 @@ def get_player_stats(name: str) -> list:
     return rows
 
 
-class _Row(dict):
-    def __getattr__(self, key):
-        try:
-            return self[key]
-        except KeyError:
-            return None
-
-
 if __name__ == "__main__":
     init_db()

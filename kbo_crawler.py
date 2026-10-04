@@ -318,8 +318,9 @@ def get_box_score(game_id: str, session: requests.Session) -> tuple[list, list]:
         print(f"    타자 파싱 오류: {e}")
 
     # ── 투수 파싱 ──
-    # [0]이름 [1]선발/중간 [2]결과 [3~5]? [6]이닝 [7]상대타자 [8]투구수
-    # [9]타수 [10]피안타 [11]피홈런 [12]볼넷 [13]삼진 [14]자책 [15]비자책 [16]ERA
+    # [0]이름 [1]등판(선발 or 등판 이닝 번호) [2]결과 [3]승 [4]패 [5]세 [6]이닝 [7]타자 [8]투구수
+    # [9]타수 [10]피안타 [11]피홈런 [12]4사구 [13]삼진 [14]실점 [15]자책 [16]ERA
+    # 선발/불펜 모두 같은 열 구조 (예전엔 불펜만 [14]실점을 자책으로 읽고 투구수/타수/실점이 앞 투수 값으로 남는 버그가 있었음)
     pitchers = []
     try:
         pitcher_data = data["arrPitcher"][team_idx]
@@ -331,35 +332,21 @@ def get_box_score(game_id: str, session: requests.Session) -> tuple[list, list]:
             if not name or name in ("합계","선수명"):
                 continue
 
-            # row[1]: 선발은 "선발", 불펜은 이닝번호(숫자)
+            # row[1]: 선발은 "선발", 불펜은 등판 이닝 번호(숫자)
             role_raw = _gt(row, 1)
-            try:
-                float(role_raw)  # 숫자면 이닝 번호 → 불펜
-                role = "불펜"
-                result = _gt(row, 2)
-                ip     = _gt(row, 6)
-                bf     = _iv(row, 7)
-                h      = _iv(row, 10)
-                hr     = _iv(row, 11)
-                bb     = _iv(row, 12)
-                so     = _iv(row, 13)
-                er     = _iv(row, 14)
-                era    = _gt(row, 16)
-            except ValueError:
-                # 문자면 역할 (선발 등)
-                role = role_raw if role_raw else "불펜"
-                result      = _gt(row, 2)
-                ip          = _gt(row, 6)
-                bf          = _iv(row, 7)
-                pitch_count = _iv(row, 8)
-                ab_against  = _iv(row, 9)
-                h           = _iv(row, 10)
-                hr          = _iv(row, 11)
-                bb          = _iv(row, 12)   # 4사구 (볼넷+사구)
-                so          = _iv(row, 13)
-                r           = _iv(row, 14)   # 실점
-                er          = _iv(row, 15)
-                era         = _gt(row, 16)
+            role = "불펜" if role_raw.isdigit() or not role_raw else role_raw
+            result      = _gt(row, 2)
+            ip          = _gt(row, 6)
+            bf          = _iv(row, 7)
+            pitch_count = _iv(row, 8)
+            ab_against  = _iv(row, 9)
+            h           = _iv(row, 10)
+            hr          = _iv(row, 11)
+            bb          = _iv(row, 12)   # 4사구 (볼넷+사구)
+            so          = _iv(row, 13)
+            r           = _iv(row, 14)   # 실점
+            er          = _iv(row, 15)   # 자책
+            era         = _gt(row, 16)
 
             pitchers.append({
                 "name":        name,

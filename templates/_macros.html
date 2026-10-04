@@ -1,0 +1,23 @@
+{# 두산 기준으로 정렬된 경기 한 줄. link=False면 클릭 불가(퓨처스) #}
+{% macro game_row(g, link=True, show_venue=True) %}
+{% set is_home = g.home_team == '두산' %}
+{% set us = g.home_score if is_home else g.away_score %}
+{% set them = g.away_score if is_home else g.home_score %}
+{% set opp = g.away_team if is_home else g.home_team %}
+{% set rc = 'win' if g.result == '승' else 'lose' if g.result == '패' else 'draw' %}
+<{{ 'a href=/game/' ~ g.game_id if link else 'div' }} class="card game-row">
+  <div class="game-date num"><b>{{ g.date[4:6]|int }}.{{ g.date[6:8] }}</b>{{ g.date[:4] }}</div>
+  <div style="min-width:0">
+    <div class="matchup">
+      <span class="team us">두산</span>
+      <span class="score num">{% if rc == 'lose' %}<span class="dim">{{ us }}</span>{% else %}{{ us }}{% endif %}<span class="dim"> : </span>{% if rc == 'win' %}<span class="dim">{{ them }}</span>{% else %}{{ them }}{% endif %}</span>
+      <span class="team them">{{ opp }}</span>
+    </div>
+    {% if show_venue %}<div class="game-meta">{{ '홈' if is_home else '원정' }}{% if g.stadium %} · {{ g.stadium }}{% endif %}</div>{% endif %}
+  </div>
+  <div class="row" style="gap:8px">
+    <span class="badge badge-{{ rc }}">{{ g.result or '-' }}</span>
+    {% if link %}<svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg>{% endif %}
+  </div>
+</{{ 'a' if link else 'div' }}>
+{% endmacro %}

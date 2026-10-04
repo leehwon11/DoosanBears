@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}{{ code }} · 두산 베어스{% endblock %}
+{% block content %}
+<div class="empty" style="padding:72px 20px;">
+  <div style="font-family:var(--font-display);font-size:4.5rem;line-height:1;letter-spacing:3px;color:var(--accent);">{{ code }}</div>
+  <p style="margin:10px 0 20px;font-size:1rem;color:var(--text-2);">{{ message }}</p>
+  <a href="/" class="btn btn-secondary">홈으로 가기</a>
+</div>
+{% endblock %}

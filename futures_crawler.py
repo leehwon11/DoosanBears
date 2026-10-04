@@ -194,7 +194,7 @@ def get_futures_box_score(game_id: str, session) -> tuple[list, list]:
             name = gt(0)
             if not name or name in ("합계","선수명"): continue
             pitchers.append({"name":name,"role":gt(1),"result":gt(2),"ip":gt(6),
-                "bf":iv(7),"h":iv(10),"hr":iv(11),"bb":iv(12),"so":iv(13),"er":iv(14),"era":gt(16)})
+                "bf":iv(7),"h":iv(10),"hr":iv(11),"bb":iv(12),"so":iv(13),"er":iv(15),"era":gt(16)})  # [14]실점 [15]자책
     except: pass
 
     return batters, pitchers

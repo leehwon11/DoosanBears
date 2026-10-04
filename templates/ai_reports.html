@@ -1,154 +1,120 @@
 {% extends "base.html" %}
-{% block title %}AI 분석 목록 · 두산 베어스{% endblock %}
-
-{% block head %}
-<style>
-  .page-header { display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem; }
-  .page-title { font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:2px; }
-  .filter-wrap { display:flex;gap:8px;margin-bottom:1.5rem;flex-wrap:wrap; }
-  .filter-btn { padding:6px 16px;border-radius:20px;border:1px solid var(--border);background:none;color:var(--gray);cursor:pointer;font-family:inherit;font-size:0.82rem;font-weight:500;transition:all 0.2s; }
-  .filter-btn.active { background:var(--red);border-color:var(--red);color:white; }
-  .filter-btn:hover:not(.active) { border-color:rgba(255,255,255,0.3);color:var(--white); }
-  .search-input { background:var(--card);border:1px solid var(--border);border-radius:20px;padding:6px 16px;color:var(--white);font-family:inherit;font-size:0.82rem;width:200px;outline:none; }
-  .search-input:focus { border-color:var(--blue); }
-  .report-list { display:flex;flex-direction:column;gap:10px; }
-  .report-card { background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.2rem 1.5rem;cursor:pointer;transition:border-color 0.2s,transform 0.15s;display:flex;align-items:center;justify-content:space-between;gap:1rem; }
-  .report-card:hover { border-color:rgba(255,255,255,0.25);transform:translateY(-1px); }
-  .report-card.game { border-left:3px solid var(--blue); }
-  .report-card.player { border-left:3px solid var(--gold); }
-  .report-card.season { border-left:3px solid #27AE60; }
-  .report-type-badge { font-size:0.7rem;font-weight:700;letter-spacing:1px;padding:2px 8px;border-radius:10px;white-space:nowrap; }
-  .badge-game   { background:rgba(27,58,107,0.4);color:#74b9ff; }
-  .badge-player { background:rgba(255,165,0,0.2);color:var(--gold); }
-  .badge-season { background:rgba(39,174,96,0.2);color:#27AE60; }
-  .report-title { font-weight:600;font-size:0.95rem;flex:1; }
-  .report-meta  { font-size:0.78rem;color:var(--gray);margin-top:3px; }
-  .report-date  { font-size:0.78rem;color:var(--gray);white-space:nowrap; }
-  .report-preview { font-size:0.82rem;color:rgba(248,249,250,0.5);margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:500px; }
-  .empty { text-align:center;padding:3rem;color:var(--gray); }
-  /* 모달 */
-  .modal-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);z-index:1000;align-items:center;justify-content:center; }
-  .modal-overlay.active { display:flex; }
-  .modal-box { background:var(--card);border:1px solid var(--border);border-radius:16px;padding:2rem;width:90%;max-width:680px;max-height:82vh;overflow-y:auto;position:relative; }
-  .modal-close { position:absolute;top:1rem;right:1rem;background:none;border:none;color:var(--gray);font-size:1.4rem;cursor:pointer;line-height:1; }
-  .modal-close:hover { color:var(--white); }
-  .modal-type { font-size:0.72rem;font-weight:700;letter-spacing:2px;color:var(--red);text-transform:uppercase;margin-bottom:0.5rem; }
-  .modal-title { font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:2px;margin-bottom:0.3rem; }
-  .modal-meta { color:var(--gray);font-size:0.82rem;margin-bottom:1.5rem; }
-  .modal-content { line-height:1.9;font-size:0.9rem;color:rgba(248,249,250,0.88);white-space:pre-wrap; }
-</style>
-{% endblock %}
+{% block title %}AI 분석 · 두산 베어스{% endblock %}
 
 {% block content %}
-<!-- 모달 -->
-<div class="modal-overlay" id="report-modal" onclick="closeModal(event)">
-  <div class="modal-box">
-    <button class="modal-close" onclick="document.getElementById('report-modal').classList.remove('active')">×</button>
-    <div class="modal-type" id="modal-type"></div>
-    <div class="modal-title" id="modal-title"></div>
-    <div class="modal-meta" id="modal-meta"></div>
-    <div class="modal-content" id="modal-content"></div>
+<div class="page-head">
+  <div>
+    <h1 class="page-title">AI 분석 리포트</h1>
+    <p class="page-sub">Claude가 작성한 경기 총평 · 선수 평가 · 시즌 분석을 모아봤어요.</p>
   </div>
 </div>
 
-<div class="page-header">
-  <div class="page-title">AI 분석 목록</div>
-  <a href="/" style="color:var(--gray);text-decoration:none;font-size:0.85rem;">← 홈으로</a>
-</div>
+{% set n_game = reports | selectattr('report_type','equalto','game') | list | length %}
+{% set n_player = reports | selectattr('report_type','equalto','player') | list | length %}
+{% set n_season = reports | length - n_game - n_player %}
 
-<div class="filter-wrap">
-  <button class="filter-btn active" onclick="setFilter('all',this)">전체 ({{ reports|length }})</button>
-  <button class="filter-btn" onclick="setFilter('game',this)">경기 분석 ({{ reports|selectattr('report_type','equalto','game')|list|length }})</button>
-  <button class="filter-btn" onclick="setFilter('player',this)">선수 분석 ({{ reports|selectattr('report_type','equalto','player')|list|length }})</button>
-  <button class="filter-btn" onclick="setFilter('season',this)">시즌 분석 ({{ reports|selectattr('report_type','equalto','player_season')|list|length }})</button>
-  <input class="search-input" type="text" placeholder="선수명 / 날짜 검색..." oninput="searchReports(this.value)" />
+<div class="toolbar">
+  <div class="seg" id="filter">
+    <button class="active" data-type="all">전체 <span class="count">{{ reports|length }}</span></button>
+    <button data-type="game">경기 <span class="count">{{ n_game }}</span></button>
+    <button data-type="player">선수 <span class="count">{{ n_player }}</span></button>
+    <button data-type="season">시즌 <span class="count">{{ n_season }}</span></button>
+  </div>
+  <div class="spacer"></div>
+  <input class="input" type="search" id="search" placeholder="선수명 · 상대팀 · 날짜 검색" aria-label="리포트 검색" style="width:240px;max-width:100%;">
 </div>
 
 {% if reports %}
-<div class="report-list" id="report-list">
+<div class="stack" id="report-list">
   {% for r in reports %}
-  {% set rtype = 'season' if 'player_season' in r.report_type else r.report_type %}
-  <div class="report-card {{ rtype }}" data-type="{{ rtype }}" data-search="{{ (r.player_name or '') }} {{ (r.date or '') }}"
-       onclick="openModal({{ loop.index0 }})">
-    <div style="flex:1;min-width:0;">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+  {% set rtype = 'season' if r.report_type.startswith('player_season') else r.report_type %}
+  {% set dstr = (r.date[:4] ~ '.' ~ r.date[4:6] ~ '.' ~ r.date[6:8]) if r.date else '' %}
+  {% set opp = (r.away_team if r.home_team == '두산' else r.home_team) if r.home_team else '' %}
+  <button type="button" class="card interactive report-item" data-idx="{{ loop.index0 }}" data-type="{{ rtype }}"
+          data-search="{{ r.player_name or '' }} {{ opp }} {{ r.date or '' }} {{ dstr }} {{ r.report_type }}">
+    <div class="body">
+      <div class="title">
         {% if rtype == 'game' %}
-        <span class="report-type-badge badge-game">경기 분석</span>
+          <span class="badge badge-info">경기</span>
+          두산 vs {{ opp }}
+          {% if r.home_score is not none %}<span class="num muted" style="font-weight:600">{{ r.home_score if r.home_team == '두산' else r.away_score }}:{{ r.away_score if r.home_team == '두산' else r.home_score }}</span>{% endif %}
         {% elif rtype == 'player' %}
-        <span class="report-type-badge badge-player">선수 분석</span>
+          <span class="badge badge-gold">선수</span>
+          {{ r.player_name }}{% if opp %} <span class="muted" style="font-weight:500">vs {{ opp }}</span>{% endif %}
         {% else %}
-        <span class="report-type-badge badge-season">시즌 분석</span>
+          {% set parts = r.report_type.split('_') %}
+          <span class="badge badge-win">시즌</span>
+          {{ r.player_name }} <span class="muted" style="font-weight:500">{% if parts|length >= 4 %}{{ parts[2] }}시즌 · {{ 'KBO' if parts[3] == 'kbo' else '퓨처스' }}{% else %}시즌{% endif %}</span>
         {% endif %}
-        <div class="report-title">
-          {% if rtype == 'game' %}
-            {{ r.home_team or '' }} {{ r.home_score if r.home_score is not none else '' }} : {{ r.away_score if r.away_score is not none else '' }} {{ r.away_team or '' }}
-          {% elif rtype == 'player' %}
-            {{ r.player_name }} — {{ r.date[:4] if r.date else '' }}.{{ r.date[4:6] if r.date else '' }}.{{ r.date[6:] if r.date else '' }} 경기
-          {% else %}
-            {{ r.player_name }} — {{ r.report_type.replace('player_season_','').replace('_',' ') }} 시즌 분석
-          {% endif %}
-        </div>
       </div>
-      <div class="report-meta">
-        {% if r.date %}{{ r.date[:4] }}.{{ r.date[4:6] }}.{{ r.date[6:] }}{% endif %}
-        {% if r.result %} · <span class="badge {% if r.result == '승' %}badge-win{% elif r.result == '패' %}badge-lose{% else %}badge-draw{% endif %}">{{ r.result }}</span>{% endif %}
-        · {{ r.created_at[:10] }} 생성
+      <div class="meta">
+        {% if dstr %}<span class="num">{{ dstr }}</span>{% endif %}
+        {% if r.result and rtype != 'season' %}<span class="badge {{ 'badge-win' if r.result == '승' else 'badge-lose' if r.result == '패' else 'badge-draw' }}">{{ r.result }}</span>{% endif %}
+        <span>{{ (r.created_at or '')[:10] }} 생성</span>
       </div>
-      <div class="report-preview">{{ r.content[:80] }}...</div>
+      <div class="preview">{{ r.content[:120] }}</div>
     </div>
-    <div class="report-date">›</div>
-  </div>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="muted"><path d="m9 18 6-6-6-6"/></svg>
+  </button>
   {% endfor %}
 </div>
+<div class="empty" id="no-match" hidden><p>조건에 맞는 리포트가 없어요.</p></div>
 {% else %}
-<div class="empty"><p>아직 AI 분석 결과가 없어요.</p></div>
+<div class="empty">
+  <div class="empty-icon">🤖</div>
+  <p>아직 AI 분석 결과가 없어요.<br>경기 리포트나 선수 페이지에서 분석을 생성해보세요.</p>
+</div>
 {% endif %}
+{% endblock %}
 
+{% block scripts %}
 <script>
-const reports = {{ reports | tojson }};
+const REPORTS = {{ reports | tojson }};
+let filterType = 'all';
 
-function openModal(idx) {
-  const r = reports[idx];
-  const rtype = r.report_type.startsWith('player_season') ? 'season' : r.report_type;
-  const typeLabel = rtype === 'game' ? '경기 분석' : rtype === 'player' ? '선수 분석' : '시즌 분석';
-  let title = '';
-  let meta = '';
-  if (rtype === 'game') {
-    title = (r.home_team||'') + ' ' + (r.home_score||'') + ' : ' + (r.away_score||'') + ' ' + (r.away_team||'');
-    meta = (r.date ? r.date.slice(0,4)+'.'+r.date.slice(4,6)+'.'+r.date.slice(6) : '') + (r.result ? ' · ' + r.result : '');
-  } else if (rtype === 'player') {
-    title = r.player_name || '';
-    meta = (r.date ? r.date.slice(0,4)+'.'+r.date.slice(4,6)+'.'+r.date.slice(6)+' 경기' : '') + ' · ' + (r.created_at||'').slice(0,10) + ' 생성';
+function applyFilter() {
+  const q = (document.getElementById('search')?.value || '').trim().toLowerCase();
+  let shown = 0;
+  document.querySelectorAll('.report-item').forEach(card => {
+    const ok = (filterType === 'all' || card.dataset.type === filterType) && (!q || card.dataset.search.toLowerCase().includes(q));
+    card.hidden = !ok;
+    if (ok) shown++;
+  });
+  const nm = document.getElementById('no-match');
+  if (nm) nm.hidden = shown > 0;
+}
+
+document.querySelectorAll('#filter button').forEach(btn => btn.addEventListener('click', () => {
+  document.querySelectorAll('#filter button').forEach(b => b.classList.toggle('active', b === btn));
+  filterType = btn.dataset.type;
+  applyFilter();
+}));
+document.getElementById('search').addEventListener('input', applyFilter);
+
+document.querySelectorAll('.report-item').forEach(card => card.addEventListener('click', () => {
+  const r = REPORTS[+card.dataset.idx];
+  const type = r.report_type.startsWith('player_season') ? 'season' : r.report_type;
+  const opp = r.home_team ? (r.home_team === '두산' ? r.away_team : r.home_team) : '';
+  const date = fmtDate(r.date);
+  let kicker, title, meta;
+  if (type === 'game') {
+    kicker = '경기 분석';
+    const home = r.home_team === '두산';
+    title = '두산 vs ' + opp + (r.home_score != null ? '  ' + (home ? r.home_score : r.away_score) + ':' + (home ? r.away_score : r.home_score) : '');
+    meta = [date, r.result].filter(Boolean).join(' · ');
+  } else if (type === 'player') {
+    kicker = '선수 분석';
+    title = r.player_name;
+    meta = [date && date + ' vs ' + opp, (r.created_at || '').slice(0, 10) + ' 생성'].filter(Boolean).join(' · ');
   } else {
-    title = (r.player_name||'') + ' 시즌 분석';
-    meta = r.report_type.replace('player_season_','').replace(/_/g,' ') + ' · ' + (r.created_at||'').slice(0,10) + ' 생성';
+    const p = r.report_type.split('_');
+    kicker = '시즌 분석';
+    title = r.player_name;
+    meta = (p.length >= 4 ? p[2] + '시즌 · ' + (p[3] === 'kbo' ? 'KBO' : '퓨처스') : '시즌') + ' · ' + (r.created_at || '').slice(0, 10) + ' 생성';
   }
-  document.getElementById('modal-type').textContent    = typeLabel;
-  document.getElementById('modal-title').textContent   = title;
-  document.getElementById('modal-meta').textContent    = meta;
-  document.getElementById('modal-content').textContent = r.content;
-  document.getElementById('report-modal').classList.add('active');
-}
-
-function closeModal(e) {
-  if (e.target === document.getElementById('report-modal'))
-    document.getElementById('report-modal').classList.remove('active');
-}
-
-function setFilter(type, btn) {
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.querySelectorAll('.report-card').forEach(card => {
-    card.style.display = (type === 'all' || card.dataset.type === type) ? '' : 'none';
-  });
-}
-
-function searchReports(query) {
-  const q = query.toLowerCase();
-  document.querySelectorAll('.report-card').forEach(card => {
-    const searchText = card.dataset.search.toLowerCase();
-    card.style.display = searchText.includes(q) ? '' : 'none';
-  });
-}
+  let html = aiReportHTML(kicker, title, meta, r.content);
+  if (r.game_id && r.date) html += '<div style="margin-top:18px"><a class="btn btn-secondary btn-sm" href="/game/' + encodeURIComponent(r.game_id) + '">경기 리포트 보기 →</a></div>';
+  Modal.open(html);
+}));
 </script>
 {% endblock %}
