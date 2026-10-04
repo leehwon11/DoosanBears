@@ -1,220 +1,173 @@
 {% extends "base.html" %}
 {% block title %}선수 비교 · 두산 베어스{% endblock %}
 
-{% block head %}
-<style>
-  .page-title { font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:2px;margin-bottom:2rem; }
-  .compare-select-wrap { display:grid;grid-template-columns:1fr auto 1fr;gap:1rem;align-items:center;margin-bottom:2rem; }
-  .vs-label { font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--red);text-align:center; }
-  .player-select-box { background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.2rem; }
-  .select-label { font-size:0.78rem;color:var(--gray);letter-spacing:1px;margin-bottom:8px; }
-  .player-select { width:100%;background:var(--navy);color:var(--white);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:inherit;font-size:0.9rem;cursor:pointer; }
-  .year-select { background:var(--navy);color:var(--white);border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-family:inherit;font-size:0.88rem;cursor:pointer; }
-  .compare-btn { background:var(--red);color:white;border:none;padding:10px 28px;border-radius:8px;font-size:0.9rem;font-weight:500;cursor:pointer;font-family:inherit;display:block;margin:0 auto 2rem; }
-  .compare-btn:hover { opacity:0.85; }
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">선수 비교</h1>
+    <p class="page-sub">같은 시즌 KBO 기록으로 두 선수를 나란히 비교해요. 투수는 투수끼리, 타자는 타자끼리 비교할 때 가장 정확해요.</p>
+  </div>
+</div>
 
-  .result-wrap { display:none; }
-  .result-wrap.active { display:block; }
+<section class="card card-pad section">
+  <div class="row" style="margin-bottom:16px;">
+    <label class="field-label" for="year-select" style="margin:0">시즌</label>
+    <select class="select select-sm" id="year-select" onchange="location.href='/compare?year='+this.value">
+      {% for yr in years %}<option value="{{ yr }}" {% if yr == current_year %}selected{% endif %}>{{ yr }} 시즌</option>{% endfor %}
+    </select>
+    <span class="muted" style="font-size:0.8rem">{{ players|length }}명 출전</span>
+  </div>
+  <div class="compare-pick">
+    {% for n in [1, 2] %}
+    {% if n == 2 %}<div class="compare-vs">VS</div>{% endif %}
+    <div>
+      <label class="field-label" for="p{{ n }}-select">선수 {{ n }}</label>
+      <select class="select" id="p{{ n }}-select">
+        <option value="">선수 선택</option>
+        {% for pos in ['투수','포수','내야수','외야수'] %}
+        {% set group = players | selectattr('position','equalto',pos) | list %}
+        {% if group %}
+        <optgroup label="{{ pos }}">
+          {% for p in group %}<option value="{{ p.name }}">{{ p.name }}</option>{% endfor %}
+        </optgroup>
+        {% endif %}
+        {% endfor %}
+      </select>
+    </div>
+    {% endfor %}
+  </div>
+  <div style="margin-top:18px;display:flex;justify-content:center;">
+    <button class="btn btn-primary" type="button" id="compare-btn" onclick="loadCompare()" style="min-width:160px">비교하기</button>
+  </div>
+  <p class="error-text" id="compare-error" hidden style="text-align:center"></p>
+</section>
 
-  .player-headers { display:grid;grid-template-columns:1fr 80px 1fr;gap:1rem;margin-bottom:1rem;text-align:center; }
-  .player-header-card { background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.2rem; }
-  .ph-number { font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--red); }
-  .ph-name { font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:1px; }
-  .ph-pos { font-size:0.8rem;color:var(--gray);margin-top:4px; }
-  .vs-center { display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--red); }
-
-  .stat-rows { display:flex;flex-direction:column;gap:6px; }
-  .stat-row { display:grid;grid-template-columns:1fr 80px 1fr;gap:1rem;align-items:center; }
-  .stat-val { background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 14px;text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.3rem;transition:background 0.2s; }
-  .stat-val.winner { background:rgba(39,174,96,0.2);border-color:rgba(39,174,96,0.4);color:#27AE60; }
-  .stat-label-center { text-align:center;font-size:0.75rem;color:var(--gray);letter-spacing:1px;padding:6px 0; }
-  .loading { text-align:center;padding:2rem;color:var(--gray); }
-  .ai-card { background:var(--card);border:1px solid var(--border);border-left:3px solid var(--red);border-radius:12px;padding:1.5rem; }
-  .ai-label { font-size:0.72rem;font-weight:700;letter-spacing:2px;color:var(--red);text-transform:uppercase;margin-bottom:0.8rem; }
-  .ai-content { line-height:1.9;font-size:0.85rem;color:rgba(248,249,250,0.85);white-space:pre-wrap; }
-</style>
+<section class="section" id="result" hidden>
+  <div class="cmp-head">
+    <div class="card cmp-player"><div class="n" id="p1-name"></div><div class="p" id="p1-pos"></div></div>
+    <div class="card cmp-player"><div class="n" id="p2-name"></div><div class="p" id="p2-pos"></div></div>
+  </div>
+  <div class="card" style="padding:6px 16px;" id="stat-rows"></div>
+  <p class="muted" id="mixed-note" hidden style="font-size:0.82rem;margin-top:10px;text-align:center;">투수와 타자는 공통 지표(경기 수)만 비교해요.</p>
+  <div style="margin-top:18px;display:flex;justify-content:center;">
+    <button class="btn btn-secondary" type="button" id="ai-btn" onclick="generateCompareAI()">두 선수 AI 시즌 분석 보기</button>
+  </div>
+  <div class="grid-2" id="ai-result" style="margin-top:18px;"></div>
+</section>
 {% endblock %}
 
-{% block content %}
-<div class="page-title">선수 비교</div>
-
-<div class="compare-select-wrap">
-  <div class="player-select-box">
-    <div class="select-label">선수 1</div>
-    <select class="player-select" id="p1-select">
-      <option value="">선수 선택</option>
-      {% for p in players %}
-      <option value="{{ p.name }}">{{ p.name }} ({{ p.position }})</option>
-      {% endfor %}
-    </select>
-  </div>
-  <div class="vs-label">VS</div>
-  <div class="player-select-box">
-    <div class="select-label">선수 2</div>
-    <select class="player-select" id="p2-select">
-      <option value="">선수 선택</option>
-      {% for p in players %}
-      <option value="{{ p.name }}">{{ p.name }} ({{ p.position }})</option>
-      {% endfor %}
-    </select>
-  </div>
-</div>
-
-<div style="text-align:center;margin-bottom:1.5rem;">
-  <select class="year-select" id="year-select">
-    {% for yr in years %}
-    <option value="{{ yr }}" {% if yr == current_year %}selected{% endif %}>{{ yr }}시즌</option>
-    {% endfor %}
-  </select>
-</div>
-
-<button class="compare-btn" onclick="loadCompare()">비교하기</button>
-
-<div class="result-wrap" id="result-wrap">
-  <div class="player-headers">
-    <div class="player-header-card">
-      <div class="ph-number" id="p1-number"></div>
-      <div class="ph-name" id="p1-name"></div>
-      <div class="ph-pos" id="p1-pos"></div>
-    </div>
-    <div class="vs-center">VS</div>
-    <div class="player-header-card">
-      <div class="ph-number" id="p2-number"></div>
-      <div class="ph-name" id="p2-name"></div>
-      <div class="ph-pos" id="p2-pos"></div>
-    </div>
-  </div>
-
-  <div class="stat-rows" id="stat-rows"></div>
-</div>
-
-<div id="ai-compare-wrap"></div>
-
+{% block scripts %}
 <script>
+let last = null;
+
+const BATTER_ROWS = [
+  { label: '경기', k: 'games', higher: true },
+  { label: '타율', k: 'avg', higher: true },
+  { label: '출루율', k: 'obp', higher: true },
+  { label: '장타율', k: 'slg', higher: true },
+  { label: 'OPS', k: 'ops', higher: true },
+  { label: '안타', k: 'h', higher: true },
+  { label: '홈런', k: 'hr', higher: true },
+  { label: '타점', k: 'rbi', higher: true },
+  { label: '득점', k: 'r', higher: true },
+  { label: '볼넷', k: 'bb', higher: true },
+  { label: '삼진', k: 'so', higher: false },
+];
+const PITCHER_ROWS = [
+  { label: '경기', k: 'games', higher: true },
+  { label: 'ERA', k: 'era', higher: false },
+  { label: 'WHIP', k: 'whip', higher: false },
+  { label: '이닝', k: 'ip', higher: true },
+  { label: '승', k: 'wins', higher: true },
+  { label: '패', k: 'loses', higher: false },
+  { label: '홀드', k: 'holds', higher: true },
+  { label: '세이브', k: 'saves', higher: true },
+  { label: '탈삼진', k: 'so', higher: true },
+  { label: '볼넷', k: 'bb', higher: false },
+  { label: '피안타', k: 'h', higher: false },
+];
+
+function showError(msg) {
+  const el = document.getElementById('compare-error');
+  el.textContent = msg; el.hidden = !msg;
+}
+
 async function loadCompare() {
   const p1 = document.getElementById('p1-select').value;
   const p2 = document.getElementById('p2-select').value;
   const year = document.getElementById('year-select').value;
+  if (!p1 || !p2) return showError('두 선수를 모두 선택해주세요.');
+  if (p1 === p2) return showError('서로 다른 선수를 선택해주세요.');
+  showError('');
 
-  if (!p1 || !p2) { alert('두 선수를 모두 선택해주세요!'); return; }
-  if (p1 === p2) { alert('다른 선수를 선택해주세요!'); return; }
-
-  const result = document.getElementById('result-wrap');
-  result.classList.add('active');
-  document.getElementById('stat-rows').innerHTML = '<div class="loading">불러오는 중...</div>';
-
-  const resp = await fetch('/api/compare?p1=' + encodeURIComponent(p1) + '&p2=' + encodeURIComponent(p2) + '&year=' + year);
-  const data = await resp.json();
-  if (data.error) { alert('오류: ' + data.error); return; }
-
-  const { p1: d1, p2: d2 } = data;
-
-  // 헤더
-  document.getElementById('p1-number').textContent = d1.info.number ? 'No.' + d1.info.number : '';
-  document.getElementById('p1-name').textContent   = d1.info.name || p1;
-  document.getElementById('p1-pos').textContent    = d1.info.position + (d1.info.batting ? ' (' + d1.info.batting + ')' : '');
-  document.getElementById('p2-number').textContent = d2.info.number ? 'No.' + d2.info.number : '';
-  document.getElementById('p2-name').textContent   = d2.info.name || p2;
-  document.getElementById('p2-pos').textContent    = d2.info.position + (d2.info.batting ? ' (' + d2.info.batting + ')' : '');
-
-  // 스탯 행 생성
-  const s1 = d1.stats, s2 = d2.stats;
-  let rows = [];
-
-  if (!d1.is_pitcher && !d2.is_pitcher) {
-    // 둘 다 타자
-    rows = [
-      { label: '경기', k: 'games', higher: true },
-      { label: '타율', k: 'avg', higher: true, str: true },
-      { label: '안타', k: 'h', higher: true },
-      { label: '홈런', k: 'hr', higher: true },
-      { label: '타점', k: 'rbi', higher: true },
-      { label: '볼넷', k: 'bb', higher: true },
-      { label: '삼진', k: 'so', higher: false },
-      { label: '타수', k: 'ab', higher: false },
-    ];
-  } else if (d1.is_pitcher && d2.is_pitcher) {
-    // 둘 다 투수
-    rows = [
-      { label: '경기', k: 'games', higher: true },
-      { label: '승', k: 'wins', higher: true },
-      { label: '패', k: 'loses', higher: false },
-      { label: '홀드', k: 'holds', higher: true },
-      { label: '세이브', k: 'saves', higher: true },
-      { label: '삼진', k: 'so', higher: true },
-      { label: '자책', k: 'er', higher: false },
-      { label: '피안타', k: 'h', higher: false },
-      { label: '볼넷', k: 'bb', higher: false },
-    ];
-  } else {
-    // 혼합
-    rows = [{ label: '경기', k: 'games', higher: true }];
+  const btn = document.getElementById('compare-btn');
+  btn.disabled = true;
+  try {
+    const resp = await fetch('/api/compare?p1=' + encodeURIComponent(p1) + '&p2=' + encodeURIComponent(p2) + '&year=' + encodeURIComponent(year));
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error);
+    render(data, p1, p2, year);
+  } catch (e) {
+    showError('오류: ' + e.message);
+  } finally {
+    btn.disabled = false;
   }
+}
 
-  const html = rows.map(row => {
-    const v1 = s1[row.k] ?? '-';
-    const v2 = s2[row.k] ?? '-';
+function render(data, p1, p2, year) {
+  const { p1: d1, p2: d2 } = data;
+  last = { p1, p2, year, ip1: d1.is_pitcher, ip2: d2.is_pitcher };
+  const head = (d, n, fallback) => {
+    document.getElementById(n + '-name').textContent = (d.info.number ? d.info.number + ' ' : '') + (d.info.name || fallback);
+    document.getElementById(n + '-pos').textContent = [d.info.position || (d.is_pitcher ? '투수' : '타자'), d.info.batting].filter(Boolean).join(' · ');
+  };
+  head(d1, 'p1', p1); head(d2, 'p2', p2);
+
+  const same = d1.is_pitcher === d2.is_pitcher;
+  const rows = !same ? [{ label: '경기', k: 'games', higher: true }] : (d1.is_pitcher ? PITCHER_ROWS : BATTER_ROWS);
+  document.getElementById('mixed-note').hidden = same;
+
+  const ipNum = v => { const [a, b] = String(v).split('.'); return parseInt(a) + (parseInt(b || 0) / 3); };
+  document.getElementById('stat-rows').innerHTML = rows.map(row => {
+    const v1 = d1.stats[row.k] ?? '-', v2 = d2.stats[row.k] ?? '-';
+    let n1 = row.k === 'ip' ? ipNum(v1) : parseFloat(v1);
+    let n2 = row.k === 'ip' ? ipNum(v2) : parseFloat(v2);
     let w1 = '', w2 = '';
-    if (v1 !== '-' && v2 !== '-' && v1 !== v2) {
-      const n1 = parseFloat(v1), n2 = parseFloat(v2);
-      if (!isNaN(n1) && !isNaN(n2)) {
-        if (row.higher ? n1 > n2 : n1 < n2) w1 = 'winner';
-        else w2 = 'winner';
-      }
+    if (!isNaN(n1) && !isNaN(n2) && n1 !== n2) {
+      if (row.higher ? n1 > n2 : n1 < n2) w1 = 'win'; else w2 = 'win';
     }
-    return '<div class="stat-row">' +
-      '<div class="stat-val ' + w1 + '">' + (v1 === null ? '-' : v1) + '</div>' +
-      '<div class="stat-label-center">' + row.label + '</div>' +
-      '<div class="stat-val ' + w2 + '">' + (v2 === null ? '-' : v2) + '</div>' +
+    // 막대: 더 높은 값 기준 비율 (낮을수록 좋은 지표도 실제 값 크기로 표시)
+    const max = Math.max(isNaN(n1) ? 0 : n1, isNaN(n2) ? 0 : n2) || 1;
+    const pct = n => isNaN(n) ? 0 : Math.max(4, Math.round(n / max * 100));
+    return '<div class="cmp-row">' +
+      '<div class="cmp-val l ' + w1 + '"><span class="t">' + esc(v1) + '</span><span class="bar"><i style="width:' + pct(n1) + '%"></i></span></div>' +
+      '<div class="cmp-label">' + row.label + '</div>' +
+      '<div class="cmp-val ' + w2 + '"><span class="bar"><i style="width:' + pct(n2) + '%"></i></span><span class="t">' + esc(v2) + '</span></div>' +
       '</div>';
   }).join('');
 
-  document.getElementById('stat-rows').innerHTML = html;
-
-  // AI 비교 분석 버튼 추가
-  const aiWrap = document.getElementById('ai-compare-wrap');
-  aiWrap.innerHTML = '<button class="compare-btn" style="margin-top:1.5rem;" onclick="generateCompareAI()">AI 비교 분석 생성하기</button>';
-  aiWrap.dataset.p1 = p1;
-  aiWrap.dataset.p2 = p2;
-  aiWrap.dataset.year = year;
-  aiWrap.dataset.ip1 = d1.is_pitcher ? '1' : '0';
-  aiWrap.dataset.ip2 = d2.is_pitcher ? '1' : '0';
+  document.getElementById('ai-result').innerHTML = '';
+  document.getElementById('ai-btn').disabled = false;
+  const res = document.getElementById('result');
+  res.hidden = false;
+  res.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 async function generateCompareAI() {
-  const wrap = document.getElementById('ai-compare-wrap');
-  const p1 = wrap.dataset.p1, p2 = wrap.dataset.p2;
-  const year = wrap.dataset.year;
-  const ip1 = wrap.dataset.ip1 === '1', ip2 = wrap.dataset.ip2 === '1';
+  if (!last) return;
+  const btn = document.getElementById('ai-btn');
+  const wrap = document.getElementById('ai-result');
+  btn.disabled = true;
+  const card = (name, body) => '<div class="ai-card"><div class="ai-label">Claude AI <span class="muted">· ' + esc(name) + ' · ' + esc(last.year) + '시즌</span></div>' + body + '</div>';
+  const loading = '<div class="loading"><div class="spinner"></div><p>분석 생성 중…</p></div>';
+  wrap.innerHTML = card(last.p1, loading) + card(last.p2, loading);
 
-  wrap.innerHTML = '<div style="text-align:center;padding:1rem;color:var(--gray);">AI 분석 생성 중...</div>';
-
-  // 두 선수 시즌 분석 순차 생성
-  try {
-    const r1 = await fetch('/api/analyze/player-season', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({player_name: p1, is_pitcher: ip1, year: year, league: 'kbo'})
-    });
-    const d1 = await r1.json();
-
-    const r2 = await fetch('/api/analyze/player-season', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({player_name: p2, is_pitcher: ip2, year: year, league: 'kbo'})
-    });
-    const d2 = await r2.json();
-
-    if (d1.success && d2.success) {
-      wrap.innerHTML =
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.5rem;">' +
-          '<div class="ai-card"><div class="ai-label">' + p1 + ' · ' + year + '시즌</div><div class="ai-content">' + d1.content + '</div></div>' +
-          '<div class="ai-card"><div class="ai-label">' + p2 + ' · ' + year + '시즌</div><div class="ai-content">' + d2.content + '</div></div>' +
-        '</div>';
-    } else {
-      wrap.innerHTML = '<p style="color:var(--red);text-align:center;">오류가 발생했어요.</p>';
-    }
-  } catch(e) {
-    wrap.innerHTML = '<p style="color:var(--red);text-align:center;">오류: ' + e.message + '</p>';
-  }
+  const run = (name, isPitcher) => postJSON('/api/analyze/player-season', { player_name: name, is_pitcher: isPitcher, year: last.year, league: 'kbo' })
+    .catch(e => ({ error: e.message }));
+  const [r1, r2] = await Promise.all([run(last.p1, last.ip1), run(last.p2, last.ip2)]);
+  const body = r => r.success ? '<div class="ai-content">' + esc(r.content) + '</div>' : '<p class="error-text">오류: ' + esc(r.error || '알 수 없는 오류') + '</p>';
+  wrap.innerHTML = card(last.p1, body(r1)) + card(last.p2, body(r2));
+  btn.disabled = false;
 }
 </script>
 {% endblock %}

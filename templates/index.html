@@ -1,191 +1,88 @@
 {% extends "base.html" %}
+{% from "_macros.html" import game_row %}
 {% block title %}두산 베어스 경기 분석{% endblock %}
 
-{% block head %}
-<style>
-  .hero {
-    text-align: center;
-    padding: 3.5rem 0 2.5rem;
-    position: relative;
-  }
-  .hero-eyebrow {
-    font-size: 0.78rem;
-    font-weight: 700;
-    letter-spacing: 3px;
-    color: var(--red);
-    text-transform: uppercase;
-    margin-bottom: 0.8rem;
-  }
-  .hero h1 {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: clamp(3rem, 8vw, 5.5rem);
-    letter-spacing: 4px;
-    line-height: 1;
-    margin-bottom: 1rem;
-  }
-  .hero h1 span { color: var(--red); }
-  .hero-sub {
-    color: var(--gray);
-    font-size: 0.95rem;
-  }
-  .section-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.6rem;
-    letter-spacing: 2px;
-    margin-bottom: 1.2rem;
-    padding-bottom: 0.6rem;
-    border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; gap: 0.8rem;
-  }
-  .section-title::before {
-    content: '';
-    display: inline-block;
-    width: 4px; height: 22px;
-    background: var(--red);
-    border-radius: 2px;
-  }
-  .games-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  .game-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 1.2rem 1.5rem;
-    text-decoration: none;
-    color: inherit;
-    display: grid;
-    grid-template-columns: 110px 1fr auto;
-    align-items: center;
-    gap: 1.5rem;
-    transition: border-color 0.2s, transform 0.15s;
-  }
-  .game-card:hover {
-    border-color: rgba(255,255,255,0.2);
-    transform: translateX(4px);
-  }
-  .game-date { color: var(--gray); font-size: 0.85rem; }
-  .game-score {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.6rem;
-    letter-spacing: 2px;
-  }
-  .game-teams {
-    font-size: 0.88rem;
-    color: var(--gray);
-    margin-top: 2px;
-  }
-  .empty {
-    text-align: center;
-    padding: 4rem;
-    color: var(--gray);
-  }
-  .empty-icon {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-    opacity: 0.4;
-  }
-  .stat-bar {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin-bottom: 2.5rem;
-  }
-  .stat-item {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 1.2rem;
-    text-align: center;
-  }
-  .stat-num {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 2.4rem;
-    line-height: 1;
-    margin-bottom: 4px;
-  }
-  .stat-label { font-size: 0.78rem; color: var(--gray); letter-spacing: 1px; }
-  .league-tab-wrap { display:flex;gap:8px;margin-bottom:1.2rem; }
-  .league-tab { padding:6px 18px;border-radius:20px;border:1px solid var(--border);background:none;color:var(--gray);cursor:pointer;font-family:inherit;font-size:0.82rem;font-weight:500;transition:all 0.2s; }
-  .league-tab.active { background:var(--blue);border-color:var(--blue);color:white; }
-  .league-tab:hover:not(.active) { border-color:rgba(255,255,255,0.3);color:var(--white); }
-  .league-content { display:none; }
-  .league-content.active { display:block; }
-</style>
-{% endblock %}
-
 {% block content %}
-<div class="hero">
-  <p class="hero-eyebrow">Fan Analysis</p>
-  <h1>DOOSAN <span>BEARS</span></h1>
-  <p class="hero-sub">경기 후 AI가 분석한 두산 베어스 리포트</p>
-</div>
-
-<!-- 1. 시즌 스탯 -->
-{% if team_stats %}
-<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-bottom:2rem;">
-  <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem;text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:#27AE60;line-height:1;margin-bottom:4px;">{{ team_stats.wins }}</div><div style="font-size:0.72rem;color:var(--gray);letter-spacing:1px;">승</div></div>
-  <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem;text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--red);line-height:1;margin-bottom:4px;">{{ team_stats.loses }}</div><div style="font-size:0.72rem;color:var(--gray);letter-spacing:1px;">패</div></div>
-  <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem;text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--gold);line-height:1;margin-bottom:4px;">{% if team_stats.wins + team_stats.loses > 0 %}{{ "%.3f"|format(team_stats.wins/(team_stats.wins+team_stats.loses)) }}{% else %}.000{% endif %}</div><div style="font-size:0.72rem;color:var(--gray);letter-spacing:1px;">승률</div></div>
-  <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem;text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--gold);line-height:1;margin-bottom:4px;">{{ team_stats.avg }}</div><div style="font-size:0.72rem;color:var(--gray);letter-spacing:1px;">팀타율</div></div>
-  <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem;text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--white);line-height:1;margin-bottom:4px;">{{ team_stats.hr }}</div><div style="font-size:0.72rem;color:var(--gray);letter-spacing:1px;">홈런</div></div>
-  <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem;text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--white);line-height:1;margin-bottom:4px;">{{ team_stats.rbi }}</div><div style="font-size:0.72rem;color:var(--gray);letter-spacing:1px;">타점</div></div>
-  <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem;text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--white);line-height:1;margin-bottom:4px;">{{ team_stats.era }}</div><div style="font-size:0.72rem;color:var(--gray);letter-spacing:1px;">팀ERA</div></div>
-  <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem;text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--white);line-height:1;margin-bottom:4px;">{{ team_stats.so_pit }}</div><div style="font-size:0.72rem;color:var(--gray);letter-spacing:1px;">탈삼진</div></div>
-</div>
-{% endif %}
-
-<!-- 2. 다음 경기 예고 -->
-{% if next_game %}
-<div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.5rem;margin-bottom:2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
-  <div>
-    <div style="font-size:0.72rem;font-weight:700;letter-spacing:2px;color:var(--red);text-transform:uppercase;margin-bottom:6px;">다음 경기</div>
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:2px;">
-      {{ next_game.home }} vs {{ next_game.away }}
-    </div>
-    <div style="color:var(--gray);font-size:0.85rem;margin-top:4px;display:flex;gap:12px;flex-wrap:wrap;">
-      <span>📅 {{ next_game.date_str }}</span>
-      <span>⏰ {{ next_game.time }}</span>
-      <span>📍 {{ next_game.stadium }}</span>
-      {% if next_game.status %}<span style="color:var(--red);">{{ next_game.status }}</span>{% endif %}
-    </div>
-  </div>
-  <div style="font-family:'Bebas Neue',sans-serif;font-size:3rem;color:var(--blue);letter-spacing:4px;">VS</div>
-</div>
-{% endif %}
-
-<!-- 3. 최근 경기 -->
-<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;padding-bottom:0.6rem;border-bottom:1px solid var(--border);">
-  <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:2px;display:flex;align-items:center;gap:0.6rem;">
-    <span style="display:inline-block;width:4px;height:22px;background:var(--red);border-radius:2px;flex-shrink:0;"></span>
-    최근 경기
-  </div>
-  <a href="/games" style="font-size:0.82rem;color:var(--gray);text-decoration:none;" onmouseover="this.style.color='white'" onmouseout="this.style.color='var(--gray)'">전체 경기 보기 →</a>
-</div>
-{% if games %}
-<div class="games-grid">
-  {% for g in games %}
-  <a href="/game/{{ g.game_id }}" class="game-card">
-    <div class="game-date">
-      {{ g.date[:4] }}.{{ g.date[4:6] }}.{{ g.date[6:] }}
-    </div>
+{% set ts = team_stats %}
+<section class="hero">
+  <div class="hero-top">
     <div>
-      <div class="game-score">
-        {{ g.home_team }} {{ g.home_score }} : {{ g.away_score }} {{ g.away_team }}
+      <div class="eyebrow">{{ ts.year }} 시즌 · KBO 정규시즌</div>
+      <div class="hero-record num">
+        <span class="w">{{ ts.wins }}<small>승</small></span>
+        <span class="l">{{ ts.loses }}<small>패</small></span>
+        {% if ts.draws %}<span class="l">{{ ts.draws }}<small>무</small></span>{% endif %}
       </div>
+      <div class="hero-sub">경기 후 자동으로 기록이 업데이트되고, Claude AI가 분석 리포트를 작성해요.</div>
     </div>
-    <span class="badge {% if g.result == '승' %}badge-win{% elif g.result == '패' %}badge-lose{% else %}badge-draw{% endif %}">
-      {{ g.result }}
-    </span>
-  </a>
-  {% endfor %}
-</div>
-{% else %}
-<div class="empty">
-  <div class="empty-icon">⚾</div>
-  <p>아직 경기 데이터가 없습니다.<br>경기 후 자동으로 업데이트돼요.</p>
-</div>
+    <div class="hero-pct">
+      <div class="v num">{{ ts.win_pct }}</div>
+      <div class="k">승률</div>
+    </div>
+  </div>
+  {% if recent_form %}
+  <div class="hero-form">
+    <span class="k">최근 {{ recent_form|length }}경기</span>
+    <div class="form-dots">
+      {% for r in recent_form %}<span class="form-dot {{ 'win' if r == '승' else 'lose' if r == '패' else 'draw' }}" title="{{ r }}">{{ r }}</span>{% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</section>
+
+<section class="section">
+  <div class="stat-grid cols-6">
+    <div class="stat"><div class="stat-label">팀 타율</div><div class="stat-value gold">{{ ts.avg }}</div></div>
+    <div class="stat"><div class="stat-label">홈런</div><div class="stat-value">{{ ts.hr }}</div></div>
+    <div class="stat"><div class="stat-label">타점</div><div class="stat-value">{{ ts.rbi }}</div></div>
+    <div class="stat"><div class="stat-label">볼넷</div><div class="stat-value">{{ ts.bb }}</div></div>
+    <div class="stat"><div class="stat-label">팀 ERA</div><div class="stat-value gold">{{ ts.era }}</div></div>
+    <div class="stat"><div class="stat-label">탈삼진</div><div class="stat-value">{{ ts.so_pit }}</div></div>
+  </div>
+</section>
+
+{% if next_game %}
+<section class="section">
+  <div class="section-head"><h2 class="section-title">다음 경기</h2></div>
+  <div class="card next-game">
+    <div class="next-team home">{{ next_game.away }}<small>원정</small></div>
+    <div class="next-vs">VS</div>
+    <div class="next-team">{{ next_game.home }}<small>홈</small></div>
+    <div class="next-info">
+      <span>📅 {{ next_game.date_str }}</span>
+      {% if next_game.time %}<span>⏰ {{ next_game.time }}</span>{% endif %}
+      {% if next_game.stadium %}<span>📍 {{ next_game.stadium }}</span>{% endif %}
+      {% if next_game.status %}<span class="badge badge-accent">{{ next_game.status }}</span>{% endif %}
+    </div>
+  </div>
+</section>
 {% endif %}
+
+<section class="section">
+  <div class="section-head">
+    <h2 class="section-title">최근 경기</h2>
+    <div class="row">
+      <div class="seg" data-tabs="recent">
+        <button class="active" data-tab="kbo" aria-selected="true">KBO</button>
+        <button data-tab="fut">퓨처스</button>
+      </div>
+      <a href="/games" class="section-link">전체 보기 →</a>
+    </div>
+  </div>
+
+  <div class="tab-panel active" id="recent-kbo" data-tab-group="recent">
+    {% if games %}
+    <div class="stack">{% for g in games %}{{ game_row(g) }}{% endfor %}</div>
+    {% else %}
+    <div class="empty"><div class="empty-icon">⚾</div><p>아직 경기 데이터가 없어요.<br>경기 후 자동으로 업데이트돼요.</p></div>
+    {% endif %}
+  </div>
+  <div class="tab-panel" id="recent-fut" data-tab-group="recent">
+    {% if futures_games %}
+    <div class="stack">{% for g in futures_games %}{{ game_row(g, link=False, show_venue=False) }}{% endfor %}</div>
+    {% else %}
+    <div class="empty"><div class="empty-icon">⚾</div><p>퓨처스 경기 데이터가 없어요.</p></div>
+    {% endif %}
+  </div>
+</section>
 {% endblock %}

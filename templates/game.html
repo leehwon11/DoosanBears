@@ -1,344 +1,196 @@
 {% extends "base.html" %}
-{% block title %}경기 리포트 · 두산 베어스{% endblock %}
-
-{% block head %}
-<style>
-  .back-link { display:inline-flex;align-items:center;gap:6px;color:var(--gray);text-decoration:none;font-size:0.85rem;margin-bottom:1.5rem;transition:color 0.2s; }
-  .back-link:hover { color:var(--white); }
-  .game-header { background:var(--card);border:1px solid var(--border);border-radius:16px;padding:2rem;margin-bottom:2rem;text-align:center; }
-  .game-header-date { color:var(--gray);font-size:0.85rem;margin-bottom:1rem; }
-  .scoreboard { display:flex;align-items:center;justify-content:center;gap:2rem;margin-bottom:1.2rem; }
-  .team-name { font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:2px; }
-  .score-num { font-family:'Bebas Neue',sans-serif;font-size:4rem;line-height:1; }
-  .score-sep { font-family:'Bebas Neue',sans-serif;font-size:2.5rem;color:var(--gray); }
-  .inning-table-wrap { overflow-x:auto;margin-top:1rem; }
-  .inning-table { width:100%;border-collapse:collapse;font-size:0.82rem;min-width:400px; }
-  .inning-table th, .inning-table td { padding:6px 10px;text-align:center;border:1px solid var(--border); }
-  .inning-table th { color:var(--gray);font-weight:500; }
-  .inning-table .total-col { color:var(--gold);font-weight:700; }
-  .grid-2 { display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem; }
-  @media(max-width:640px){.grid-2{grid-template-columns:1fr;}}
-  .section-title { font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:2px;margin-bottom:1rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.6rem; }
-  .section-title::before { content:'';display:inline-block;width:4px;height:18px;background:var(--red);border-radius:2px; }
-  .stats-card { background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden; }
-  .stats-table { width:100%;border-collapse:collapse;font-size:0.82rem; }
-  .stats-table th { background:rgba(255,255,255,0.04);padding:8px 12px;text-align:center;color:var(--gray);font-weight:500;border-bottom:1px solid var(--border); }
-  .stats-table td { padding:9px 12px;text-align:center;border-bottom:1px solid var(--border); }
-  .stats-table tr:last-child td { border-bottom:none; }
-  .stats-table td:first-child { text-align:left;font-weight:500; }
-  .player-link { color:inherit;text-decoration:none; }
-  .player-link:hover { color:var(--gold); }
-  .highlight { color:var(--gold);font-weight:700; }
-  .ai-card { background:var(--card);border:1px solid var(--border);border-left:3px solid var(--red);border-radius:12px;padding:1.5rem; }
-  .ai-label { font-size:0.72rem;font-weight:700;letter-spacing:2px;color:var(--red);text-transform:uppercase;margin-bottom:0.8rem; }
-  .ai-content { line-height:1.9;font-size:0.88rem;color:rgba(248,249,250,0.85);white-space:pre-wrap; }
-  .player-report-card { background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.2rem 1.5rem; }
-  .player-report-name { font-weight:700;margin-bottom:0.5rem;font-size:0.95rem; }
-  .player-report-content { font-size:0.85rem;line-height:1.8;color:rgba(248,249,250,0.75);white-space:pre-wrap; }
-  .analyze-btn { background:var(--red);color:white;border:none;padding:10px 20px;border-radius:8px;font-size:0.88rem;font-weight:500;cursor:pointer;font-family:inherit;transition:opacity 0.2s;width:100%; }
-  .analyze-btn:hover { opacity:0.85; }
-  .analyze-btn:disabled { opacity:0.5;cursor:not-allowed; }
-  .player-select { width:100%;margin-bottom:0.8rem;background:var(--navy);color:var(--white);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:0.88rem;font-family:inherit; }
-  /* 모달 */
-  .modal-overlay {
-    display:none;position:fixed;inset:0;
-    background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);
-    z-index:1000;align-items:center;justify-content:center;
-  }
-  .modal-overlay.active { display:flex; }
-  .modal-box {
-    background:var(--card);border:1px solid var(--border);
-    border-radius:16px;padding:2rem;
-    width:90%;max-width:600px;max-height:80vh;
-    overflow-y:auto;position:relative;
-  }
-  .modal-close {
-    position:absolute;top:1rem;right:1rem;
-    background:none;border:none;color:var(--gray);
-    font-size:1.4rem;cursor:pointer;transition:color 0.2s;
-  }
-  .modal-close:hover { color:var(--white); }
-  .modal-player-name {
-    font-family:'Bebas Neue',sans-serif;
-    font-size:1.8rem;letter-spacing:2px;margin-bottom:0.3rem;
-  }
-  .modal-meta { color:var(--gray);font-size:0.82rem;margin-bottom:1.2rem; }
-  .modal-loading { text-align:center;padding:2rem;color:var(--gray); }
-  .modal-loading-spinner {
-    width:32px;height:32px;border:3px solid var(--border);
-    border-top-color:var(--red);border-radius:50%;
-    animation:spin 0.8s linear infinite;margin:0 auto 1rem;
-  }
-  @keyframes spin { to { transform:rotate(360deg); } }
-</style>
-{% endblock %}
+{% set g = detail.game %}
+{% block title %}{{ g.date[4:6]|int }}/{{ g.date[6:8]|int }} {{ g.away_team }} vs {{ g.home_team }} · 두산 베어스{% endblock %}
 
 {% block content %}
-<!-- 선수 평가 모달 -->
-<div class="modal-overlay" id="player-modal" onclick="closeModal(event)">
-  <div class="modal-box">
-    <button class="modal-close" onclick="document.getElementById('player-modal').classList.remove('active')">×</button>
-    <div id="modal-body">
-      <div class="modal-loading">
-        <div class="modal-loading-spinner"></div>
-        <p>AI 분석 중...</p>
-      </div>
-    </div>
-  </div>
-</div>
+<a href="/games" class="back-link">← 경기 일정</a>
 
-<a href="/" class="back-link">← 경기 목록으로</a>
-
-{% set g = detail.game %}
-<div class="game-header">
-  <div class="game-header-date">
-    {{ g.date[:4] }}.{{ g.date[4:6] }}.{{ g.date[6:] }}{% if g.stadium %} · {{ g.stadium }}{% endif %}
-    &nbsp;|&nbsp;
-    <span class="badge {% if g.result == '승' %}badge-win{% elif g.result == '패' %}badge-lose{% else %}badge-draw{% endif %}">{{ g.result }}</span>
+{% set rc = 'win' if g.result == '승' else 'lose' if g.result == '패' else 'draw' %}
+<section class="card scoreboard-card">
+  <div class="scoreboard-meta num">
+    <span>{{ g.date[:4] }}.{{ g.date[4:6] }}.{{ g.date[6:8] }}</span>
+    {% if g.stadium %}<span>· {{ g.stadium }}</span>{% endif %}
+    <span class="badge badge-{{ rc }}">두산 {{ g.result }}</span>
   </div>
   <div class="scoreboard">
-    <div class="team-name">{{ g.home_team }}</div>
-    <div class="score-num">{{ g.home_score }}</div>
-    <div class="score-sep">:</div>
-    <div class="score-num">{{ g.away_score }}</div>
-    <div class="team-name">{{ g.away_team }}</div>
+    <div class="sb-team away">{{ g.away_team }}<small>원정</small></div>
+    <div class="sb-score num">
+      <span class="{{ 'lo' if (g.away_score or 0) < (g.home_score or 0) }}">{{ g.away_score }}</span><span class="sep">:</span><span class="{{ 'lo' if (g.home_score or 0) < (g.away_score or 0) }}">{{ g.home_score }}</span>
+    </div>
+    <div class="sb-team home">{{ g.home_team }}<small>홈</small></div>
   </div>
+
   {% if detail.innings %}
-  {% set doosan_inn  = detail.innings | selectattr('team','equalto','doosan')   | list | sort(attribute='inning') %}
-  {% set opp_inn     = detail.innings | selectattr('team','equalto','opponent') | list | sort(attribute='inning') %}
-  {% set max_inn = [doosan_inn|length, opp_inn|length]|max %}
+  {% set doosan_inn = detail.innings | selectattr('team','equalto','doosan') | list %}
+  {% set opp_inn    = detail.innings | selectattr('team','equalto','opponent') | list %}
+  {% set max_inn = [doosan_inn|length, opp_inn|length, 9]|max %}
   {% set doosan_map = {} %}{% for i in doosan_inn %}{% set _ = doosan_map.update({i.inning: i.score}) %}{% endfor %}
   {% set opp_map = {} %}{% for i in opp_inn %}{% set _ = opp_map.update({i.inning: i.score}) %}{% endfor %}
-  <div class="inning-table-wrap"><table class="inning-table">
-    <tr>
-      <th>팀</th>
-      {% for n in range(1, max_inn+1) %}<th>{{ n }}</th>{% endfor %}
-      <th class="total-col">R</th>
-    </tr>
-    {# 원정팀(초 공격) 위, 홈팀(말 공격) 아래 #}
-    <tr>
-      <td style="text-align:left;font-weight:500;">{{ g.away_team }}</td>
-      {% if g.away_team == '두산' %}
-        {% for n in range(1, max_inn+1) %}<td>{{ doosan_map[n] if n in doosan_map else '-' }}</td>{% endfor %}
-        <td class="total-col">{{ g.away_score }}</td>
-      {% else %}
-        {% for n in range(1, max_inn+1) %}<td>{{ opp_map[n] if n in opp_map else '-' }}</td>{% endfor %}
-        <td class="total-col">{{ g.away_score }}</td>
-      {% endif %}
-    </tr>
-    <tr>
-      <td style="text-align:left;font-weight:500;">{{ g.home_team }}</td>
-      {% if g.home_team == '두산' %}
-        {% for n in range(1, max_inn+1) %}<td>{{ doosan_map[n] if n in doosan_map else '-' }}</td>{% endfor %}
-        <td class="total-col">{{ g.home_score }}</td>
-      {% else %}
-        {% for n in range(1, max_inn+1) %}<td>{{ opp_map[n] if n in opp_map else '-' }}</td>{% endfor %}
-        <td class="total-col">{{ g.home_score }}</td>
-      {% endif %}
-    </tr>
-  </table></div>
+  {% set away_map = doosan_map if g.away_team == '두산' else opp_map %}
+  {% set home_map = doosan_map if g.home_team == '두산' else opp_map %}
+  <div class="table-wrap">
+    <table class="table linescore">
+      <thead><tr><th>팀</th>{% for n in range(1, max_inn+1) %}<th>{{ n }}</th>{% endfor %}<th class="total">R</th></tr></thead>
+      <tbody>
+        {% for team, m, total in [(g.away_team, away_map, g.away_score), (g.home_team, home_map, g.home_score)] %}
+        <tr>
+          <td class="sticky-col">{{ team }}</td>
+          {% for n in range(1, max_inn+1) %}<td class="{{ 'dim' if n not in m or m[n] == 0 }}">{{ m[n] if n in m else '-' }}</td>{% endfor %}
+          <td class="total">{{ total }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
   {% endif %}
-</div>
+</section>
 
-<!-- AI 분석 섹션 (2분할) -->
-<div class="grid-2" style="margin-bottom:2rem;">
-
-  <!-- 왼쪽: 경기 종합 평가 -->
-  <div>
-    <div class="section-title">AI 경기 총평</div>
+<div class="grid-2 section">
+  <section>
+    <div class="section-head"><h2 class="section-title">AI 경기 총평</h2></div>
     {% set game_report = detail.reports | selectattr('report_type','equalto','game') | list %}
     {% if game_report %}
     <div class="ai-card">
-      <div class="ai-label">Gemini AI Analysis</div>
-      <div class="ai-content">{{ game_report[0].content }}</div>
+      <div class="ai-label">Claude AI <span class="muted">· {{ game_report[-1].created_at[:10] }}</span></div>
+      <div class="ai-content">{{ game_report[-1].content }}</div>
     </div>
     {% else %}
-    <div class="ai-card" id="ai-game-placeholder" style="text-align:center;padding:2rem;">
-      <div class="ai-label">Gemini AI Analysis</div>
-      <p style="color:var(--gray);font-size:0.88rem;margin:0.8rem 0 1.2rem;">아직 경기 분석이 없어요</p>
-      <button class="analyze-btn" id="btn-game" onclick="generateGameAnalysis()">경기 분석 생성하기</button>
-    </div>
-    <div class="ai-card" id="ai-game-result" style="display:none;">
-      <div class="ai-label">Gemini AI Analysis</div>
-      <div class="ai-content" id="ai-game-content"></div>
+    <div class="ai-card" id="ai-game">
+      <div class="ai-label">Claude AI</div>
+      <div class="ai-empty">
+        <p>아직 이 경기의 AI 분석이 없어요.</p>
+        <button class="btn btn-primary" id="btn-game" type="button" onclick="generateGameAnalysis()">경기 분석 생성하기</button>
+      </div>
     </div>
     {% endif %}
-  </div>
+  </section>
 
-  <!-- 오른쪽: 선수 개인 평가 -->
-  <div>
-    <div class="section-title">AI 선수 평가</div>
+  <section>
+    <div class="section-head"><h2 class="section-title">AI 선수 평가</h2></div>
+    {% set player_reports = detail.reports | selectattr('report_type','equalto','player') | list %}
+    {% set analyzed_names = player_reports | map(attribute='player_name') | list %}
     <div class="ai-card">
-      <div class="ai-label">Claude AI Analysis</div>
-      <p style="color:var(--gray);font-size:0.88rem;margin:0.6rem 0 1rem;">평가할 선수를 선택해주세요</p>
-      <select id="player-select" class="player-select">
-        <option value="">선수 선택</option>
-        {% set player_reports = detail.reports | selectattr('report_type','equalto','player') | list %}
-        {% set analyzed_names = player_reports | map(attribute='player_name') | list %}
-        {% for b in detail.batters %}
-        <option value="{{ b.name }}" {% if b.name in analyzed_names %}data-analyzed="true"{% endif %}>
-          {{ b.name }} ({{ b.position }}){% if b.name in analyzed_names %} ✓{% endif %}
-        </option>
-        {% endfor %}
-        {% for p in detail.pitchers %}
-        <option value="{{ p.name }}" {% if p.name in analyzed_names %}data-analyzed="true"{% endif %}>
-          {{ p.name }} (투수){% if p.name in analyzed_names %} ✓{% endif %}
-        </option>
-        {% endfor %}
+      <div class="ai-label">Claude AI</div>
+      <p class="muted" style="font-size:0.88rem;margin-bottom:12px;">오늘 경기 기록을 바탕으로 선수 개인을 평가해요. ✓ 표시는 이미 분석된 선수예요.</p>
+      <label class="field-label" for="player-select">선수 선택</label>
+      <select id="player-select" class="select" style="width:100%;margin-bottom:12px;">
+        <option value="">선수를 선택하세요</option>
+        <optgroup label="타자">
+          {% for b in detail.batters %}
+          <option value="{{ b.name }}" {% if b.name in analyzed_names %}data-analyzed="true"{% endif %}>{{ b.name }} ({{ b.position }}){% if b.name in analyzed_names %} ✓{% endif %}</option>
+          {% endfor %}
+        </optgroup>
+        <optgroup label="투수">
+          {% for p in detail.pitchers %}
+          <option value="{{ p.name }}" {% if p.name in analyzed_names %}data-analyzed="true"{% endif %}>{{ p.name }}{% if p.result %} ({{ p.result }}){% endif %}{% if p.name in analyzed_names %} ✓{% endif %}</option>
+          {% endfor %}
+        </optgroup>
       </select>
-      <button class="analyze-btn" id="btn-player" onclick="generatePlayerAnalysis()">선수 평가 보기</button>
+      <button class="btn btn-secondary btn-block" id="btn-player" type="button" onclick="generatePlayerAnalysis()">선수 평가 보기</button>
     </div>
-  </div>
-
+  </section>
 </div>
 
-<!-- 타자/투수 기록 -->
-<div class="grid-2">
-  {% if detail.batters %}
-  <div>
-    <div class="section-title">타자 기록</div>
-    <div class="stats-card">
-      <table class="stats-table">
-        <thead>
-          <tr><th>타순</th><th>포지션</th><th>선수</th><th>타수</th><th>안타</th><th>타점</th><th>볼넷</th><th>타율</th></tr>
-        </thead>
-        <tbody>
-        {% for b in detail.batters %}
-        <tr>
-          <td style="color:var(--gray)">{{ b.batting_order if b.batting_order else '' }}</td>
-          <td style="color:var(--gray);font-size:0.78rem;">{{ b.position }}</td>
-          <td><a href="/player/{{ b.name }}" class="player-link">{{ b.name }}</a></td>
-          <td>{{ b.ab }}</td>
-          <td {% if b.h >= 2 %}class="highlight"{% endif %}>{{ b.h }}</td>
-          <td>{{ b.rbi }}</td>
-          <td>{{ b.bb }}</td>
-          <td>{{ b.avg }}</td>
-        </tr>
-        {% endfor %}
-        </tbody>
-      </table>
-    </div>
+{% if detail.batters %}
+<section class="section">
+  <div class="section-head"><h2 class="section-title">두산 타자 기록</h2></div>
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>타순</th><th class="left sticky-col">선수</th><th>포지션</th><th>타수</th><th>안타</th><th>2루타</th><th>3루타</th><th>홈런</th><th>타점</th><th>득점</th><th>볼넷</th><th>삼진</th><th>시즌 타율</th></tr></thead>
+      <tbody>
+      {% for b in detail.batters %}
+      <tr>
+        <td class="dim">{{ b.batting_order or '' }}</td>
+        <td class="left sticky-col"><a href="/player/{{ b.name|urlencode }}" class="player-link">{{ b.name }}</a></td>
+        <td class="dim">{{ b.position }}</td>
+        <td>{{ b.ab }}</td>
+        <td class="{{ 'hi' if (b.h or 0) >= 2 }}">{{ b.h }}</td>
+        <td class="{{ 'dim' if not b.doubles }}">{{ b.doubles or 0 }}</td>
+        <td class="{{ 'dim' if not b.triples }}">{{ b.triples or 0 }}</td>
+        <td class="{{ 'hi' if b.hr else 'dim' }}">{{ b.hr }}</td>
+        <td class="{{ 'strong' if b.rbi else 'dim' }}">{{ b.rbi }}</td>
+        <td class="{{ 'dim' if not b.r }}">{{ b.r }}</td>
+        <td class="{{ 'dim' if not b.bb }}">{{ b.bb }}</td>
+        <td class="{{ 'dim' if not b.so }}">{{ b.so }}</td>
+        <td>{{ b.avg|rate }}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
   </div>
-  {% endif %}
+</section>
+{% endif %}
 
-  {% if detail.pitchers %}
-  <div>
-    <div class="section-title">투수 기록</div>
-    <div class="stats-card">
-      <table class="stats-table">
-        <thead>
-          <tr><th>선수</th><th>역할</th><th>결과</th><th>이닝</th><th>피안타</th><th>볼넷</th><th>삼진</th><th>자책</th><th>ERA</th></tr>
-        </thead>
-        <tbody>
-        {% for p in detail.pitchers %}
-        <tr>
-          <td><a href="/player/{{ p.name }}" class="player-link">{{ p.name }}</a></td>
-          <td style="color:var(--gray);font-size:0.78rem;">{{ p.role or '' }}</td>
-          <td>
-            {% if p.result %}
-            <span class="badge {% if p.result == '승' %}badge-win{% elif p.result == '패' %}badge-lose{% else %}badge-draw{% endif %}">{{ p.result }}</span>
-            {% endif %}
-          </td>
-          <td>{{ p.ip }}</td>
-          <td>{{ p.h }}</td>
-          <td>{{ p.bb }}</td>
-          <td>{{ p.so }}</td>
-          <td {% if p.er == 0 %}class="highlight"{% endif %}>{{ p.er }}</td>
-          <td style="color:var(--gray)">{{ p.era }}</td>
-        </tr>
-        {% endfor %}
-        </tbody>
-      </table>
-    </div>
+{% if detail.pitchers %}
+<section class="section">
+  <div class="section-head"><h2 class="section-title">두산 투수 기록</h2></div>
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th class="left sticky-col">선수</th><th>결과</th><th>이닝</th><th>타자</th><th>투구수</th><th>피안타</th><th>피홈런</th><th>볼넷</th><th>삼진</th><th>실점</th><th>자책</th><th>시즌 ERA</th></tr></thead>
+      <tbody>
+      {% for p in detail.pitchers %}
+      <tr>
+        <td class="left sticky-col"><a href="/player/{{ p.name|urlencode }}" class="player-link">{{ p.name }}</a></td>
+        <td>{% if p.result %}<span class="badge {{ 'badge-win' if p.result == '승' else 'badge-lose' if p.result == '패' else 'badge-info' }}">{{ p.result }}</span>{% endif %}</td>
+        <td class="strong">{{ p.ip }}</td>
+        <td>{{ p.bf }}</td>
+        <td>{{ p.pitch_count or '-' }}</td>
+        <td>{{ p.h }}</td>
+        <td class="{{ 'dim' if not p.hr }}">{{ p.hr }}</td>
+        <td class="{{ 'dim' if not p.bb }}">{{ p.bb }}</td>
+        <td class="{{ 'strong' if (p.so or 0) >= 5 }}">{{ p.so }}</td>
+        <td>{{ p.r }}</td>
+        <td class="{{ 'hi' if p.er == 0 }}">{{ p.er }}</td>
+        <td class="dim">{{ p.era }}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
   </div>
-  {% endif %}
-</div>
+</section>
+{% endif %}
+{% endblock %}
 
+{% block scripts %}
 <script>
-const GAME_ID = "{{ detail.game.game_id }}";
+const GAME_ID = {{ g.game_id | tojson }};
 
 async function generateGameAnalysis() {
   const btn = document.getElementById('btn-game');
-  const placeholder = document.getElementById('ai-game-placeholder');
-  const result = document.getElementById('ai-game-result');
-  const contentEl = document.getElementById('ai-game-content');
-
+  const card = document.getElementById('ai-game');
   btn.disabled = true;
-  btn.textContent = '생성 중...';
-
+  btn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2px"></span> 분석 중… (최대 1분)';
   try {
-    const resp = await fetch('/api/analyze/game/' + GAME_ID, { method: 'POST' });
-    const data = await resp.json();
-    if (data.success) {
-      placeholder.style.display = 'none';
-      result.style.display = 'block';
-      contentEl.textContent = data.content;
-    } else {
-      btn.disabled = false;
-      btn.textContent = '경기 분석 생성하기';
-      alert('오류: ' + (data.error || '알 수 없는 오류'));
-    }
-  } catch(e) {
+    const data = await postJSON('/api/analyze/game/' + encodeURIComponent(GAME_ID));
+    if (!data.success) throw new Error(data.error || '알 수 없는 오류');
+    card.innerHTML = '<div class="ai-label">Claude AI <span class="muted">· 방금 생성</span></div><div class="ai-content">' + esc(data.content) + '</div>';
+  } catch (e) {
     btn.disabled = false;
-    btn.textContent = '경기 분석 생성하기';
-    alert('오류: ' + e.message);
-  }
-}
-
-function closeModal(e) {
-  if (e.target === document.getElementById('player-modal')) {
-    document.getElementById('player-modal').classList.remove('active');
+    btn.textContent = '다시 시도';
+    card.querySelector('.ai-empty p').innerHTML = '<span class="error-text">오류: ' + esc(e.message) + '</span>';
   }
 }
 
 async function generatePlayerAnalysis() {
   const select = document.getElementById('player-select');
-  const playerName = select.value;
-  if (!playerName) { alert('선수를 선택해주세요!'); return; }
-
+  const name = select.value;
+  if (!name) { select.focus(); return; }
   const option = select.options[select.selectedIndex];
   const isAnalyzed = option.dataset.analyzed === 'true';
-
-  const modal = document.getElementById('player-modal');
-  const body  = document.getElementById('modal-body');
-
-  // 모달 열기 + 로딩
-  modal.classList.add('active');
-  body.innerHTML = '<div class="modal-loading"><div class="modal-loading-spinner"></div><p>' + 
-    (isAnalyzed ? '저장된 분석 불러오는 중...' : 'AI 분석 생성 중... (30초 내외)') + '</p></div>';
-
   const btn = document.getElementById('btn-player');
+
+  Modal.loading(isAnalyzed ? '저장된 분석을 불러오는 중…' : name + ' 선수 분석을 생성하는 중… (30초 내외)');
   btn.disabled = true;
-  btn.textContent = '분석 중...';
-
   try {
-    const resp = await fetch('/api/analyze/player/' + GAME_ID, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ player_name: playerName })
-    });
-    const data = await resp.json();
-
-    if (data.success) {
-      // 새로 분석된 경우 드롭다운에 ✓ 표시
-      if (!isAnalyzed) {
-        option.dataset.analyzed = 'true';
-        option.textContent = option.textContent + ' ✓';
-      }
-
-      var cached = data.cached ? ' (저장됨)' : '';
-      body.innerHTML = '<div class="ai-label" style="margin-bottom:0.5rem;">Claude AI Analysis' + cached + '</div>' +
-        '<div class="modal-player-name">' + data.player_name + '</div>' +
-        '<div class="modal-meta">' + new Date().toLocaleDateString("ko-KR") + ' · 경기 분석</div>' +
-        '<div class="ai-content">' + data.content.replace(/\n/g, "<br>") + '</div>';
-    } else {
-      body.innerHTML = '<p style="color:var(--red);padding:1rem;">오류: ' + (data.error || '알 수 없는 오류') + '</p>';
-    }
-  } catch(e) {
-    body.innerHTML = '<p style="color:var(--red);padding:1rem;">오류: ' + e.message + '</p>';
+    const data = await postJSON('/api/analyze/player/' + encodeURIComponent(GAME_ID), { player_name: name });
+    if (!data.success) throw new Error(data.error || '알 수 없는 오류');
+    if (!isAnalyzed) { option.dataset.analyzed = 'true'; option.textContent += ' ✓'; }
+    Modal.set(aiReportHTML('Claude AI · 경기 평가' + (data.cached ? ' (저장됨)' : ''), data.player_name,
+      {{ (g.date[:4] ~ '.' ~ g.date[4:6] ~ '.' ~ g.date[6:8] ~ ' ' ~ g.away_team ~ ' vs ' ~ g.home_team) | tojson }}, data.content));
+  } catch (e) {
+    Modal.set('<div class="modal-kicker">오류</div><p class="error-text">' + esc(e.message) + '</p>');
   } finally {
     btn.disabled = false;
-    btn.textContent = '선수 평가 보기';
   }
 }
 </script>
