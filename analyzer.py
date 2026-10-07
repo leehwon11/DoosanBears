@@ -23,24 +23,37 @@ client = anthropic.Anthropic(
 )
 
 
+# 사용할 모델 (서버 환경변수 ANTHROPIC_MODEL로 바꿀 수 있음)
+# claude-sonnet-4-5는 더 이상 제공되지 않아 404가 나므로 현재 Sonnet으로 교체
+CLAUDE_MODEL = os.getenv("ANTHROPIC_MODEL") or "claude-sonnet-5-5"
+
+# Sonnet 5.5는 기본으로 생각(thinking)을 한 뒤 답하고, 그 토큰도 max_tokens에 포함됨
+# → 리포트가 중간에 잘리지 않도록 최소 16000으로 잡음
+MIN_MAX_TOKENS = 16000
+
+
 def _call_claude(prompt: str, max_tokens: int = 2048) -> str:
     """Claude API 호출. 오류 시 재시도. 재시도 소진 시 예외를 던짐(빈 리포트 저장 방지)."""
     last_err = None
     for attempt in range(3):
         try:
             message = client.messages.create(
-                model="claude-sonnet-4-5",
-                max_tokens=max_tokens,
+                model=CLAUDE_MODEL,
+                max_tokens=max(max_tokens, MIN_MAX_TOKENS),
                 messages=[{"role": "user", "content": prompt}]
             )
-            return message.content[0].text
+            if message.stop_reason == "refusal":
+                raise RuntimeError("AI가 이 요청에 대한 응답을 거절했어요.")
+            # 응답 앞에 thinking 블록이 올 수 있으므로 text 블록만 모음
+            text = "".join(b.text for b in message.content if b.type == "text").strip()
+            if not text:
+                raise RuntimeError(f"AI 응답이 비어 있어요 (stop_reason={message.stop_reason})")
+            return text
         except anthropic.RateLimitError as e:
             last_err = e
             wait = (attempt + 1) * 15
             print(f"    API 한도 초과 — {wait}초 후 재시도...")
             time.sleep(wait)
-        except Exception as e:
-            raise e
     raise RuntimeError(f"Claude API 호출 3회 재시도 후 실패: {last_err}")
 
 
