@@ -9,6 +9,7 @@ from datetime import datetime
 from flask import Flask, render_template, jsonify, abort, request
 from dotenv import load_dotenv
 from database import init_db, get_recent_games, get_game_detail, get_connection, get_recent_futures_games
+from stats_utils import ip_to_outs, outs_to_ip, fmt_rate
 
 load_dotenv()
 init_db()
@@ -45,32 +46,6 @@ def calc_wrc_plus(woba, year=None):
         return 100
     wrc_plus = ((woba - c["woba_avg"]) / c["woba_scale"] + c["r_pa"]) / c["r_pa"] * 100
     return round(wrc_plus)
-
-
-def ip_to_outs(ip) -> int:
-    """이닝 문자열('5 2/3', '1/3', '7') → 아웃카운트"""
-    outs = 0
-    try:
-        for part in str(ip or "0").split():
-            if "/" in part:
-                n, d = part.split("/")
-                outs += int(n) * 3 // int(d)
-            else:
-                outs += int(part) * 3
-    except ValueError:
-        return 0
-    return outs
-
-
-def fmt_rate(v: float) -> str:
-    """비율 기록 표기 (0.262 → .262, 1.023은 그대로)"""
-    t = f"{v:.3f}"
-    return t[1:] if t.startswith("0.") else t
-
-
-def outs_to_ip(outs: int) -> str:
-    """아웃카운트 → '45.2' 형식 이닝 표기"""
-    return f"{outs // 3}.{outs % 3}" if outs > 0 else "0"
 
 
 def simplify_pos(pos):
@@ -583,6 +558,13 @@ def api_analyze_game(game_id):
         return jsonify({"error": str(e)}), 500
 
 
+def _whole_season(aggregate, stats, year):
+    """시즌 집계 한 줄. 연도 지정이 없으면 전체 기록을 한 시즌처럼 합산"""
+    if not year:
+        stats = [dict(r, date="0000" + r["date"][4:]) for r in stats]
+    return aggregate(stats)[0]
+
+
 @app.route("/api/analyze/player-season", methods=["POST"])
 def api_analyze_player_season():
     try:
@@ -624,20 +606,7 @@ def api_analyze_player_season():
             if not stats:
                 conn.close()
                 return jsonify({"error": f"{season_label} {league_label} 기록이 없어요"}), 404
-            season = aggregate_by_season_pitcher(stats)[0] if year else None
-            lines = [f"{s['date'][4:6]}/{s['date'][6:]} {s['ip']}이닝 {s['er']}자책 {s['so']}삼진 ERA {s['era']}" for s in stats]
-            stat_summary = "\n".join(lines[:30])
-            totals = (f"총 {len(stats)}경기 등판, {season['ip']}이닝, 자책점 {season['er']}점, 삼진 {season['so']}개, "
-                      f"ERA {season['era']}, WHIP {season['whip']}" if season else
-                      f"총 {len(stats)}경기 등판, 자책점 {sum(s['er'] for s in stats)}점, 삼진 {sum(s['so'] for s in stats)}개")
-            prompt = f"""두산 베어스 투수 {player_name}의 {season_label} {league_label} 전체 기록을 분석해주세요.
-
-기록 목록:
-{stat_summary}
-
-{totals}
-
-3~4문단으로 시즌 전체 흐름 평가, 강점, 약점, 발전 방향을 팬 입장에서 따뜻하게 작성해주세요."""
+            season = _whole_season(aggregate_by_season_pitcher, stats, year)
         else:
             table = "batter_stats" if league == "kbo" else "futures_batter_stats"
             stats = [dict(r) for r in _query(conn, f"""
@@ -648,20 +617,11 @@ def api_analyze_player_season():
             if not stats:
                 conn.close()
                 return jsonify({"error": f"{season_label} {league_label} 기록이 없어요"}), 404
-            total_ab  = sum(s['ab'] for s in stats)
-            total_h   = sum(s['h'] for s in stats)
-            total_hr  = sum(s['hr'] for s in stats)
-            total_rbi = sum(s['rbi'] for s in stats)
-            avg = f"{total_h/total_ab:.3f}" if total_ab > 0 else ".000"
-            prompt = f"""두산 베어스 타자 {player_name}의 {season_label} {league_label} 전체 기록을 분석해주세요.
+            season = _whole_season(aggregate_by_season_batter, stats, year)
 
-시즌 누적: {total_ab}타수 {total_h}안타 {total_hr}홈런 {total_rbi}타점 타율 {avg}
-총 {len(stats)}경기 출장
-
-3~4문단으로 시즌 전체 흐름 평가, 강점, 약점, 발전 방향을 팬 입장에서 따뜻하게 작성해주세요."""
-
-        from analyzer import _call_claude
-        result = _call_claude(prompt, max_tokens=2048)
+        from analyzer import _call_claude, build_season_prompt
+        prompt = build_season_prompt(player_name, is_pitcher, season_label, league_label, stats, season)
+        result = _call_claude(prompt, max_tokens=4096)
 
         conn.execute(
             "INSERT INTO ai_reports (game_id, report_type, player_name, content, created_at) VALUES ('season', ?, ?, ?, ?)",
